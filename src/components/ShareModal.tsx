@@ -62,7 +62,6 @@ export function ShareModal({
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const markdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  const openedAtRef = useRef<number>(0);
 
   useEffect(() => {
     setSelectedPrivacy((currentPrivacy) => {
@@ -105,14 +104,6 @@ export function ShareModal({
       }
       setUrlCopied(false);
       setMarkdownCopied(false);
-    }
-  }, [isOpen]);
-
-  // Initial focus when opening
-  useEffect(() => {
-    if (isOpen) {
-      openedAtRef.current = Date.now();
-      closeBtnRef.current?.focus();
     }
   }, [isOpen]);
 
@@ -197,32 +188,6 @@ export function ShareModal({
     llmTxtUrl,
   ]);
 
-  const handleDialogKeyDown = React.useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === "Escape") onClose();
-    },
-    [onClose],
-  );
-
-  const handleOverlayKeyDown = React.useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      // Guard against immediate close right after opening
-      const justOpened = Date.now() - openedAtRef.current < 200;
-      if (justOpened) return;
-      if (e.key === "Escape" || e.key === "Enter") onClose();
-    },
-    [onClose],
-  );
-
-  const handleOverlayClick = React.useCallback(
-    (_e: React.MouseEvent<HTMLDivElement>) => {
-      const justOpened = Date.now() - openedAtRef.current < 200;
-      if (justOpened) return;
-      onClose();
-    },
-    [onClose],
-  );
-
   const handleSelectPrivacy = React.useCallback(
     (value: PrivacyOption) => setSelectedPrivacy(value),
     [],
@@ -264,9 +229,6 @@ export function ShareModal({
       onGenerateOrCopy={handleGenerateOrCopy}
       onCopyMarkdown={handleCopyMarkdown}
       onClose={onClose}
-      onDialogKeyDown={handleDialogKeyDown}
-      onOverlayKeyDown={handleOverlayKeyDown}
-      onOverlayClick={handleOverlayClick}
     />
   );
 }

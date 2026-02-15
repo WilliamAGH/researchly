@@ -73,7 +73,7 @@ export function useDebounce<Args extends unknown[]>(
 export function useThrottle<T extends (...args: unknown[]) => void>(
   callback: T,
   delay: number,
-): T {
+): (...args: Parameters<T>) => void {
   const lastRunRef = useRef<number>(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const callbackRef = useRef(callback);
@@ -83,7 +83,7 @@ export function useThrottle<T extends (...args: unknown[]) => void>(
     callbackRef.current = callback;
   }, [callback]);
 
-  const throttledCallback = useCallback<T>(
+  const throttledCallback = useCallback(
     (...args: Parameters<T>) => {
       const now = Date.now();
       const timeSinceLastRun = now - lastRunRef.current;

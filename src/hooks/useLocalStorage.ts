@@ -64,21 +64,24 @@ export function useLocalStorage<T>(
     }
   }, [key]);
 
-  const schedulePersist = () => {
+  const schedulePersist = useCallback(() => {
     if (timerRef.current !== null) {
       window.clearTimeout(timerRef.current);
     }
     timerRef.current = window.setTimeout(persist, debounceMs);
-  };
+  }, [persist, debounceMs]);
 
-  const setValue = (value: T | ((prev: T) => T)) => {
-    setStoredValue((prev) => {
-      const next = isUpdater(value) ? value(prev) : value;
-      latestRef.current = next;
-      schedulePersist();
-      return next;
-    });
-  };
+  const setValue = useCallback(
+    (value: T | ((prev: T) => T)) => {
+      setStoredValue((prev) => {
+        const next = isUpdater(value) ? value(prev) : value;
+        latestRef.current = next;
+        schedulePersist();
+        return next;
+      });
+    },
+    [schedulePersist],
+  );
 
   // Flush pending write on unmount
   useEffect(() => {
