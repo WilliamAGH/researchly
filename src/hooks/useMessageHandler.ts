@@ -5,7 +5,7 @@
  * Manages chat creation, selection, and title updates
  */
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "../../convex/lib/errors";
 import type { ChatActions, ChatState } from "@/hooks/types";
@@ -173,8 +173,10 @@ export function useMessageHandler(deps: UseMessageHandlerDeps) {
     ],
   );
 
-  sendRef.current = async (msg: string, ids?: string[]) =>
-    handleSendMessage(msg, ids);
+  useEffect(() => {
+    sendRef.current = async (msg: string, ids?: string[]) =>
+      handleSendMessage(msg, ids);
+  }, [handleSendMessage]);
 
   return {
     handleSendMessage,

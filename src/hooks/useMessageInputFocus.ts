@@ -10,9 +10,16 @@ export function useMessageInputFocus({
   textareaRef,
   disabled,
 }: MessageInputFocusOptions) {
-  // Autofocus once and manage focus on disabled changes
+  // Refocus when generation completes (disabled goes false→true→false).
+  // Skip on touch devices to avoid popping the virtual keyboard.
   useEffect(() => {
     if (disabled) return;
+    const isCoarse =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) return;
+
     const el = textareaRef.current;
     if (!el) return;
     try {
