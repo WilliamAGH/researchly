@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 type AutoResizeOptions = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -25,10 +25,12 @@ export function useAutoResizeTextarea({
     ta.style.height = `${target}px`;
   }, [maxHeight, textareaRef]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- dependencies is a caller-provided array of values to trigger resize
+  // Create a stable key from dependencies for effect tracking
+  const depsKey = useMemo(() => JSON.stringify(dependencies), [dependencies]);
+
   useEffect(() => {
     adjustTextarea();
-  }, [adjustTextarea, ...dependencies]);
+  }, [adjustTextarea, depsKey]);
 
   useEffect(() => {
     const handler: EventListener = () =>
