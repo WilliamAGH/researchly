@@ -128,8 +128,15 @@ export function ChatLayout({
           pb-20: Reserves space so the last message content is never hidden
           behind the sticky input bar. The input area is ~70px tall; 80px
           (pb-20) gives comfortable clearance including safe-area insets.
+
+          pb-40: When the FollowUpPrompt banner is visible it floats above
+          the sticky input bar via absolute positioning (~80px tall).
+          Extra bottom padding ensures the last chat messages remain
+          scrollable past the banner without being obscured.
         */}
-        <div className="grow shrink-0 flex flex-col min-w-0 max-w-4xl mx-auto w-full pb-20">
+        <div
+          className={`grow shrink-0 flex flex-col min-w-0 max-w-4xl mx-auto w-full ${showFollowUpPrompt ? "pb-40" : "pb-20"}`}
+        >
           <MessageList
             key={String(currentChatId)}
             {...messageListProps}

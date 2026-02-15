@@ -38,7 +38,7 @@ export function FollowUpPrompt({
       role="status"
       className="absolute bottom-full w-full max-w-3xl mx-auto left-0 right-0 px-3 mb-2 animate-slide-up z-40"
     >
-      <div className="w-full border border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-900/20 text-amber-900 dark:text-amber-200 rounded-md">
+      <div className="w-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-200 rounded-md">
         <div className="px-3 sm:px-4 py-2">
           {/* Headline row */}
           <div className="flex items-center gap-2 mb-1">
@@ -87,7 +87,7 @@ export function FollowUpPrompt({
               <button
                 type="button"
                 onClick={onNewChat}
-                className="px-2 md:px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] md:text-[11px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
+                className="px-2 md:px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
               >
                 Start New Chat
               </button>
@@ -95,7 +95,7 @@ export function FollowUpPrompt({
                 <button
                   type="button"
                   onClick={onNewChatWithSummary}
-                  className="px-2 md:px-2.5 py-1 bg-emerald-600/90 hover:bg-emerald-700 text-white text-[10px] md:text-[11px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
+                  className="px-2 md:px-2.5 py-1 bg-emerald-600/90 hover:bg-emerald-700 text-white text-[11px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
                 >
                   New Chat w/ Summary
                 </button>
@@ -103,7 +103,7 @@ export function FollowUpPrompt({
               <button
                 type="button"
                 onClick={onContinue}
-                className="px-2 md:px-2.5 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-[10px] md:text-[11px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
+                className="px-2 md:px-2.5 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
               >
                 Continue Here
               </button>
