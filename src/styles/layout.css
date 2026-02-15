@@ -10,8 +10,8 @@ body,
 }
 
 /*
- * Lock body scroll to prevent bounce effects and address bar quirks on iOS.
- * This effectively makes the body a fixed container matching the visual viewport.
+ * Lock body scroll to prevent bounce effects and address bar quirks on iOS/Android.
+ * Using overflow: hidden instead of position: fixed to avoid breaking Android scroll.
  */
 html,
 body {

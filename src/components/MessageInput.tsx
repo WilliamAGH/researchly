@@ -300,6 +300,7 @@ export function MessageInput({
               onShare={onShare}
               message={message}
               disabled={disabled}
+              isGenerating={disabled}
             />
             <button
               type="submit"
