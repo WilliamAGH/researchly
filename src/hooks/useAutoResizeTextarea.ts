@@ -1,15 +1,16 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 
 type AutoResizeOptions = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   maxHeight: number;
-  dependencies: Array<unknown>;
+  /** Serialized key that triggers re-measurement (e.g. `JSON.stringify([a, b])`) */
+  depsKey: string;
 };
 
 export function useAutoResizeTextarea({
   textareaRef,
   maxHeight,
-  dependencies,
+  depsKey,
 }: AutoResizeOptions) {
   const adjustTextarea = useCallback(() => {
     const ta = textareaRef.current;
@@ -24,9 +25,6 @@ export function useAutoResizeTextarea({
 
     ta.style.height = `${target}px`;
   }, [maxHeight, textareaRef]);
-
-  // Create a stable key from dependencies for effect tracking
-  const depsKey = useMemo(() => JSON.stringify(dependencies), [dependencies]);
 
   useEffect(() => {
     adjustTextarea();

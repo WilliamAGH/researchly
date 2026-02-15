@@ -217,7 +217,7 @@ export function MessageInput({
   useAutoResizeTextarea({
     textareaRef,
     maxHeight: MAX_TEXTAREA_HEIGHT,
-    dependencies: [message, placeholder, disabled],
+    depsKey: JSON.stringify([message, placeholder, disabled]),
   });
   useMessageInputFocus({ textareaRef, disabled });
 
