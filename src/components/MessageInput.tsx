@@ -7,7 +7,7 @@
  * - Image attachments via paste or file picker
  */
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { useAutoResizeTextarea } from "@/hooks/useAutoResizeTextarea";
 import { useMessageInputFocus } from "@/hooks/useMessageInputFocus";
 import { useInputHistory } from "@/hooks/useInputHistory";
@@ -84,6 +84,7 @@ export function MessageInput({
   const [sendError, setSendError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const composingRef = useRef(false);
 
   const { historyIndex, handleHistoryNavigation, resetHistory } =
     useInputHistory({
@@ -156,11 +157,19 @@ export function MessageInput({
     if (sendError) setSendError(null);
   }, [sendError]);
 
+  /** Track IME composition state via ref for iOS Safari predictive text. */
+  const handleCompositionStart = useCallback(() => {
+    composingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback(() => {
+    composingRef.current = false;
+  }, []);
+
   /** Enter to send, Shift+Enter for newline, ArrowUp/Down for history. */
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      const isComposing = e.nativeEvent.isComposing ?? false;
-      if (isComposing) return; // avoid sending mid-IME composition
+      if (composingRef.current) return; // avoid sending mid-IME composition
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         void sendCurrentMessage();
@@ -267,7 +276,10 @@ export function MessageInput({
               value={message}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
               onPaste={handlePaste}
+              enterKeyHint="send"
               placeholder={placeholder}
               aria-label="Message input"
               data-testid="message-input"

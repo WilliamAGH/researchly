@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from "react";
+import React, { useRef, useMemo } from "react";
 import type { Message } from "@/lib/types/message";
 import { resolveMessageKey } from "./messageKey";
 
@@ -33,20 +33,6 @@ export function VirtualizedMessageList({
 
     return groups;
   }, [messages]);
-
-  // Optimize scroll performance
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    // Add passive scroll listener for better performance
-    const handleScroll = () => {
-      // Browser handles virtualization via content-visibility
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <div

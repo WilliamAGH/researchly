@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo, useRef } from "react";
 import type { TouchEvent } from "react";
 
 interface UseKeyboardShortcutsProps {
@@ -59,20 +59,19 @@ export function useKeyboardShortcuts({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  // Refs for swipe tracking — stable across re-renders and sidebarOpen changes
+  const touchStartXRef = useRef(0);
+
   // Swipe handlers for mobile
   const swipeHandlers = useMemo(() => {
     if (!isMobile) return {};
 
-    let touchStartX = 0;
-    let touchEndX = 0;
-
     const handleTouchStart = (e: TouchEvent) => {
-      touchStartX = e.touches[0].clientX;
+      touchStartXRef.current = e.touches[0].clientX;
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      touchEndX = e.changedTouches[0].clientX;
-      const swipeDistance = touchEndX - touchStartX;
+      const swipeDistance = e.changedTouches[0].clientX - touchStartXRef.current;
 
       // Swipe right to open sidebar
       if (swipeDistance > 100 && !sidebarOpen) {

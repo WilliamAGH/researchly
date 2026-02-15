@@ -84,13 +84,24 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number,
 ): (...args: Parameters<T>) => void {
-  let inThrottle: boolean;
+  let inThrottle = false;
+  let trailingArgs: Parameters<T> | null = null;
 
   return function executedFunction(...args: Parameters<T>) {
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
+      setTimeout(() => {
+        inThrottle = false;
+        if (trailingArgs) {
+          func(...trailingArgs);
+          trailingArgs = null;
+          inThrottle = true;
+          setTimeout(() => (inThrottle = false), limit);
+        }
+      }, limit);
+    } else {
+      trailingArgs = args;
     }
   };
 }
