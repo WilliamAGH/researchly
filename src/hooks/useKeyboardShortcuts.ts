@@ -49,7 +49,7 @@ export function useKeyboardShortcuts({
       }
 
       // Escape - Close sidebar on mobile
-      if (e.key === "Escape" && isMobile && sidebarOpen) {
+      if (e.code === "Escape" && isMobile && sidebarOpen) {
         e.preventDefault();
         onToggleSidebar?.();
         return;

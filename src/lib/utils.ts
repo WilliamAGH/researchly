@@ -93,6 +93,7 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
       inThrottle = true;
       setTimeout(() => {
         inThrottle = false;
+        // Fire trailing call if one was queued during the throttle window
         if (trailingArgs) {
           func(...trailingArgs);
           trailingArgs = null;
@@ -101,6 +102,7 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
         }
       }, limit);
     } else {
+      // Queue the latest call for trailing execution
       trailingArgs = args;
     }
   };
