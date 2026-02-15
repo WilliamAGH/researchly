@@ -71,7 +71,8 @@ export function useKeyboardShortcuts({
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      const swipeDistance = e.changedTouches[0].clientX - touchStartXRef.current;
+      const swipeDistance =
+        e.changedTouches[0].clientX - touchStartXRef.current;
 
       // Swipe right to open sidebar
       if (swipeDistance > 100 && !sidebarOpen) {
