@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { getDomainFromUrl } from "@/lib/utils/favicon";
 import { logger } from "@/lib/logger";
 import { toWebSourceCards } from "@/lib/domain/webResearchSources";
+import { stripTrailingSources } from "@/lib/utils/stripTrailingSources";
 import type { WebResearchSourceClient } from "@/lib/schemas/messageStream";
 
 /**
@@ -17,12 +18,17 @@ export function useCitationProcessor(
     const cards = toWebSourceCards(webResearchSources);
     const urlSet = new Set(cards.map((c) => c.url));
 
+    // Strip trailing "Sources:" / "References:" sections that the LLM appends.
+    // This runs client-side so trailing citations are hidden during streaming,
+    // before the server's stripped `persisted` event arrives.
+    const stripped = stripTrailingSources(content);
+
     // Replace [domain.com] or [full URL] with custom markers that survive markdown processing
     // Updated regex to capture potential following (url) part of a markdown link
     // This handles cases where LLM outputs [domain.com](url) - we want to consume the whole thing
     const citationRegex = /\[([^\]]+)\](?:\(([^)]+)\))?/g;
 
-    return content.replace(citationRegex, (match, citedText, existingUrl) => {
+    return stripped.replace(citationRegex, (match, citedText, existingUrl) => {
       let domain = citedText;
       let url: string | undefined;
 
