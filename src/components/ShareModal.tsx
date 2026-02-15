@@ -107,8 +107,6 @@ export function ShareModal({
     }
   }, [isOpen]);
 
-
-
   const _handleShare = React.useCallback(async () => {
     // Map LLM to shared privacy when persisting
     const effective = toPersistedPrivacy(selectedPrivacy);
