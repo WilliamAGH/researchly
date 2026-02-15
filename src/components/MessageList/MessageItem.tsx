@@ -171,6 +171,7 @@ export function MessageItem({
               webResearchSources={message.webResearchSources}
               hoveredSourceUrl={hoveredSourceUrl}
               onCitationHover={onCitationHover}
+              isStreaming={message.isStreaming}
             />
           ) : (
             <div className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 leading-relaxed break-words slashed-zero lining-nums tabular-nums">
