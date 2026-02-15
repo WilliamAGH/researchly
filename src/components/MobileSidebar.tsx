@@ -1,12 +1,13 @@
 // Refactored to use stable callbacks; no inline function props
 
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useRef, useCallback } from "react";
+import { Fragment, useRef, useCallback, useState } from "react";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { Chat } from "@/lib/types/chat";
 import { logger } from "@/lib/logger";
 import { useSessionAwareDeleteChat } from "@/hooks/useSessionAwareDeleteChat";
 import { toConvexId } from "@/lib/utils/idValidation";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export function MobileSidebar({
   const deleteChat = useSessionAwareDeleteChat();
   // Ensure Headless UI Dialog has a stable initial focusable element on open
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteTargetIsCurrent, setDeleteTargetIsCurrent] = useState(false);
 
   const handleNewChat = useCallback(() => {
     logger.info("New Chat button clicked in MobileSidebar");
@@ -63,43 +66,55 @@ export function MobileSidebar({
     [handleSelectChat],
   );
 
-  const handleDeleteChat = useCallback(
-    async (chatId: Id<"chats"> | string, isCurrentChat: boolean) => {
-      try {
-        if (!window.confirm("Delete this chat? This cannot be undone.")) return;
-
-        const resolvedChatId =
-          typeof chatId === "string" ? toConvexId<"chats">(chatId) : chatId;
-        if (!resolvedChatId) {
-          throw new Error(`Invalid chat ID for deletion: ${chatId}`);
-        }
-        if (onRequestDeleteChat) {
-          onRequestDeleteChat(resolvedChatId);
-        } else {
-          await deleteChat(resolvedChatId);
-        }
-
-        if (isCurrentChat) {
-          onSelectChat(null);
-        }
-      } catch (err) {
-        logger.error("Chat deletion failed:", err);
-      }
-    },
-    [onRequestDeleteChat, deleteChat, onSelectChat],
-  );
-
   const handleDeleteChatFromBtn = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       const id = e.currentTarget.getAttribute("data-chat-id");
       const isCurrent = e.currentTarget.getAttribute("data-current") === "1";
       if (!id) return;
-      void handleDeleteChat(id, isCurrent);
+      setDeleteTargetId(id);
+      setDeleteTargetIsCurrent(isCurrent);
     },
-    [handleDeleteChat],
+    [],
   );
 
+  const confirmDeleteChat = useCallback(async () => {
+    if (!deleteTargetId) return;
+    const chatId = deleteTargetId;
+    const isCurrent = deleteTargetIsCurrent;
+    setDeleteTargetId(null);
+
+    try {
+      const resolvedChatId = toConvexId<"chats">(chatId);
+      if (!resolvedChatId) {
+        throw new Error(`Invalid chat ID for deletion: ${chatId}`);
+      }
+      if (onRequestDeleteChat) {
+        onRequestDeleteChat(resolvedChatId);
+      } else {
+        await deleteChat(resolvedChatId);
+      }
+
+      if (isCurrent) {
+        onSelectChat(null);
+      }
+    } catch (err) {
+      logger.error("Chat deletion failed:", err);
+    }
+  }, [deleteTargetId, deleteTargetIsCurrent, onRequestDeleteChat, deleteChat, onSelectChat]);
+
+  const cancelDeleteChat = useCallback(() => {
+    setDeleteTargetId(null);
+  }, []);
+
   return (
+    <>
+    <ConfirmDialog
+      open={deleteTargetId !== null}
+      onConfirm={() => void confirmDeleteChat()}
+      onCancel={cancelDeleteChat}
+      title="Delete chat"
+      message="Delete this chat? This cannot be undone."
+    />
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
         as="div"
@@ -322,5 +337,6 @@ export function MobileSidebar({
         </div>
       </Dialog>
     </Transition.Root>
+    </>
   );
 }

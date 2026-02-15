@@ -20,6 +20,7 @@ import type { Message, SearchProgress } from "@/lib/types/message";
 import { useMessageListScroll } from "@/hooks/useMessageListScroll";
 import { resolveMessageKey } from "./messageKey";
 import { hasWebResearchSources } from "@/lib/domain/webResearchSources";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 /** Virtualize message list when exceeding this count for performance */
 const VIRTUALIZATION_THRESHOLD = 100;
@@ -82,21 +83,26 @@ export function MessageList({
     {},
   );
   const [hoveredSourceUrl, setHoveredSourceUrl] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleDeleteMessage = React.useCallback(
-    async (messageId: Id<"messages"> | string | undefined) => {
+    (messageId: Id<"messages"> | string | undefined) => {
       if (!messageId) return;
-
-      try {
-        if (!globalThis.confirm("Delete this message? This cannot be undone."))
-          return;
-        onRequestDeleteMessage(String(messageId));
-      } catch (err) {
-        logger.error("Failed to delete message", err);
-      }
+      setDeleteTarget(String(messageId));
     },
-    [onRequestDeleteMessage],
+    [],
   );
+
+  const confirmDelete = React.useCallback(() => {
+    if (deleteTarget) {
+      onRequestDeleteMessage(deleteTarget);
+    }
+    setDeleteTarget(null);
+  }, [deleteTarget, onRequestDeleteMessage]);
+
+  const cancelDelete = React.useCallback(() => {
+    setDeleteTarget(null);
+  }, []);
 
   // Debug logging
   useEffect(() => {
@@ -272,6 +278,14 @@ export function MessageList({
   // Content to render (shared between internal and external scroll modes)
   const content = (
     <>
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        title="Delete message"
+        message="Delete this message? This cannot be undone."
+      />
+
       <ScrollToBottomFab
         visible={userHasScrolled && messages.length > 0}
         onClick={handleScrollToBottom}

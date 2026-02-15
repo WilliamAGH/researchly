@@ -1,3 +1,4 @@
+import { Dialog } from "@headlessui/react";
 import type { PrivacyOption } from "@/components/share/shareModalTypes";
 
 type ShareModalContentProps = {
@@ -13,9 +14,6 @@ type ShareModalContentProps = {
   onGenerateOrCopy: () => void;
   onCopyMarkdown: () => void;
   onClose: () => void;
-  onDialogKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
-  onOverlayKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
-  onOverlayClick: (e: React.MouseEvent<HTMLDivElement>) => void;
 };
 
 export function ShareModalContent({
@@ -31,27 +29,20 @@ export function ShareModalContent({
   onGenerateOrCopy,
   onCopyMarkdown,
   onClose,
-  onDialogKeyDown,
-  onOverlayKeyDown,
-  onOverlayClick,
 }: ShareModalContentProps) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="share-modal-title"
-      onKeyDown={onDialogKeyDown}
+    <Dialog
+      open
+      onClose={onClose}
+      className="relative z-50"
+      initialFocus={closeBtnRef}
     >
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onOverlayClick}
-        onKeyDown={onOverlayKeyDown}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
+      <div className="fixed inset-0 flex items-center justify-center">
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full mx-4 p-5 sm:p-6 border border-gray-200 dark:border-gray-700 font-serif dark:font-mono">
+      <Dialog.Panel className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full mx-4 p-5 sm:p-6 border border-gray-200 dark:border-gray-700 font-serif dark:font-mono">
         <button
           ref={closeBtnRef}
           onClick={onClose}
@@ -311,7 +302,8 @@ export function ShareModalContent({
             </div>
           </div>
         </div>
+      </Dialog.Panel>
       </div>
-    </div>
+    </Dialog>
   );
 }

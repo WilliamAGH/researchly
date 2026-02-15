@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { Chat } from "@/lib/types/chat";
 import { logger } from "@/lib/logger";
 import { toConvexId } from "@/lib/utils/idValidation";
 import { useSessionAwareDeleteChat } from "@/hooks/useSessionAwareDeleteChat";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 /**
  * Execute chat deletion based on available handlers.
@@ -77,6 +78,7 @@ export function ChatSidebar({
   isCreatingChat = false,
 }: ChatSidebarProps) {
   const deleteChat = useSessionAwareDeleteChat();
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const handleSelectChat = React.useCallback(
     (chatId: Id<"chats"> | string) => {
@@ -97,40 +99,60 @@ export function ChatSidebar({
   );
 
   const handleDeleteClick = React.useCallback(
-    async (e: React.MouseEvent<HTMLButtonElement>) => {
+    (e: React.MouseEvent<HTMLButtonElement>) => {
       const chatId = e.currentTarget.getAttribute("data-chat-id");
       if (!chatId) return;
-
-      if (!window.confirm("Delete this chat? This cannot be undone.")) return;
-
-      const chat = chats.find((c) => String(c._id) === chatId);
-
-      try {
-        await executeDeleteChat(chatId, chat, {
-          onRequestDeleteChat,
-          deleteChat,
-        });
-
-        // Navigate away if deleting the current chat
-        const currentIdString =
-          currentChatId !== null ? String(currentChatId) : null;
-        if (chat?._id && currentIdString === String(chat._id)) {
-          onSelectChat(null);
-        }
-      } catch (err) {
-        if (import.meta.env.DEV) {
-          logger.warn("Chat deletion failed:", err);
-        }
-      }
+      setDeleteTargetId(chatId);
     },
-    [chats, onRequestDeleteChat, deleteChat, onSelectChat, currentChatId],
+    [],
   );
+
+  const confirmDeleteChat = React.useCallback(async () => {
+    if (!deleteTargetId) return;
+    const chat = chats.find((c) => String(c._id) === deleteTargetId);
+    setDeleteTargetId(null);
+
+    try {
+      await executeDeleteChat(deleteTargetId, chat, {
+        onRequestDeleteChat,
+        deleteChat,
+      });
+
+      const currentIdString =
+        currentChatId !== null ? String(currentChatId) : null;
+      if (chat?._id && currentIdString === String(chat._id)) {
+        onSelectChat(null);
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        logger.warn("Chat deletion failed:", err);
+      }
+    }
+  }, [
+    deleteTargetId,
+    chats,
+    onRequestDeleteChat,
+    deleteChat,
+    onSelectChat,
+    currentChatId,
+  ]);
+
+  const cancelDeleteChat = React.useCallback(() => {
+    setDeleteTargetId(null);
+  }, []);
 
   // Always render the sidebar container so tests can locate the "New Chat" button
   // even when visually hidden on small screens. We use CSS to hide it when closed.
 
   return (
     <div className="w-full h-full bg-muted/30 flex flex-col">
+      <ConfirmDialog
+        open={deleteTargetId !== null}
+        onConfirm={() => void confirmDeleteChat()}
+        onCancel={cancelDeleteChat}
+        title="Delete chat"
+        message="Delete this chat? This cannot be undone."
+      />
       <div className="p-3 sm:p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Chats</h3>

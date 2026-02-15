@@ -25,7 +25,8 @@ export function MessageInputActions({
         onClick={() => onNewChat?.()}
         aria-label="New chat"
         title="New chat"
-        className="p-2 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+        disabled={disabled}
+        className="p-2 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <svg
           className="w-4 h-4"

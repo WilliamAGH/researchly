@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { MutableRefObject } from "react";
 import { logger } from "@/lib/logger";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -103,6 +103,8 @@ export function useEnhancedFollowUpPrompt({
   const [showFollowUpPrompt, setShowFollowUpPrompt] = useState(false);
   // Queue used only when user explicitly chooses "Start New Chat" flow.
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  /** Guards against dispatching the same pending message twice (race condition). */
+  const dispatchedRef = useRef(false);
   // Candidate message detected from topic shift; never auto-sent by itself.
   const [followUpMessage, setFollowUpMessage] = useState<string | null>(null);
   const [plannerHint, setPlannerHint] = useState<{
@@ -197,11 +199,24 @@ export function useEnhancedFollowUpPrompt({
   // Send pending message when chat is ready
   useEffect(() => {
     if (pendingMessage && currentChatId && sendRef.current) {
+      if (dispatchedRef.current) return;
+      dispatchedRef.current = true;
+      let stale = false;
       const sendMessage = async () => {
         await sendRef.current?.(pendingMessage);
-        setPendingMessage(null);
+        if (!stale) {
+          setPendingMessage(null);
+          dispatchedRef.current = false;
+        }
       };
       void sendMessage();
+      return () => {
+        stale = true;
+      };
+    }
+    // Reset dispatch guard when a new pending message is queued
+    if (!pendingMessage) {
+      dispatchedRef.current = false;
     }
   }, [pendingMessage, currentChatId, sendRef]);
 

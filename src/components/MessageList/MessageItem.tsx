@@ -164,7 +164,10 @@ export function MessageItem({
         ) : null}
 
         {/* 5) AI/user content last – always appears under sources/thinking */}
-        <div className="prose prose-gray max-w-none dark:prose-invert prose-sm mt-2 overflow-x-hidden text-[15px] sm:text-base leading-6">
+        <div
+          className="prose prose-gray max-w-none dark:prose-invert prose-sm mt-2 overflow-x-hidden text-[15px] sm:text-base leading-6"
+          aria-live={message.role === "assistant" ? "polite" : undefined}
+        >
           {message.role === "assistant" ? (
             <ContentWithCitations
               content={message.content || ""}
