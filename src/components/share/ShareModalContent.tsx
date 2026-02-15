@@ -31,12 +31,7 @@ export function ShareModalContent({
   onClose,
 }: ShareModalContentProps) {
   return (
-    <Dialog
-      open
-      onClose={onClose}
-      className="fixed inset-0 z-50"
-      initialFocus={closeBtnRef}
-    >
+    <>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
@@ -306,8 +301,7 @@ export function ShareModalContent({
               </div>
             </div>
           </div>
-        </Dialog.Panel>
-      </div>
-    </Dialog>
+      </Dialog.Panel>
+    </>
   );
 }
