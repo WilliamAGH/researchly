@@ -134,7 +134,9 @@ export function ChatLayout({
           Extra bottom padding ensures the last chat messages remain
           scrollable past the banner without being obscured.
         */}
-        <div className={`grow shrink-0 flex flex-col min-w-0 max-w-4xl mx-auto w-full ${showFollowUpPrompt ? "pb-40" : "pb-20"}`}>
+        <div
+          className={`grow shrink-0 flex flex-col min-w-0 max-w-4xl mx-auto w-full ${showFollowUpPrompt ? "pb-40" : "pb-20"}`}
+        >
           <MessageList
             key={String(currentChatId)}
             {...messageListProps}
