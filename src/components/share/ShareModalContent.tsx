@@ -34,7 +34,7 @@ export function ShareModalContent({
     <Dialog
       open
       onClose={onClose}
-      className="relative z-50"
+      className="fixed inset-0 z-50"
       initialFocus={closeBtnRef}
     >
       {/* Backdrop */}
