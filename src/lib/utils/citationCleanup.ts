@@ -8,8 +8,8 @@
 const TRAILING_PATTERNS = [
   /** `## Sources` / `### References` heading sections */
   /\n#{1,3}\s*(?:Sources?|References?):?\s*\n[\s\S]*$/i,
-  /** `**Sources:**` bold header sections */
-  /\n\*\*(?:Sources?|References?)\*\*:?\s*\n[\s\S]*$/i,
+  /** `**Sources:**` bold header sections (colon may be inside or outside bold) */
+  /\n\*\*(?:Sources?|References?):?\*\*:?\s*\n[\s\S]*$/i,
   /** `Sources:` plain header with bullet/numbered list */
   /\n(?:Sources?|References?):?\s*\n(?:\s*[-•*\d]+\.?\s+.+(?:\n|$))+$/i,
   /** Numbered reference list: `[1] https://...` or `[1]: https://...` */

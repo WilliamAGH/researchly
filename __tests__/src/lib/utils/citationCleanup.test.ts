@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import { cleanTrailingCitations } from "../../../../src/lib/utils/citationCleanup";
 
 describe("cleanTrailingCitations", () => {
-  const BODY = "Here is the answer about climate change.\n\nIt affects many regions.";
+  const BODY =
+    "Here is the answer about climate change.\n\nIt affects many regions.";
 
   it("returns content unchanged when no trailing citations exist", () => {
     expect(cleanTrailingCitations(BODY, new Set())).toBe(BODY);
