@@ -32,8 +32,7 @@ const PLAIN_HEADER_SOURCES =
  *   [2]: https://other.com
  * Requires 2+ consecutive entries to avoid false positives on inline citations.
  */
-const NUMBERED_BRACKET_REFS =
-  /\n+(?:\[\d+\]:?\s+https?:\/\/\S+(?:\n|$)){2,}$/;
+const NUMBERED_BRACKET_REFS = /\n+(?:\[\d+\]:?\s+https?:\/\/\S+(?:\n|$)){2,}$/;
 
 /**
  * Matches a trailing bare-URL list (2+ URLs on consecutive lines at end).

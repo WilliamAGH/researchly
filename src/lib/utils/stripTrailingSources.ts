@@ -26,8 +26,7 @@ const PLAIN_HEADER_SOURCES =
  * Numbered bracket references without a header (2+ consecutive entries).
  * e.g. `[1] https://example.com` or `[1]: https://example.com`
  */
-const NUMBERED_BRACKET_REFS =
-  /\n+(?:\[\d+\]:?\s+https?:\/\/\S+(?:\n|$)){2,}$/;
+const NUMBERED_BRACKET_REFS = /\n+(?:\[\d+\]:?\s+https?:\/\/\S+(?:\n|$)){2,}$/;
 
 /** Trailing bare-URL list (2+ URLs on consecutive lines after a blank line) */
 const TRAILING_BARE_URLS = /\n\n(?:[-•*]?\s*https?:\/\/\S+(?:\n|$)){2,}$/;
