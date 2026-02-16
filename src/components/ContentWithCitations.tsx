@@ -27,7 +27,7 @@ interface ContentWithCitationsProps {
   isStreaming?: boolean;
 }
 
-export function ContentWithCitations({
+export const ContentWithCitations = React.memo(function ContentWithCitations({
   content,
   webResearchSources,
   hoveredSourceUrl,
@@ -99,4 +99,4 @@ export function ContentWithCitations({
       </div>
     </>
   );
-}
+});

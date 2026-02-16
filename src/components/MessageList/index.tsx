@@ -251,21 +251,22 @@ export function MessageList({
             }
 
             return (
-              <MessageItem
-                key={messageKey}
-                message={message}
-                index={index}
-                collapsedById={collapsedById}
-                hoveredSourceUrl={hoveredSourceUrl}
-                onToggleCollapsed={toggleCollapsed}
-                onDeleteMessage={handleDeleteMessage}
-                onSourceHover={setHoveredSourceUrl}
-                searchProgress={
-                  index === messages.length - 1 && isGenerating
-                    ? searchProgress
-                    : undefined
-                }
-              />
+              <div key={messageKey} className="message-item">
+                <MessageItem
+                  message={message}
+                  index={index}
+                  collapsedById={collapsedById}
+                  hoveredSourceUrl={hoveredSourceUrl}
+                  onToggleCollapsed={toggleCollapsed}
+                  onDeleteMessage={handleDeleteMessage}
+                  onSourceHover={setHoveredSourceUrl}
+                  searchProgress={
+                    index === messages.length - 1 && isGenerating
+                      ? searchProgress
+                      : undefined
+                  }
+                />
+              </div>
             );
           })
         )}
