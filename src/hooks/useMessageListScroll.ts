@@ -1,6 +1,11 @@
 /**
  * Custom hook for MessageList scroll behavior
- * Encapsulates auto-scroll, FAB visibility, and scroll position preservation
+ * Encapsulates FAB visibility, scroll position preservation, and user-driven scrolling.
+ *
+ * DESIGN: Auto-scroll during streaming is intentionally DISABLED.
+ * When new content arrives off-screen, the ScrollToBottomFab indicator appears
+ * so the user can choose to scroll down. This prevents the jarring "viewport
+ * theft" that occurs when smooth-scroll fights rapid DOM growth.
  */
 
 import { useEffect, useRef, useCallback, useState } from "react";
@@ -9,8 +14,6 @@ import { useIsVirtualKeyboardOpen } from "@/hooks/useIsVirtualKeyboardOpen";
 import { throttle, isNearBottom, isScrolledPastPercent } from "@/lib/utils";
 import type { SearchProgress } from "@/lib/types/message";
 
-/** Duration of smooth scroll animation (ms) */
-const SCROLL_ANIMATION_MS = 600;
 /** Throttle scroll event handler to this interval (ms) */
 const THROTTLE_MS = 100;
 /** Percentage threshold: hide FAB when user is 95%+ of the way down */
@@ -48,17 +51,17 @@ interface UseMessageListScrollResult {
 
 /**
  * Hook that manages all scroll-related behavior for the message list:
- * - Auto-scroll when near bottom or generating
- * - FAB visibility based on scroll position
+ * - FAB visibility based on scroll position (including during streaming)
  * - Unseen message counting
  * - Scroll position preservation during pagination
  * - Touch/wheel interruption of smooth scroll
+ *
+ * Auto-scroll is DISABLED during streaming. The FAB indicator shows instead.
  */
 export function useMessageListScroll({
   messageCount,
   isGenerating,
   externalScrollRef,
-  searchProgress,
 }: UseMessageListScrollOptions): UseMessageListScrollResult {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const internalScrollRef = useRef<HTMLDivElement | null>(null);
@@ -69,9 +72,10 @@ export function useMessageListScroll({
   const previousMessagesLengthRef = useRef(messageCount);
   const isLoadingMoreRef = useRef(false);
   const lastSeenMessageCountRef = useRef(messageCount);
-  const autoScrollEnabledRef = useRef(true);
   const smoothScrollInProgressRef = useRef(false);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Tracks whether user was at bottom when streaming started */
+  const wasAtBottomBeforeStreamRef = useRef(true);
 
   const isMobile = useIsMobile();
   const isVirtualKeyboardOpen = useIsVirtualKeyboardOpen();
@@ -80,7 +84,6 @@ export function useMessageListScroll({
   const [unseenMessageCount, setUnseenMessageCount] = useState(0);
 
   // Dynamic thresholds based on viewport
-  const NEAR_BOTTOM_THRESHOLD = isMobile ? 100 : 200;
   const STUCK_THRESHOLD = isMobile ? 50 : 100;
 
   /**
@@ -100,7 +103,7 @@ export function useMessageListScroll({
   }, [scrollContainerRef]);
 
   /**
-   * Scroll to bottom of messages
+   * Scroll to bottom of messages — only called by explicit user action (FAB click).
    */
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = "smooth") => {
@@ -110,20 +113,18 @@ export function useMessageListScroll({
       if (behavior === "smooth") {
         smoothScrollInProgressRef.current = true;
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        // Reset flag after animation completes and ensure FAB is hidden
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
         }
         scrollTimeoutRef.current = setTimeout(() => {
           smoothScrollInProgressRef.current = false;
-          // After scroll animation, verify we're near bottom and keep FAB hidden
           const stillNearBottom =
             isNearBottom(container, STUCK_THRESHOLD) ||
             isScrolledPastPercent(container, SCROLL_PERCENT_THRESHOLD);
           if (stillNearBottom) {
             setUserHasScrolled(false);
           }
-        }, SCROLL_ANIMATION_MS);
+        }, 600);
       } else {
         messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
       }
@@ -144,7 +145,6 @@ export function useMessageListScroll({
     scrollToBottom("smooth");
     setUserHasScrolled(false);
     setUnseenMessageCount(0);
-    autoScrollEnabledRef.current = true;
     lastSeenMessageCountRef.current = messageCount;
   }, [scrollToBottom, messageCount]);
 
@@ -158,7 +158,6 @@ export function useMessageListScroll({
       const container = scrollContainerRef.current;
       if (!container) return;
 
-      // Save scroll height before loading
       const prevScrollHeight = container.scrollHeight;
       const prevScrollTop = container.scrollTop;
 
@@ -167,7 +166,6 @@ export function useMessageListScroll({
       try {
         await onLoadMore();
 
-        // After messages are loaded, restore scroll position
         requestAnimationFrame(() => {
           if (container) {
             const newScrollHeight = container.scrollHeight;
@@ -182,32 +180,57 @@ export function useMessageListScroll({
     [scrollContainerRef],
   );
 
-  // Intelligent auto-scroll: scroll when near bottom or actively generating
-  // Also triggers on searchProgress changes to keep tool status visible
-  // IMPORTANT: Pauses when virtual keyboard is open to prevent viewport theft
+  // When streaming starts, snapshot whether user is at bottom.
+  // This determines whether the FAB should appear as content grows.
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const shouldAutoScroll =
-      autoScrollEnabledRef.current &&
-      !isVirtualKeyboardOpen &&
-      (isNearBottom(container, NEAR_BOTTOM_THRESHOLD) ||
-        (isGenerating && !userHasScrolled));
-
-    if (shouldAutoScroll) {
-      scrollToBottom("smooth");
-      lastSeenMessageCountRef.current = messageCount;
+    if (isGenerating) {
+      const container = scrollContainerRef.current;
+      if (container) {
+        wasAtBottomBeforeStreamRef.current =
+          isNearBottom(container, STUCK_THRESHOLD) ||
+          isScrolledPastPercent(container, SCROLL_PERCENT_THRESHOLD);
+      }
     }
+  }, [isGenerating, STUCK_THRESHOLD, scrollContainerRef]);
+
+  // Detect when content grows beyond viewport during streaming.
+  // Uses requestAnimationFrame to batch with browser paint and avoid layout thrashing.
+  useEffect(() => {
+    if (!isGenerating) return;
+    if (isVirtualKeyboardOpen) return;
+
+    let rafId: number | null = null;
+
+    const checkOverflow = () => {
+      rafId = requestAnimationFrame(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const nearBottom =
+          isNearBottom(container, STUCK_THRESHOLD) ||
+          isScrolledPastPercent(container, SCROLL_PERCENT_THRESHOLD);
+
+        if (!nearBottom && !userHasScrolled) {
+          // Content has grown past the viewport — show the FAB
+          setUserHasScrolled(true);
+          lastSeenMessageCountRef.current = messageCount;
+        }
+      });
+    };
+
+    // Check on every message count change (new chunks arrive)
+    checkOverflow();
+
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, [
     messageCount,
     isGenerating,
     userHasScrolled,
     isVirtualKeyboardOpen,
-    scrollToBottom,
-    NEAR_BOTTOM_THRESHOLD,
+    STUCK_THRESHOLD,
     scrollContainerRef,
-    searchProgress,
   ]);
 
   // Track unseen messages when user is scrolled up
@@ -219,19 +242,6 @@ export function useMessageListScroll({
       }
     }
   }, [messageCount, userHasScrolled]);
-
-  // Reset auto-scroll when new assistant message starts streaming
-  // Note: This relies on messageCount changes; for more precise control,
-  // the component should pass lastMessage info
-  useEffect(() => {
-    if (isGenerating) {
-      const container = scrollContainerRef.current;
-      if (container && isNearBottom(container, NEAR_BOTTOM_THRESHOLD * 2)) {
-        autoScrollEnabledRef.current = true;
-        setUserHasScrolled(false);
-      }
-    }
-  }, [isGenerating, NEAR_BOTTOM_THRESHOLD, scrollContainerRef]);
 
   // Detect when user scrolls manually with touch/scroll awareness
   useEffect(() => {
@@ -259,22 +269,20 @@ export function useMessageListScroll({
       const nearBottom = nearBottomPixels || nearBottomPercent;
       const wasScrolledUp = userHasScrolled;
 
-      // User is near bottom - enable auto-scroll
+      // User is near bottom — hide FAB
       if (nearBottom) {
         if (wasScrolledUp) {
           setUserHasScrolled(false);
           setUnseenMessageCount(0);
           lastSeenMessageCountRef.current = messageCount;
         }
-        autoScrollEnabledRef.current = true;
       }
-      // User scrolled up - disable auto-scroll
+      // User scrolled up — show FAB
       else {
         if (!wasScrolledUp) {
           setUserHasScrolled(true);
           lastSeenMessageCountRef.current = messageCount;
         }
-        autoScrollEnabledRef.current = false;
       }
     }, THROTTLE_MS);
 

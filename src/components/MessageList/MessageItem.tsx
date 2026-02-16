@@ -27,7 +27,7 @@ interface MessageItemProps {
   searchProgress?: SearchProgress | null;
 }
 
-export function MessageItem({
+export const MessageItem = React.memo(function MessageItem({
   message,
   index: _index,
   collapsedById,
@@ -233,4 +233,4 @@ export function MessageItem({
       </div>
     </div>
   );
-}
+});
