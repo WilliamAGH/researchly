@@ -25,24 +25,24 @@ const TEXTAREA_CLASSES = [
 
 interface MessageInputProps {
   /** Callback when message is sent (with optional image storage IDs) */
-  onSendMessage: (
+  readonly onSendMessage: (
     message: string,
     imageStorageIds?: string[],
   ) => void | Promise<void>;
   /** Open share modal */
-  onShare?: () => void;
+  readonly onShare?: () => void;
   /** Start a new chat */
-  onNewChat?: () => void;
+  readonly onNewChat?: () => void;
   /** Disable input during generation */
-  disabled?: boolean;
+  readonly disabled?: boolean;
   /** Placeholder text */
-  placeholder?: string;
+  readonly placeholder?: string;
   /** Optional draft-change callback (debounced in parent) */
-  onDraftChange?: (draft: string) => void;
+  readonly onDraftChange?: (draft: string) => void;
   /** Optional history of previous user messages (oldest -> newest) */
-  history?: Array<string>;
+  readonly history?: Array<string>;
   /** Image upload state from useImageUpload hook */
-  imageUpload?: ImageUploadState;
+  readonly imageUpload?: ImageUploadState;
 }
 
 /** Message input with auto-resize and keyboard shortcuts */
