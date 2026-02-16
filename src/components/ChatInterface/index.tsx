@@ -229,7 +229,7 @@ function ChatInterfaceComponent({
   );
   useAutoCreateFirstChat();
   const isMobile = useIsMobile(DESKTOP_BREAKPOINT);
-  const { swipeHandlers, handleToggleSidebar, handleNewChatButton } =
+  const { handleToggleSidebar, handleNewChatButton } =
     useKeyboardShortcuts({
       isMobile,
       sidebarOpen,
@@ -290,7 +290,6 @@ function ChatInterfaceComponent({
       mobileSidebarProps={mobileSidebarProps}
       messageListProps={messageListProps}
       messageInputProps={messageInputProps}
-      swipeHandlers={swipeHandlers}
       setShowShareModal={setShowShareModal}
       setUndoBanner={setUndoBanner}
       handleContinueChat={handleContinueChat}

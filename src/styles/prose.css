@@ -132,6 +132,8 @@ html.dark .prose code {
    * internal scrolling (overflow-x-auto) instead of expanding the page.
    */
   max-width: 100%;
+  /* Prevent horizontal scroll from chaining to parent (e.g. triggering sidebar swipe) */
+  overscroll-behavior-x: contain;
 }
 
 /*
@@ -145,6 +147,8 @@ html.dark .prose code {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin: 0.75rem 0;
+  /* Prevent horizontal scroll from chaining to parent (e.g. triggering sidebar swipe) */
+  overscroll-behavior-x: contain;
 }
 
 .prose table {

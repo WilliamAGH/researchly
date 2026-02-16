@@ -19,11 +19,6 @@ type ChatSidebarProps = React.ComponentProps<typeof ChatSidebar>;
 type MobileSidebarProps = React.ComponentProps<typeof MobileSidebar>;
 type MessageListProps = React.ComponentProps<typeof MessageList>;
 type MessageInputProps = React.ComponentProps<typeof MessageInput>;
-type SwipeHandlers = Pick<
-  React.HTMLAttributes<HTMLDivElement>,
-  "onTouchStart" | "onTouchEnd"
->;
-
 interface ChatLayoutProps {
   // Layout state
   sidebarOpen: boolean;
@@ -48,8 +43,6 @@ interface ChatLayoutProps {
   mobileSidebarProps: MobileSidebarProps;
   messageListProps: MessageListProps;
   messageInputProps: MessageInputProps;
-  swipeHandlers: SwipeHandlers;
-
   // Callbacks
   setShowShareModal: (show: boolean) => void;
   setUndoBanner: (
@@ -76,7 +69,6 @@ export function ChatLayout({
   mobileSidebarProps,
   messageListProps,
   messageInputProps,
-  swipeHandlers,
   setShowShareModal,
   setUndoBanner,
   handleContinueChat,
@@ -115,7 +107,6 @@ export function ChatLayout({
       <div
         ref={scrollContainerRef}
         className={`w-full box-border flex flex-col h-full min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-contain ${showDesktopSidebar ? "pl-80" : ""}`}
-        {...swipeHandlers}
       >
         {/*
           DO NOT REMOVE OR OVERRIDE: Content Containment
