@@ -2,12 +2,14 @@
  * Markdown renderer with interactive citation support.
  * - Converts [domain.com] patterns to styled citation pills
  * - Handles hover highlighting between citations and sources
+ * - Cleans trailing LLM citations after streaming completes
  */
 
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import { useCitationProcessor } from "@/hooks/utils/useCitationProcessor";
 import { createCitationAnchorRenderer } from "@/lib/utils/citationAnchorRenderer";
+import { cleanTrailingCitations } from "@/lib/utils/citationCleanup";
 import {
   REMARK_PLUGINS,
   REHYPE_PLUGINS,
@@ -22,13 +24,15 @@ interface ContentWithCitationsProps {
   webResearchSources?: WebResearchSourceClient[] | undefined;
   hoveredSourceUrl?: string | null;
   onCitationHover?: (url: string | null) => void;
+  isStreaming?: boolean;
 }
 
-export function ContentWithCitations({
+export const ContentWithCitations = React.memo(function ContentWithCitations({
   content,
   webResearchSources,
   hoveredSourceUrl,
   onCitationHover,
+  isStreaming,
 }: ContentWithCitationsProps) {
   // Create a map of domains to URLs for quick lookup
   const domainToUrlMap = React.useMemo(
@@ -36,9 +40,16 @@ export function ContentWithCitations({
     [webResearchSources],
   );
 
+  // After streaming completes, clean trailing citation sections (safety net)
+  const cleanedContent = React.useMemo(() => {
+    if (isStreaming || !content) return content;
+    const inlineCitedUrls = new Set(domainToUrlMap.values());
+    return cleanTrailingCitations(content, inlineCitedUrls);
+  }, [content, isStreaming, domainToUrlMap]);
+
   // Convert [domain] or [URL] to markdown links where domain is known
   const processedContent = useCitationProcessor(
-    content,
+    cleanedContent,
     webResearchSources,
     domainToUrlMap,
   );
@@ -88,4 +99,4 @@ export function ContentWithCitations({
       </div>
     </>
   );
-}
+});

@@ -15,7 +15,7 @@ body,
  */
 html,
 body {
-  position: fixed;
+  overflow: hidden;
   overscroll-behavior: none;
 }
 
@@ -68,4 +68,14 @@ body {
 
 .auth-button {
   @apply w-full px-4 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/*
+ * Message item containment — reduces layout thrashing during streaming.
+ * `contain: content` tells the browser that changes inside a message item
+ * do not affect siblings, so it can skip re-laying-out the entire list
+ * when a single message's content grows.
+ */
+.message-item {
+  contain: content;
 }

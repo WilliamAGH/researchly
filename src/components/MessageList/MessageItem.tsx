@@ -27,7 +27,7 @@ interface MessageItemProps {
   searchProgress?: SearchProgress | null;
 }
 
-export function MessageItem({
+export const MessageItem = React.memo(function MessageItem({
   message,
   index: _index,
   collapsedById,
@@ -117,7 +117,10 @@ export function MessageItem({
               id={messageId}
               reasoning={message.reasoning ?? ""}
               thinkingText={message.thinking?.trim()}
-              isThinkingActive={Boolean(message.thinking?.trim())}
+              isThinkingActive={
+                Boolean(message.thinking?.trim()) &&
+                Boolean(message.isStreaming)
+              }
               isStreaming={message.isStreaming}
               hasStartedContent={Boolean(
                 message.content && message.content.trim(),
@@ -164,13 +167,17 @@ export function MessageItem({
         ) : null}
 
         {/* 5) AI/user content last – always appears under sources/thinking */}
-        <div className="prose prose-gray max-w-none dark:prose-invert prose-sm mt-2 overflow-x-hidden text-[15px] sm:text-base leading-6">
+        <div
+          className="prose prose-gray max-w-none dark:prose-invert prose-sm mt-2 overflow-x-hidden text-[15px] sm:text-base leading-6"
+          aria-live={message.role === "assistant" ? "polite" : undefined}
+        >
           {message.role === "assistant" ? (
             <ContentWithCitations
               content={message.content || ""}
               webResearchSources={message.webResearchSources}
               hoveredSourceUrl={hoveredSourceUrl}
               onCitationHover={onCitationHover}
+              isStreaming={message.isStreaming}
             />
           ) : (
             <div className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 leading-relaxed break-words slashed-zero lining-nums tabular-nums">
@@ -229,4 +236,4 @@ export function MessageItem({
       </div>
     </div>
   );
-}
+});

@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 const COLLAPSED_PREVIEW_MAX_CHARS = 140;
 
@@ -36,6 +36,20 @@ export function ReasoningDisplay({
     onToggle(`reasoning-${id}`);
   }, [id, onToggle]);
 
+  // Force WebKit repaint when thinking state transitions to inactive.
+  // Mobile Safari can leave CSS animations (animate-spin) stuck on
+  // composited layers when the class is removed without a repaint.
+  const spinnerRef = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    if (!isThinkingActive && spinnerRef.current) {
+      const el = spinnerRef.current;
+      el.style.animation = "none";
+      // Reading offsetHeight forces a synchronous reflow/repaint
+      void el.offsetHeight;
+      el.style.animation = "";
+    }
+  }, [isThinkingActive]);
+
   const displayThinkingText = isThinkingActive
     ? thinkingText?.trim() || "Thinking..."
     : "Thinking";
@@ -59,7 +73,9 @@ export function ReasoningDisplay({
           <div className="min-w-0 flex-1 flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 flex-shrink-0">
               <svg
+                ref={spinnerRef}
                 className={`w-4 h-4 flex-shrink-0 ${isThinkingActive ? "animate-spin" : ""}`}
+                style={{ willChange: isThinkingActive ? "transform" : "auto" }}
                 fill="none"
                 viewBox="0 0 24 24"
               >

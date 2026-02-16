@@ -1,25 +1,26 @@
 import { useState, useEffect } from "react";
 
 /**
- * Hook to detect mobile device viewport
+ * Hook to detect mobile device viewport using matchMedia.
+ * Only fires when the breakpoint is actually crossed, avoiding
+ * re-renders on every resize pixel.
  * @param breakpoint - Width threshold for mobile detection (default: 768px)
  * @returns boolean indicating if viewport is mobile size
  */
 export function useIsMobile(breakpoint = 768): boolean {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" ? window.innerWidth < breakpoint : false,
-  );
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia(`(max-width: ${breakpoint - 1}px)`).matches;
+  });
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < breakpoint);
-    };
+    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    // Sync on mount in case SSR initial value diverged
+    setIsMobile(mql.matches);
 
-    // Check on mount
-    handleResize();
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
   }, [breakpoint]);
 
   return isMobile;

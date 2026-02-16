@@ -7,10 +7,11 @@
  * - Image attachments via paste or file picker
  */
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { useAutoResizeTextarea } from "@/hooks/useAutoResizeTextarea";
 import { useMessageInputFocus } from "@/hooks/useMessageInputFocus";
 import { useInputHistory } from "@/hooks/useInputHistory";
+import { ImageAttachButton } from "@/components/ImageAttachButton";
 import { ImageAttachmentPreview } from "@/components/ImageAttachmentPreview";
 import { MessageInputActions } from "@/components/MessageInputActions";
 import {
@@ -84,6 +85,7 @@ export function MessageInput({
   const [sendError, setSendError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const composingRef = useRef(false);
 
   const { historyIndex, handleHistoryNavigation, resetHistory } =
     useInputHistory({
@@ -156,11 +158,19 @@ export function MessageInput({
     if (sendError) setSendError(null);
   }, [sendError]);
 
+  /** Track IME composition state via ref for iOS Safari predictive text. */
+  const handleCompositionStart = useCallback(() => {
+    composingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback(() => {
+    composingRef.current = false;
+  }, []);
+
   /** Enter to send, Shift+Enter for newline, ArrowUp/Down for history. */
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      const isComposing = e.nativeEvent.isComposing ?? false;
-      if (isComposing) return; // avoid sending mid-IME composition
+      if (composingRef.current) return; // avoid sending mid-IME composition
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         void sendCurrentMessage();
@@ -217,7 +227,7 @@ export function MessageInput({
   useAutoResizeTextarea({
     textareaRef,
     maxHeight: MAX_TEXTAREA_HEIGHT,
-    dependencies: [message, placeholder, disabled],
+    depsKey: JSON.stringify([message, placeholder, disabled]),
   });
   useMessageInputFocus({ textareaRef, disabled });
 
@@ -267,7 +277,10 @@ export function MessageInput({
               value={message}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
               onPaste={handlePaste}
+              enterKeyHint="send"
               placeholder={placeholder}
               aria-label="Message input"
               data-testid="message-input"
@@ -288,29 +301,10 @@ export function MessageInput({
             />
             {/* Image attach button — left side of input */}
             {imageUpload && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                aria-label="Attach image"
-                title="Attach image"
+              <ImageAttachButton
                 disabled={disabled}
-                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors disabled:opacity-60"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </button>
+                onClick={() => fileInputRef.current?.click()}
+              />
             )}
             <MessageInputActions
               onNewChat={onNewChat}
