@@ -1,5 +1,4 @@
-import { useEffect, useCallback, useMemo, useRef } from "react";
-import type { TouchEvent } from "react";
+import { useEffect, useCallback } from "react";
 
 interface UseKeyboardShortcutsProps {
   isMobile: boolean;
@@ -10,8 +9,13 @@ interface UseKeyboardShortcutsProps {
 }
 
 /**
- * Hook to manage keyboard shortcuts and interaction handlers
- * Returns handlers for swipe, sidebar toggle, new chat, and session management
+ * Hook to manage keyboard shortcuts and interaction handlers.
+ * Returns handlers for sidebar toggle, new chat, and session management.
+ *
+ * Swipe-to-open/close sidebar was intentionally removed.
+ * The hamburger button and Cmd/Ctrl+/ keyboard shortcut are the sole controls
+ * for the sidebar. Swipe gestures conflicted with horizontal scrolling in
+ * tables and code blocks, causing the sidebar to open inadvertently.
  */
 export function useKeyboardShortcuts({
   isMobile,
@@ -59,37 +63,6 @@ export function useKeyboardShortcuts({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  // Refs for swipe tracking — stable across re-renders and sidebarOpen changes
-  const touchStartXRef = useRef(0);
-
-  // Swipe handlers for mobile
-  const swipeHandlers = useMemo(() => {
-    if (!isMobile) return {};
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartXRef.current = e.touches[0].clientX;
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      const swipeDistance =
-        e.changedTouches[0].clientX - touchStartXRef.current;
-
-      // Swipe right to open sidebar
-      if (swipeDistance > 100 && !sidebarOpen) {
-        onToggleSidebar?.();
-      }
-      // Swipe left to close sidebar
-      else if (swipeDistance < -100 && sidebarOpen) {
-        onToggleSidebar?.();
-      }
-    };
-
-    return {
-      onTouchStart: handleTouchStart,
-      onTouchEnd: handleTouchEnd,
-    };
-  }, [isMobile, sidebarOpen, onToggleSidebar]);
-
   // Handler for sidebar toggle button
   const handleToggleSidebar = useCallback(() => {
     onToggleSidebar?.();
@@ -106,7 +79,6 @@ export function useKeyboardShortcuts({
   }, [onNewChat]);
 
   return {
-    swipeHandlers,
     handleToggleSidebar,
     handleNewChatButton,
     startNewChatSession,
