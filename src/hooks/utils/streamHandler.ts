@@ -140,7 +140,7 @@ export class StreamEventHandler {
       updateMessageById(
         this.setState,
         this.assistantMessageId,
-        { content: this.fullContent, isStreaming: true },
+        { content: this.fullContent, isStreaming: true, thinking: undefined },
         {
           searchProgress: {
             stage: "generating",

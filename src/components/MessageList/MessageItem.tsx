@@ -117,7 +117,7 @@ export function MessageItem({
               id={messageId}
               reasoning={message.reasoning ?? ""}
               thinkingText={message.thinking?.trim()}
-              isThinkingActive={Boolean(message.thinking?.trim())}
+              isThinkingActive={Boolean(message.thinking?.trim()) && Boolean(message.isStreaming)}
               isStreaming={message.isStreaming}
               hasStartedContent={Boolean(
                 message.content && message.content.trim(),

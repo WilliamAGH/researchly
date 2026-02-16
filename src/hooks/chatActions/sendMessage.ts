@@ -133,6 +133,13 @@ function appendAssistantPlaceholder(
   return placeholderId;
 }
 
+/**
+ * Safety-net timeout (ms) to force-clear thinking/streaming state.
+ * Prevents the "Thinking" UI from being permanently frozen if the SSE
+ * stream is interrupted (e.g., mobile Safari backgrounding the tab).
+ */
+const THINKING_SAFETY_TIMEOUT_MS = 120_000;
+
 /** Stream the assistant response and handle errors. */
 async function streamAssistantResponse({
   repository,
@@ -142,6 +149,20 @@ async function streamAssistantResponse({
   imageStorageIds,
 }: SendMessageParams): Promise<void> {
   const placeholderId = appendAssistantPlaceholder(setState, chatId);
+
+  // Safety-net: force-clear thinking/streaming after timeout.
+  // Mobile WebKit can kill SSE connections when tabs are backgrounded,
+  // leaving the thinking indicator permanently frozen.
+  const safetyTimer = setTimeout(() => {
+    logger.warn("Safety timeout: force-clearing thinking state", {
+      chatId,
+      placeholderId,
+    });
+    updateMessageById(setState, placeholderId, {
+      isStreaming: false,
+      thinking: undefined,
+    });
+  }, THINKING_SAFETY_TIMEOUT_MS);
 
   try {
     const generator = repository.generateResponse(
@@ -174,6 +195,8 @@ async function streamAssistantResponse({
     // Re-throw so the caller (useMessageHandler) knows streaming failed and
     // skips post-success logic like maybeShowFollowUpPrompt().
     throw error;
+  } finally {
+    clearTimeout(safetyTimer);
   }
 }
 
