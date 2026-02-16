@@ -68,7 +68,9 @@ export function projectMessage(m: Doc<"messages">): MessageProjection {
     timestamp,
     isStreaming: m.isStreaming,
     streamedContent: m.streamedContent,
-    thinking: m.thinking,
+    // thinking is a transient streaming-only UI field. Once a message is
+    // persisted the indicator must not reappear, so we always strip it.
+    thinking: undefined,
     reasoning: normalizeReasoningValue(m.reasoning),
     webResearchSources:
       webResearchSources.length > 0 ? webResearchSources : undefined,
