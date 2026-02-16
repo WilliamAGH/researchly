@@ -229,23 +229,22 @@ function ChatInterfaceComponent({
   );
   useAutoCreateFirstChat();
   const isMobile = useIsMobile(DESKTOP_BREAKPOINT);
-  const { handleToggleSidebar, handleNewChatButton } =
-    useKeyboardShortcuts({
-      isMobile,
-      sidebarOpen,
-      onToggleSidebar,
-      onNewChat: async () => {
-        // Reset state first
-        userSelectedChatAtRef.current = Date.now();
-        setMessageCount(0);
-        resetFollowUp();
-        setPendingMessage("");
+  const { handleToggleSidebar, handleNewChatButton } = useKeyboardShortcuts({
+    isMobile,
+    sidebarOpen,
+    onToggleSidebar,
+    onNewChat: async () => {
+      // Reset state first
+      userSelectedChatAtRef.current = Date.now();
+      setMessageCount(0);
+      resetFollowUp();
+      setPendingMessage("");
 
-        // Create chat and navigate to it
-        await handleNewChat({ userInitiated: true });
-      },
-      onShare: openShareModal,
-    });
+      // Create chat and navigate to it
+      await handleNewChat({ userInitiated: true });
+    },
+    onShare: openShareModal,
+  });
   const imageUpload = useImageUpload(sessionId);
   const {
     chatSidebarProps,
