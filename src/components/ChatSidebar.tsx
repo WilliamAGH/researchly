@@ -140,7 +140,6 @@ export function ChatSidebar({
 
   const cancelDeleteChat = React.useCallback(() => {
     setDeleteTargetId(null);
-    setDeleteError(null);
   }, []);
 
   // Always render the sidebar container so tests can locate the "New Chat" button
@@ -233,9 +232,30 @@ export function ChatSidebar({
         {deleteError && (
           <div
             role="alert"
-            className="mx-2 mt-2 px-3 py-2 text-sm text-red-700 bg-red-50 dark:text-red-300 dark:bg-red-900/20 rounded-lg"
+            className="mx-2 mt-2 px-3 py-2 text-sm text-red-700 bg-red-50 dark:text-red-300 dark:bg-red-900/20 rounded-lg flex items-center justify-between gap-2"
           >
-            {deleteError}
+            <span>{deleteError}</span>
+            <button
+              type="button"
+              onClick={() => setDeleteError(null)}
+              className="flex-shrink-0 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+              aria-label="Dismiss error"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <title>Dismiss</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
         )}
         {chats.length === 0 ? (
