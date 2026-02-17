@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { logger } from "@/lib/logger";
-import { ConfirmDialog } from "../ConfirmDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "./EmptyState";
 import { ScrollToBottomFab } from "./ScrollToBottomFab";
 import { MessageItem } from "./MessageItem";
