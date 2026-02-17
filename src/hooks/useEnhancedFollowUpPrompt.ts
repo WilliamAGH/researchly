@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { MutableRefObject } from "react";
+import type { RefObject } from "react";
 import { logger } from "@/lib/logger";
 import type { Id } from "../../convex/_generated/dataModel";
 import { toConvexId } from "@/lib/utils/idValidation";
@@ -8,7 +8,7 @@ import { isTopicChange } from "@/lib/utils/topicDetection";
 interface UseEnhancedFollowUpPromptProps {
   currentChatId: string | null;
   handleNewChat: (opts?: { userInitiated?: boolean }) => Promise<string | null>;
-  sendRef: MutableRefObject<((message: string) => Promise<void>) | null>;
+  sendRef: RefObject<((message: string) => Promise<void>) | null>;
   summarizeRecentAction?: (args: { chatId: Id<"chats"> }) => Promise<string>;
   chatState: {
     messages?: Array<{ role?: string; content?: string }>;
@@ -73,18 +73,18 @@ function generateFollowUpSuggestions(content: string): string[] {
   const contentLower = content.toLowerCase();
 
   if (contentLower.includes("code")) {
-    suggestions.push("Can you explain this code in more detail?");
-    suggestions.push("How can I test this implementation?");
+    suggestions.push(
+      "Can you explain this code in more detail?",
+      "How can I test this implementation?",
+    );
   }
 
   if (contentLower.includes("error")) {
-    suggestions.push("What causes this error?");
-    suggestions.push("How can I debug this issue?");
+    suggestions.push("What causes this error?", "How can I debug this issue?");
   }
 
   if (suggestions.length === 0) {
-    suggestions.push("Tell me more about this");
-    suggestions.push("What are the alternatives?");
+    suggestions.push("Tell me more about this", "What are the alternatives?");
   }
 
   return suggestions.slice(0, 3);
@@ -210,6 +210,11 @@ export function useEnhancedFollowUpPrompt({
     const sendMessage = async () => {
       try {
         await sendRef.current?.(pendingMessage);
+        if (!stale) {
+          setPendingMessage(null);
+        }
+      } catch (err) {
+        logger.error("Failed to send follow-up message:", err);
         if (!stale) {
           setPendingMessage(null);
         }

@@ -1,6 +1,9 @@
-// Refactored to use stable callbacks; no inline function props
-
-import { Dialog, Transition } from "@headlessui/react";
+import {
+  Dialog,
+  DialogPanel,
+  Transition,
+  TransitionChild,
+} from "@headlessui/react";
 import { Fragment, useRef, useCallback, useState } from "react";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { Chat } from "@/lib/types/chat";
@@ -29,11 +32,12 @@ export function MobileSidebar({
   onNewChat,
   onRequestDeleteChat,
   isCreatingChat = false,
-}: MobileSidebarProps) {
+}: Readonly<MobileSidebarProps>) {
   const deleteChat = useSessionAwareDeleteChat();
   // Ensure Headless UI Dialog has a stable initial focusable element on open
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteTargetIsCurrent, setDeleteTargetIsCurrent] = useState(false);
 
   const handleNewChat = useCallback(() => {
@@ -59,7 +63,7 @@ export function MobileSidebar({
 
   const handleSelectChatFromBtn = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      const id = e.currentTarget.getAttribute("data-chat-id");
+      const id = e.currentTarget.dataset.chatId;
       if (!id) return;
       handleSelectChat(id);
     },
@@ -68,9 +72,10 @@ export function MobileSidebar({
 
   const handleDeleteChatFromBtn = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      const id = e.currentTarget.getAttribute("data-chat-id");
-      const isCurrent = e.currentTarget.getAttribute("data-current") === "1";
+      const id = e.currentTarget.dataset.chatId;
+      const isCurrent = e.currentTarget.dataset.current === "1";
       if (!id) return;
+      setDeleteError(null);
       setDeleteTargetId(id);
       setDeleteTargetIsCurrent(isCurrent);
     },
@@ -99,8 +104,8 @@ export function MobileSidebar({
         onSelectChat(null);
       }
     } catch (err) {
-      // Keep dialog open on failure so user can retry
       logger.error("Chat deletion failed:", err);
+      setDeleteError("Failed to delete chat. Please try again.");
     }
   }, [
     deleteTargetId,
@@ -123,14 +128,14 @@ export function MobileSidebar({
         title="Delete chat"
         message="Delete this chat? This cannot be undone."
       />
-      <Transition.Root show={isOpen} as={Fragment}>
+      <Transition show={isOpen} as={Fragment}>
         <Dialog
           as="div"
           className="relative z-50 lg:hidden mobile-sidebar-dialog"
           onClose={onClose}
           initialFocus={closeButtonRef}
         >
-          <Transition.Child
+          <TransitionChild
             as={Fragment}
             enter="transition-opacity ease-linear duration-300"
             enterFrom="opacity-0"
@@ -146,10 +151,10 @@ export function MobileSidebar({
               type="button"
               aria-label="Close sidebar overlay"
             />
-          </Transition.Child>
+          </TransitionChild>
 
           <div className="fixed inset-0 flex pr-16 overflow-x-hidden">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="transition ease-in-out duration-300 transform"
               enterFrom="-translate-x-full"
@@ -158,11 +163,11 @@ export function MobileSidebar({
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <Dialog.Panel
+              <DialogPanel
                 tabIndex={-1}
                 className="relative flex w-full max-w-xs flex-1 min-w-0"
               >
-                <Transition.Child
+                <TransitionChild
                   as={Fragment}
                   enter="ease-in-out duration-300"
                   enterFrom="opacity-0"
@@ -196,7 +201,7 @@ export function MobileSidebar({
                       </svg>
                     </button>
                   </div>
-                </Transition.Child>
+                </TransitionChild>
 
                 <div className="flex grow min-w-0 flex-col gap-y-5 overflow-y-auto overflow-x-hidden bg-white dark:bg-gray-900 px-6 pb-2">
                   <div className="flex h-16 shrink-0 items-center">
@@ -270,6 +275,11 @@ export function MobileSidebar({
                     </button>
 
                     <div className="space-y-1">
+                      {deleteError && (
+                        <p className="px-3 py-1 text-sm text-red-600 dark:text-red-400">
+                          {deleteError}
+                        </p>
+                      )}
                       <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         Recent Chats
                       </h3>
@@ -340,11 +350,11 @@ export function MobileSidebar({
                     </div>
                   </nav>
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              </DialogPanel>
+            </TransitionChild>
           </div>
         </Dialog>
-      </Transition.Root>
+      </Transition>
     </>
   );
 }
