@@ -47,7 +47,9 @@ const DANGEROUS_PATTERNS = [
 
 /**
  * Event handler patterns to remove
- * Matches quoted and unquoted attribute values
+ * Matches quoted and unquoted attribute values.
+ * The `i` flag makes [a-z] case-insensitive, covering camelCase handlers
+ * like onClick, onMouseEnter, onLoad, etc.
  */
 const EVENT_HANDLER_PATTERN = /\s*on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
 
@@ -117,7 +119,7 @@ export function validateScrapedContent(html: string): ValidationResult {
     const matches = cleanedHtml.match(pattern);
     if (matches && matches.length > 0) {
       removed.push(`${name} (${matches.length} occurrences)`);
-      cleanedHtml = cleanedHtml.replace(pattern, "");
+      cleanedHtml = cleanedHtml.replaceAll(pattern, "");
       risk = "high"; // Protocol injections are high risk
     }
   }

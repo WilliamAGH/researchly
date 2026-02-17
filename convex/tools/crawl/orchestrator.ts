@@ -244,7 +244,7 @@ const JUNK_PATTERNS = [
 function removeJunkPatterns(text: string): string {
   let cleaned = text;
   for (const pattern of JUNK_PATTERNS) {
-    cleaned = cleaned.replace(pattern, "");
+    cleaned = cleaned.replaceAll(pattern, "");
   }
   return cleaned.trim();
 }
