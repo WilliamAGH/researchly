@@ -93,6 +93,7 @@ export async function handleAgentStream(
     payload.webResearchSources,
   );
   const includeDebugSourceContext = payload.includeDebugSourceContext === true;
+  const priorChatSummary = sanitizeTextInput(payload.priorChatSummary, 2000);
 
   const imageIdsResult = validateImageStorageIds(payload.imageStorageIds);
   if (!imageIdsResult.ok) {
@@ -209,6 +210,7 @@ export async function handleAgentStream(
           webResearchSources,
           includeDebugSourceContext,
           imageStorageIds,
+          ...(priorChatSummary ? { priorChatSummary } : {}),
         });
 
         for await (const event of eventStream) {
