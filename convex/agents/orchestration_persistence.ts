@@ -163,11 +163,21 @@ export async function completeWorkflow(
         tokenId: workflowTokenId,
       });
     } catch (error) {
-      // Token completion is bookkeeping — don't crash the workflow after
-      // message persistence. Race: error handler may have invalidated
-      // the token concurrently (mirrors invalidateToken caller pattern
-      // in workflow_utils.ts).
-      console.error("[completeWorkflow] Token completion failed:", error);
+      // Race: error handler may have already invalidated or completed
+      // this token concurrently. Only suppress that expected race —
+      // infrastructure errors must propagate.
+      const msg = error instanceof Error ? error.message : String(error);
+      if (
+        msg.startsWith("TOKEN_WRONG_STATUS") ||
+        msg.startsWith("TOKEN_NOT_FOUND")
+      ) {
+        console.warn("[completeWorkflow] Token already transitioned:", {
+          tokenId: String(workflowTokenId),
+          error: msg,
+        });
+        return;
+      }
+      throw error;
     }
   }
 }
