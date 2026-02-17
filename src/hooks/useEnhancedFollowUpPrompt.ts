@@ -198,26 +198,31 @@ export function useEnhancedFollowUpPrompt({
 
   // Send pending message when chat is ready
   useEffect(() => {
-    if (pendingMessage && currentChatId && sendRef.current) {
-      if (dispatchedRef.current) return;
-      dispatchedRef.current = true;
-      let stale = false;
-      const sendMessage = async () => {
+    if (!pendingMessage) {
+      dispatchedRef.current = false;
+      return;
+    }
+    if (!currentChatId || !sendRef.current) return;
+    if (dispatchedRef.current) return;
+
+    dispatchedRef.current = true;
+    let stale = false;
+    const sendMessage = async () => {
+      try {
         await sendRef.current?.(pendingMessage);
         if (!stale) {
           setPendingMessage(null);
-          dispatchedRef.current = false;
         }
-      };
-      void sendMessage();
-      return () => {
-        stale = true;
-      };
-    }
-    // Reset dispatch guard when a new pending message is queued
-    if (!pendingMessage) {
-      dispatchedRef.current = false;
-    }
+      } finally {
+        // Always reset guard so new pending messages can dispatch,
+        // whether the send succeeded, failed, or was stale.
+        dispatchedRef.current = false;
+      }
+    };
+    void sendMessage();
+    return () => {
+      stale = true;
+    };
   }, [pendingMessage, currentChatId, sendRef]);
 
   return {

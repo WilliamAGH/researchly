@@ -48,18 +48,21 @@ export function cleanTrailingCitations(
 
   if (!matchedPattern || !matchResult) return content;
 
-  // Find the match position in the full content string
-  const fullMatch = content.match(matchedPattern);
-  if (!fullMatch || fullMatch.index === undefined) return content;
+  // Compute match position from the tail offset — never re-run the regex on the
+  // full string, which could match an earlier legitimate heading and over-strip.
+  const tailStart = Math.max(0, content.length - 500);
+  const matchIndex = tailStart + (matchResult.index ?? 0);
 
-  const trailingBlock = fullMatch[0];
-  const extractedUrls = trailingBlock.match(URL_EXTRACT) ?? [];
+  const trailingBlock = matchResult[0];
+  const extractedUrls = (trailingBlock.match(URL_EXTRACT) ?? []).map((url) =>
+    url.replace(/\.+$/, ""),
+  );
 
   // Separate unique (not inline-cited) URLs from duplicates
   const uniqueUrls = extractedUrls.filter((url) => !inlineCitedUrls.has(url));
 
   // Strip the trailing block
-  const cleaned = content.slice(0, fullMatch.index).trimEnd();
+  const cleaned = content.slice(0, matchIndex).trimEnd();
 
   // Re-add unique URLs as inline citation pill markdown (domain-only display)
   if (uniqueUrls.length === 0) return cleaned;

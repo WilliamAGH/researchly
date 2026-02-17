@@ -287,13 +287,22 @@ export function MessageList({
         message="Delete this message? This cannot be undone."
       />
 
-      <ScrollToBottomFab
-        visible={userHasScrolled && messages.length > 0}
-        onClick={handleScrollToBottom}
-        unseenCount={unseenMessageCount}
-      />
-
       {messageBody}
+
+      {/* Sticky container keeps FAB anchored to the scroll viewport bottom-right,
+          regardless of whether scrolling is handled internally or by a parent. */}
+      {userHasScrolled && messages.length > 0 && (
+        <div className="sticky bottom-4 z-40 flex justify-end pr-4 sm:pr-6 pointer-events-none">
+          <div className="pointer-events-auto">
+            <ScrollToBottomFab
+              visible={true}
+              onClick={handleScrollToBottom}
+              unseenCount={unseenMessageCount}
+            />
+          </div>
+        </div>
+      )}
+
       <div ref={messagesEndRef} />
     </>
   );
@@ -304,7 +313,7 @@ export function MessageList({
   // don't shrink when content is large (allows scroll overflow)
   if (useExternalScroll) {
     return (
-      <div className="grow shrink-0 flex flex-col min-w-0 w-full relative overflow-x-hidden">
+      <div className="grow shrink-0 flex flex-col min-w-0 w-full relative overflow-x-clip">
         {content}
       </div>
     );
