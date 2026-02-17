@@ -123,6 +123,7 @@ export async function persistAssistantMessage(
   } = params;
 
   if (sessionId) {
+    // @ts-ignore - Known Convex TS2589 issue with complex type inference in ctx.runMutation
     return await ctx.runMutation(internal.messages.addMessageHttp, {
       chatId,
       role: "assistant",
@@ -157,9 +158,17 @@ export async function completeWorkflow(
   const { ctx, workflowTokenId } = params;
 
   if (workflowTokenId) {
-    await ctx.runMutation(internal.workflowTokens.completeToken, {
-      tokenId: workflowTokenId,
-    });
+    try {
+      await ctx.runMutation(internal.workflowTokens.completeToken, {
+        tokenId: workflowTokenId,
+      });
+    } catch (error) {
+      // Token completion is bookkeeping — don't crash the workflow after
+      // message persistence. Race: error handler may have invalidated
+      // the token concurrently (mirrors invalidateToken caller pattern
+      // in workflow_utils.ts).
+      console.error("[completeWorkflow] Token completion failed:", error);
+    }
   }
 }
 

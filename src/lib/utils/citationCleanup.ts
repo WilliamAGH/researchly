@@ -35,31 +35,32 @@ export function cleanTrailingCitations(
 ): string {
   // Only inspect the tail to avoid false positives in body content
   const tail = content.slice(-500);
-  let matchedPattern: RegExp | null = null;
   let matchResult: RegExpMatchArray | null = null;
 
   for (const pattern of TRAILING_PATTERNS) {
-    const m = tail.match(pattern);
+    const m: RegExpExecArray | null = pattern.exec(tail);
     if (m && (!matchResult || m[0].length > matchResult[0].length)) {
-      matchedPattern = pattern;
       matchResult = m;
     }
   }
 
-  if (!matchedPattern || !matchResult) return content;
+  if (!matchResult) return content;
 
-  // Find the match position in the full content string
-  const fullMatch = content.match(matchedPattern);
-  if (!fullMatch || fullMatch.index === undefined) return content;
+  // Compute match position from the tail offset — never re-run the regex on the
+  // full string, which could match an earlier legitimate heading and over-strip.
+  const tailStart = Math.max(0, content.length - 500);
+  const matchIndex = tailStart + (matchResult.index ?? 0);
 
-  const trailingBlock = fullMatch[0];
-  const extractedUrls = trailingBlock.match(URL_EXTRACT) ?? [];
+  const trailingBlock = matchResult[0];
+  const extractedUrls = (trailingBlock.match(URL_EXTRACT) ?? []).map((url) =>
+    url.replace(/\.+$/, ""),
+  );
 
   // Separate unique (not inline-cited) URLs from duplicates
   const uniqueUrls = extractedUrls.filter((url) => !inlineCitedUrls.has(url));
 
   // Strip the trailing block
-  const cleaned = content.slice(0, fullMatch.index).trimEnd();
+  const cleaned = content.slice(0, matchIndex).trimEnd();
 
   // Re-add unique URLs as inline citation pill markdown (domain-only display)
   if (uniqueUrls.length === 0) return cleaned;

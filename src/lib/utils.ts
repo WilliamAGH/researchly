@@ -87,25 +87,31 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
   let inThrottle = false;
   let trailingArgs: Parameters<T> | null = null;
 
+  const scheduleReset = () => {
+    setTimeout(() => {
+      if (trailingArgs) {
+        const args = trailingArgs;
+        trailingArgs = null;
+        try {
+          func(...args);
+        } finally {
+          scheduleReset();
+        }
+      } else {
+        inThrottle = false;
+      }
+    }, limit);
+  };
+
   return function executedFunction(...args: Parameters<T>) {
     if (inThrottle) {
-      // Queue the latest call for trailing execution
       trailingArgs = args;
       return;
     }
 
     func(...args);
     inThrottle = true;
-    setTimeout(() => {
-      inThrottle = false;
-      // Fire trailing call if one was queued during the throttle window
-      if (trailingArgs) {
-        func(...trailingArgs);
-        trailingArgs = null;
-        inThrottle = true;
-        setTimeout(() => (inThrottle = false), limit);
-      }
-    }, limit);
+    scheduleReset();
   };
 }
 

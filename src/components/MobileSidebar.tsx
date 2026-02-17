@@ -81,7 +81,6 @@ export function MobileSidebar({
     if (!deleteTargetId) return;
     const chatId = deleteTargetId;
     const isCurrent = deleteTargetIsCurrent;
-    setDeleteTargetId(null);
 
     try {
       const resolvedChatId = toConvexId<"chats">(chatId);
@@ -94,10 +93,13 @@ export function MobileSidebar({
         await deleteChat(resolvedChatId);
       }
 
+      // Only dismiss dialog and navigate after successful deletion
+      setDeleteTargetId(null);
       if (isCurrent) {
         onSelectChat(null);
       }
     } catch (err) {
+      // Keep dialog open on failure so user can retry
       logger.error("Chat deletion failed:", err);
     }
   }, [

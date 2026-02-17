@@ -111,7 +111,6 @@ export function ChatSidebar({
   const confirmDeleteChat = React.useCallback(async () => {
     if (!deleteTargetId) return;
     const chat = chats.find((c) => String(c._id) === deleteTargetId);
-    setDeleteTargetId(null);
 
     try {
       setDeleteError(null);
@@ -120,6 +119,8 @@ export function ChatSidebar({
         deleteChat,
       });
 
+      // Only dismiss dialog and navigate after successful deletion
+      setDeleteTargetId(null);
       const currentIdString =
         currentChatId === null ? null : String(currentChatId);
       if (chat?._id && currentIdString === String(chat._id)) {

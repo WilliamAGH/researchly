@@ -194,35 +194,40 @@ export function useMessageListScroll({
   }, [isGenerating, STUCK_THRESHOLD, scrollContainerRef]);
 
   // Detect when content grows beyond viewport during streaming.
-  // Uses requestAnimationFrame to batch with browser paint and avoid layout thrashing.
+  // Polls at 500ms intervals because streaming updates the existing assistant
+  // message in-place without changing messageCount, so a dependency-only approach
+  // would miss in-place content growth.
   useEffect(() => {
     if (!isGenerating) return;
     if (isVirtualKeyboardOpen) return;
+    if (userHasScrolled) return; // Already showing FAB, stop polling
 
-    let rafId: number | null = null;
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
     const checkOverflow = () => {
-      rafId = requestAnimationFrame(() => {
-        const container = scrollContainerRef.current;
-        if (!container) return;
+      const nearBottom =
+        isNearBottom(container, STUCK_THRESHOLD) ||
+        isScrolledPastPercent(container, SCROLL_PERCENT_THRESHOLD);
 
-        const nearBottom =
-          isNearBottom(container, STUCK_THRESHOLD) ||
-          isScrolledPastPercent(container, SCROLL_PERCENT_THRESHOLD);
-
-        if (!nearBottom && !userHasScrolled) {
-          // Content has grown past the viewport — show the FAB
-          setUserHasScrolled(true);
-          lastSeenMessageCountRef.current = messageCount;
-        }
-      });
+      if (!nearBottom) {
+        setUserHasScrolled(true);
+        lastSeenMessageCountRef.current = messageCount;
+      }
     };
 
-    // Check on every message count change (new chunks arrive)
-    checkOverflow();
+    // Check immediately on mount and message count changes
+    let rafId = requestAnimationFrame(checkOverflow);
+
+    // Poll during streaming to detect in-place content growth.
+    // Each tick overwrites rafId so cleanup cancels the latest frame.
+    const intervalId = setInterval(() => {
+      rafId = requestAnimationFrame(checkOverflow);
+    }, 500);
 
     return () => {
-      if (rafId !== null) cancelAnimationFrame(rafId);
+      cancelAnimationFrame(rafId);
+      clearInterval(intervalId);
     };
   }, [
     messageCount,
@@ -278,11 +283,9 @@ export function useMessageListScroll({
         }
       }
       // User scrolled up — show FAB
-      else {
-        if (!wasScrolledUp) {
-          setUserHasScrolled(true);
-          lastSeenMessageCountRef.current = messageCount;
-        }
+      else if (!wasScrolledUp) {
+        setUserHasScrolled(true);
+        lastSeenMessageCountRef.current = messageCount;
       }
     }, THROTTLE_MS);
 

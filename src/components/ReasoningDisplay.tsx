@@ -52,8 +52,7 @@ export function ReasoningDisplay({
   const normalizedReasoning = reasoning.replace(/^\s*-\s+/, "");
   const hasReasoning = normalizedReasoning.trim().length > 0;
   const shouldRenderPanel =
-    isStreaming &&
-    (isThinkingActive || hasReasoning || Boolean(thinkingText?.trim()));
+    isStreaming && (isThinkingActive || hasReasoning || thinkingText?.trim());
   if (!shouldRenderPanel) return null;
 
   const displayThinkingText = isThinkingActive
