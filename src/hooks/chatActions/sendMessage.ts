@@ -14,6 +14,7 @@ type SendMessageParams = {
   chatId: string;
   content: string;
   imageStorageIds?: string[];
+  chatSessionId?: string;
 };
 
 type ChatSendQueueState = {
@@ -147,6 +148,7 @@ async function streamAssistantResponse({
   chatId,
   content,
   imageStorageIds,
+  chatSessionId,
 }: SendMessageParams): Promise<void> {
   const placeholderId = appendAssistantPlaceholder(setState, chatId);
 
@@ -169,6 +171,7 @@ async function streamAssistantResponse({
       chatId,
       content,
       imageStorageIds,
+      chatSessionId,
     );
     const handler = new StreamEventHandler(setState, chatId, placeholderId);
 

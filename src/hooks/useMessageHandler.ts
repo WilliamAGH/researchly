@@ -145,6 +145,8 @@ export function useMessageHandler(deps: UseMessageHandlerDeps) {
           activeChatId,
           messageInput.trim(),
           imageStorageIds,
+          chatState.chats.find((chat) => String(chat._id) === activeChatId)
+            ?.sessionId,
         );
 
         // Title updates handled server-side during streaming persistence
@@ -155,6 +157,7 @@ export function useMessageHandler(deps: UseMessageHandlerDeps) {
         logger.error("Failed to send message", error);
         // Surface error to user via UI feedback
         setErrorMessage(getErrorMessage(error, "Failed to send message"));
+        throw error;
       } finally {
         setIsGenerating(false);
       }

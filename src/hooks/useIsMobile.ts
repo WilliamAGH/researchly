@@ -9,12 +9,16 @@ import { useState, useEffect } from "react";
  */
 export function useIsMobile(breakpoint = 768): boolean {
   const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia(`(max-width: ${breakpoint - 1}px)`).matches;
+    if (globalThis.window === undefined) return false;
+    return globalThis.window.matchMedia(`(max-width: ${breakpoint - 1}px)`)
+      .matches;
   });
 
   useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    if (globalThis.window === undefined) return;
+    const mql = globalThis.window.matchMedia(
+      `(max-width: ${breakpoint - 1}px)`,
+    );
     // Sync on mount in case SSR initial value diverged
     setIsMobile(mql.matches);
 

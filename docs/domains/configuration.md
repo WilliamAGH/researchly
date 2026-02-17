@@ -11,7 +11,6 @@ This project uses:
 Set these in `.env.local` (or `.env.{mode}`) before running/building.
 
 - `VITE_CONVEX_URL` (required): your Convex deployment URL (typically `https://<deployment>.convex.cloud`)
-- `VITE_AGENT_SIGNING_KEY` (optional): used to verify signed `persisted` SSE events (should match `AGENT_SIGNING_KEY` in Convex)
 
 ## Convex CLI (local)
 
@@ -70,10 +69,6 @@ Optional configuration:
 ### App URLs
 
 - `SITE_URL` (recommended): used to generate share/public links for published chats
-
-### Streaming signature (optional)
-
-- `AGENT_SIGNING_KEY` (optional): signs `persisted` SSE events so the client can verify that persisted message IDs and sources were not tampered with
 
 ### Rate limiting / proxies
 

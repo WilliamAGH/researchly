@@ -13,7 +13,6 @@ export interface WorkflowPathArgs {
   ctx: WorkflowActionCtx;
   args: StreamingWorkflowArgs;
   workflowId: string;
-  nonce: string;
   workflowTokenId: Id<"workflowTokens"> | null;
   chat: { title?: string };
   startTime: number;
@@ -103,7 +102,6 @@ export interface WorkflowMetadataPayload {
     confidence: number;
     answerLength: number;
   };
-  nonce: string;
   [key: string]: unknown;
 }
 
@@ -113,8 +111,6 @@ export interface WorkflowMetadataPayload {
  */
 export interface WorkflowPersistedPayload {
   payload: StreamingPersistPayload;
-  nonce: string;
-  signature: string;
 }
 
 /**
@@ -163,7 +159,6 @@ export interface BuildMetadataEventParams {
   hasLimitations: boolean;
   confidence: number;
   answerLength: number;
-  nonce: string;
 }
 
 /**
@@ -171,6 +166,4 @@ export interface BuildMetadataEventParams {
  */
 export interface BuildPersistedEventParams {
   payload: StreamingPersistPayload;
-  nonce: string;
-  signature: string;
 }

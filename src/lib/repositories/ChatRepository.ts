@@ -32,9 +32,13 @@ export interface SearchWebResponse {
   searchMethod: "serp" | "openrouter" | "duckduckgo" | "fallback";
   hasRealResults: boolean;
   enrichment?: SerpEnrichment;
-  providerErrors?: string[] | { provider: string; error: string }[];
+  providerErrors?: string[] | ProviderError[];
   allProvidersFailed?: boolean;
 }
+
+type StorageType = "local" | "convex" | "hybrid";
+
+type ProviderError = { provider: string; error: string };
 
 /**
  * Base Chat Repository Interface
@@ -66,6 +70,7 @@ export interface IChatRepository {
     chatId: string,
     message: string,
     imageStorageIds?: string[],
+    sessionIdOverride?: string,
   ): AsyncGenerator<MessageStreamChunk>;
   searchWeb(query: string): Promise<SearchWebResponse>;
 
@@ -79,14 +84,14 @@ export interface IChatRepository {
 
   // Utility
   isAvailable(): boolean;
-  getStorageType(): "local" | "convex" | "hybrid";
+  getStorageType(): StorageType;
 }
 
 /**
  * Base Repository with shared functionality
  */
 export abstract class BaseRepository implements IChatRepository {
-  protected abstract storageType: "local" | "convex" | "hybrid";
+  protected abstract storageType: StorageType;
 
   /**
    * Update chat title. Subclasses must implement.
@@ -100,7 +105,7 @@ export abstract class BaseRepository implements IChatRepository {
     return true;
   }
 
-  getStorageType(): "local" | "convex" | "hybrid" {
+  getStorageType(): StorageType {
     return this.storageType;
   }
 
@@ -129,6 +134,7 @@ export abstract class BaseRepository implements IChatRepository {
     chatId: string,
     message: string,
     imageStorageIds?: string[],
+    sessionIdOverride?: string,
   ): AsyncGenerator<MessageStreamChunk>;
   abstract searchWeb(query: string): Promise<SearchWebResponse>;
 

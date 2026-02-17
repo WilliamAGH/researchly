@@ -169,7 +169,6 @@ export function buildMetadataEvent(
       confidence: params.confidence,
       answerLength: params.answerLength,
     },
-    nonce: params.nonce,
   };
 }
 
@@ -181,8 +180,6 @@ export function buildPersistedEvent(
 ): WorkflowPersistedPayload {
   return {
     payload: params.payload,
-    nonce: params.nonce,
-    signature: params.signature,
   };
 }
 
@@ -231,6 +228,13 @@ export function buildConversationalCompleteEvent(params: {
   searchResultCount: number;
   scrapedPageCount: number;
 }): WorkflowCompletePayload {
+  let researchQuality: "comprehensive" | "adequate" | "limited" = "limited";
+  if (params.scrapedPageCount >= 2) {
+    researchQuality = "comprehensive";
+  } else if (params.scrapedPageCount >= 1) {
+    researchQuality = "adequate";
+  }
+
   const researchSummary =
     params.searchResultCount > 0
       ? `Found ${params.searchResultCount} search results and scraped ${params.scrapedPageCount} pages.`
@@ -248,12 +252,7 @@ export function buildConversationalCompleteEvent(params: {
     research: {
       researchSummary,
       keyFindings: [],
-      researchQuality:
-        params.scrapedPageCount >= 2
-          ? "comprehensive"
-          : params.scrapedPageCount >= 1
-            ? "adequate"
-            : "limited",
+      researchQuality,
     },
     webResearchSources: params.webResearchSources ?? [],
     confidence: 1,

@@ -50,6 +50,8 @@ export const MessageItem = React.memo(function MessageItem({
   const hasReasoningContent =
     message.role === "assistant" &&
     Boolean(message.reasoning?.trim() || message.thinking?.trim());
+  const showThinkingDisplay =
+    hasReasoningContent && Boolean(message.isStreaming);
 
   return (
     <div
@@ -111,7 +113,7 @@ export const MessageItem = React.memo(function MessageItem({
           )}
 
         {/* 2) Reasoning / thinking - ReasoningDisplay owns its own collapse toggle */}
-        {hasReasoningContent && (
+        {showThinkingDisplay && (
           <div className="mb-4">
             <ReasoningDisplay
               id={messageId}
@@ -122,9 +124,7 @@ export const MessageItem = React.memo(function MessageItem({
                 Boolean(message.isStreaming)
               }
               isStreaming={message.isStreaming}
-              hasStartedContent={Boolean(
-                message.content && message.content.trim(),
-              )}
+              hasStartedContent={Boolean(message.content?.trim())}
               collapsed={collapsedById[`reasoning-${messageId}`] ?? true}
               onToggle={onToggleCollapsed}
             />

@@ -16,18 +16,18 @@ export function formatConversationMarkdown(params: {
   messages: Array<{
     role: "user" | "assistant" | "system";
     content?: string;
-    webResearchSources?: WebResearchSourceClient[] | undefined;
+    webResearchSources?: WebResearchSourceClient[];
   }>;
 }): string {
   const lines: string[] = [];
   if (params.title) lines.push(`# ${params.title}`, "");
   for (const m of params.messages) {
-    const role =
-      m.role === "user"
-        ? "User"
-        : m.role === "assistant"
-          ? "Assistant"
-          : "System";
+    let role = "System";
+    if (m.role === "user") {
+      role = "User";
+    } else if (m.role === "assistant") {
+      role = "Assistant";
+    }
     lines.push(`${role}: ${m.content ?? ""}`);
     if (m.role === "assistant") {
       const src = toWebSourceCards(m.webResearchSources).map(
@@ -88,21 +88,24 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
   let trailingArgs: Parameters<T> | null = null;
 
   return function executedFunction(...args: Parameters<T>) {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => {
-        inThrottle = false;
-        if (trailingArgs) {
-          func(...trailingArgs);
-          trailingArgs = null;
-          inThrottle = true;
-          setTimeout(() => (inThrottle = false), limit);
-        }
-      }, limit);
-    } else {
+    if (inThrottle) {
+      // Queue the latest call for trailing execution
       trailingArgs = args;
+      return;
     }
+
+    func(...args);
+    inThrottle = true;
+    setTimeout(() => {
+      inThrottle = false;
+      // Fire trailing call if one was queued during the throttle window
+      if (trailingArgs) {
+        func(...trailingArgs);
+        trailingArgs = null;
+        inThrottle = true;
+        setTimeout(() => (inThrottle = false), limit);
+      }
+    }, limit);
   };
 }
 

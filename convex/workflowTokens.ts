@@ -4,7 +4,6 @@ import { v } from "convex/values";
 export const createToken = internalMutation({
   args: {
     workflowId: v.string(),
-    nonce: v.string(),
     chatId: v.id("chats"),
     sessionId: v.optional(v.string()),
     issuedAt: v.number(),
@@ -14,8 +13,6 @@ export const createToken = internalMutation({
   handler: async (ctx, args) => {
     return await ctx.db.insert("workflowTokens", {
       workflowId: args.workflowId,
-      nonce: args.nonce,
-      signature: "",
       chatId: args.chatId,
       sessionId: args.sessionId,
       status: "active",
@@ -28,29 +25,27 @@ export const createToken = internalMutation({
 export const completeToken = internalMutation({
   args: {
     tokenId: v.id("workflowTokens"),
-    signature: v.string(),
   },
-  returns: v.null(),
+  returns: v.object({ updated: v.boolean() }),
   handler: async (ctx, args) => {
     const token = await ctx.db.get(args.tokenId);
     if (!token) {
       console.error("[workflowTokens] Token not found for completion", {
         tokenId: args.tokenId,
       });
-      return null;
+      return { updated: false };
     }
     if (token.status !== "active") {
       console.warn("[workflowTokens] Token not in active state", {
         tokenId: args.tokenId,
         currentStatus: token.status,
       });
-      return null;
+      return { updated: false };
     }
     await ctx.db.patch(args.tokenId, {
-      signature: args.signature,
       status: "completed",
     });
-    return null;
+    return { updated: true };
   },
 });
 
@@ -58,19 +53,19 @@ export const invalidateToken = internalMutation({
   args: {
     tokenId: v.id("workflowTokens"),
   },
-  returns: v.null(),
+  returns: v.object({ updated: v.boolean() }),
   handler: async (ctx, args) => {
     const token = await ctx.db.get(args.tokenId);
     if (!token) {
       console.error("[workflowTokens] Token not found for invalidation", {
         tokenId: args.tokenId,
       });
-      return null;
+      return { updated: false };
     }
     if (token.status !== "active") {
-      return null;
+      return { updated: false };
     }
     await ctx.db.patch(args.tokenId, { status: "invalidated" });
-    return null;
+    return { updated: true };
   },
 });

@@ -14,14 +14,15 @@ export function useMessageInputFocus({
   // Skip on touch devices to avoid popping the virtual keyboard.
   useEffect(() => {
     if (disabled) return;
-    const isCoarse =
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(pointer: coarse)").matches;
-    if (isCoarse) return;
-
     const el = textareaRef.current;
     if (!el) return;
+
+    const isCoarse =
+      globalThis.window !== undefined &&
+      typeof globalThis.window.matchMedia === "function" &&
+      globalThis.window.matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) return;
+
     try {
       el.focus({ preventScroll: true });
     } catch (error) {
@@ -46,9 +47,9 @@ export function useMessageInputFocus({
 
     // Skip on touch-centric devices to avoid popping the keyboard
     const isCoarse =
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(pointer: coarse)").matches;
+      globalThis.window !== undefined &&
+      typeof globalThis.window.matchMedia === "function" &&
+      globalThis.window.matchMedia("(pointer: coarse)").matches;
 
     // Avoid stealing focus if something else is active or a modal is open
     const hasModalOpen = !!document.querySelector(

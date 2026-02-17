@@ -49,18 +49,18 @@ export function useKeyboardShortcuts({
       }
 
       // Escape - Close sidebar on mobile
-      if (e.key === "Escape" && isMobile && sidebarOpen) {
+      if (e.code === "Escape" && isMobile && sidebarOpen) {
         e.preventDefault();
         onToggleSidebar?.();
-        return;
       }
     },
     [isMobile, sidebarOpen, onToggleSidebar, onNewChat, onShare],
   );
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    globalThis.window.addEventListener("keydown", handleKeyDown);
+    return () =>
+      globalThis.window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
   // Handler for sidebar toggle button

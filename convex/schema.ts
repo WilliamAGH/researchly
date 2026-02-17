@@ -109,14 +109,18 @@ const applicationTables = {
 
   /**
    * Agent workflow tokens
-   * - Tracks per-workflow nonce/signature for replay prevention
+   * - Tracks per-workflow status for access gating
    */
   workflowTokens: defineTable({
     workflowId: v.string(),
-    nonce: v.string(),
-    signature: v.string(),
     chatId: v.id("chats"),
     sessionId: v.optional(v.string()),
+    /**
+     * Legacy compatibility fields retained so existing dev/prod rows
+     * created before signing removal still validate against schema.
+     */
+    nonce: v.optional(v.string()),
+    signature: v.optional(v.string()),
     status: v.union(
       v.literal("active"),
       v.literal("completed"),
