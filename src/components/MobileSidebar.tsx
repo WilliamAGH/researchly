@@ -101,6 +101,7 @@ export function MobileSidebar({
 
       // Only dismiss dialog and navigate after successful deletion
       setDeleteTargetId(null);
+      setDeleteError(null);
       if (isCurrent) {
         onSelectChat(null);
       }
