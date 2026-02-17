@@ -22,6 +22,13 @@ const TRAILING_PATTERNS = [
 const URL_EXTRACT = /https?:\/\/[^\s)\]>,]+/g;
 
 /**
+ * Tail scan window in characters. Must be large enough to cover citation
+ * sections with many URLs (~80-120 chars each) while staying bounded to
+ * avoid false positives deep in the body.  2000 chars ≈ 20-30 URLs.
+ */
+const TRAILING_SCAN_CHARS = 2000;
+
+/**
  * Remove trailing citation sections that duplicate already-inline-cited URLs.
  * Unique (not-yet-cited) URLs are restyled as inline citation pill markdown.
  *
@@ -34,7 +41,7 @@ export function cleanTrailingCitations(
   inlineCitedUrls: Set<string>,
 ): string {
   // Only inspect the tail to avoid false positives in body content
-  const tail = content.slice(-500);
+  const tail = content.slice(-TRAILING_SCAN_CHARS);
   let matchResult: RegExpMatchArray | null = null;
 
   for (const pattern of TRAILING_PATTERNS) {
@@ -48,7 +55,7 @@ export function cleanTrailingCitations(
 
   // Compute match position from the tail offset — never re-run the regex on the
   // full string, which could match an earlier legitimate heading and over-strip.
-  const tailStart = Math.max(0, content.length - 500);
+  const tailStart = Math.max(0, content.length - TRAILING_SCAN_CHARS);
   const matchIndex = tailStart + (matchResult.index ?? 0);
 
   const trailingBlock = matchResult[0];
@@ -80,6 +87,7 @@ function safeExtractDomain(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {
+    // Display-only fallback: malformed URLs render as-is in citation pills.
     return url;
   }
 }
