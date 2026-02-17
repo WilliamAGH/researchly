@@ -18,7 +18,7 @@ describe("creator detection", () => {
     const creatorQueries = [
       "Who is the creator of Researchly?",
       "Who made this app?",
-      "Who built researchly.fyi?",
+      "Who built researchly.bot?",
       "Tell me about the author of this website",
       "Who is behind Researchly?",
       "Who founded this service?",
@@ -27,7 +27,7 @@ describe("creator detection", () => {
       "Who is William Callahan?",
       "Tell me about the founder of this site",
       "Who created this search tool?",
-      "Who is the author behind researchly.fyi?",
+      "Who is the author behind researchly.bot?",
       "Who's the creator of this search service?",
       "Tell me about william callahan",
       "Company behind Researchly",
@@ -46,7 +46,7 @@ describe("creator detection", () => {
       "What is Researchly?",
       "Tell me about Researchly",
       "How does Researchly work?",
-      "Explain researchly.fyi",
+      "Explain researchly.bot",
       "What does this app do?",
       "Describe this website",
       "What is researchly?",
@@ -125,7 +125,7 @@ describe("creator detection", () => {
       expect(result.enhancedContext).toContain("aVenture");
       expect(result.injectedResults.length).toBeGreaterThan(0);
       expect(
-        result.injectedResults.some((r) => r.url.includes("researchly.fyi")),
+        result.injectedResults.some((r) => r.url.includes("researchly.bot")),
       ).toBe(true);
     }
   });

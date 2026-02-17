@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /s/
 
-Sitemap: https://researchly.fyi/sitemap.xml
+Sitemap: https://researchly.bot/sitemap.xml
