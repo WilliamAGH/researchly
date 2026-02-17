@@ -6,7 +6,8 @@ import { normalizeWhitespace } from "../lib/text";
 
 /**
  * Build a compact context summary from messages
- * Used by planner to reduce token usage
+ * Used by summarizeRecent / summarizeRecentAction to build cross-chat context
+ * and by the planner to reduce token usage
  */
 export function buildContextSummary(params: {
   messages: Array<{
@@ -48,7 +49,15 @@ export function buildContextSummary(params: {
   for (const m of recent) {
     const txt = sanitize(m.content);
     if (!txt) continue;
-    const line = `${m.role === "assistant" ? "Assistant" : m.role === "user" ? "User" : "System"}: ${txt.slice(0, 220)}`;
+    let roleLabel: string;
+    if (m.role === "assistant") {
+      roleLabel = "Assistant";
+    } else if (m.role === "user") {
+      roleLabel = "User";
+    } else {
+      roleLabel = "System";
+    }
+    const line = `${roleLabel}: ${txt.slice(0, 220)}`;
     if (!included.has(line)) {
       lines.push(line);
     }
@@ -83,7 +92,7 @@ export function generateChatTitle(params: {
   const { intent, maxLength = DEFAULT_TITLE_MAX_LENGTH } = params;
   if (!intent) return "New Chat";
 
-  const sanitized = normalizeWhitespace(intent.replace(/<+/g, ""));
+  const sanitized = normalizeWhitespace(intent.replaceAll(/<+/g, ""));
   if (!sanitized) return "New Chat";
 
   // Remove common filler words/phrases to make titles more concise
@@ -101,7 +110,10 @@ export function generateChatTitle(params: {
 
   let compressed = sanitized.toLowerCase();
   for (const filler of fillerWords) {
-    compressed = compressed.replace(new RegExp(`^${filler}\\s+`, "i"), "");
+    compressed = compressed.replace(
+      new RegExp(String.raw`^${filler}\s+`, "i"),
+      "",
+    );
   }
   compressed = compressed.trim();
 

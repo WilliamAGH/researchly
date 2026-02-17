@@ -29,6 +29,12 @@ export const createChat = mutation({
   args: {
     title: v.string(),
     sessionId: v.optional(v.string()),
+    /**
+     * Optional rolling summary to seed the new chat.
+     * Used by "New Chat w/ Summary" to persist prior-chat context server-side
+     * so it survives retries and page reloads — independent of the HTTP POST path.
+     */
+    rollingSummary: v.optional(v.string()),
   },
   returns: v.id("chats"),
   handler: async (ctx, args) => {
@@ -61,6 +67,7 @@ export const createChat = mutation({
       privacy: "private",
       createdAt: now,
       updatedAt: now,
+      ...(args.rollingSummary ? { rollingSummary: args.rollingSummary } : {}),
     });
   },
 });
