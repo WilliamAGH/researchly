@@ -15,12 +15,11 @@ export class StreamEventHandler {
   private persistedDetails: StreamingPersistPayload | null = null;
   private persistedConfirmed = false;
   private workflowId: string | null = null;
-  private workflowNonce: string | null = null;
 
   constructor(
-    private setState: Dispatch<SetStateAction<ChatState>>,
-    private chatId: string,
-    private assistantMessageId: string,
+    private readonly setState: Dispatch<SetStateAction<ChatState>>,
+    private readonly chatId: string,
+    private readonly assistantMessageId: string,
   ) {}
 
   public getPersistedConfirmed(): boolean {
@@ -39,41 +38,31 @@ export class StreamEventHandler {
     return this.workflowId;
   }
 
-  public getWorkflowNonce(): string | null {
-    return this.workflowNonce;
-  }
-
   public handle(chunk: MessageStreamChunk): void {
-    if (chunk.type === "workflow_start") {
-      this.handleWorkflowStart(chunk);
-      return;
-    }
-    if (chunk.type === "progress") {
-      this.handleProgress(chunk);
-      return;
-    }
-    if (chunk.type === "reasoning") {
-      this.handleReasoning(chunk);
-      return;
-    }
-    if (chunk.type === "content") {
-      this.handleContent(chunk);
-      return;
-    }
-    if (chunk.type === "metadata") {
-      this.handleMetadata(chunk);
-      return;
-    }
-    if (chunk.type === "error") {
-      throw new Error(chunk.error);
-    }
-    if (chunk.type === "complete") {
-      this.handleComplete();
-      return;
-    }
-    if (chunk.type === "persisted") {
-      this.handlePersisted(chunk);
-      return;
+    switch (chunk.type) {
+      case "workflow_start":
+        this.handleWorkflowStart(chunk);
+        return;
+      case "progress":
+        this.handleProgress(chunk);
+        return;
+      case "reasoning":
+        this.handleReasoning(chunk);
+        return;
+      case "content":
+        this.handleContent(chunk);
+        return;
+      case "metadata":
+        this.handleMetadata(chunk);
+        return;
+      case "error":
+        throw new Error(chunk.error);
+      case "complete":
+        this.handleComplete();
+        return;
+      case "persisted":
+        this.handlePersisted(chunk);
+        break;
     }
   }
 
@@ -104,12 +93,9 @@ export class StreamEventHandler {
     chunk: Extract<MessageStreamChunk, { type: "workflow_start" }>,
   ) {
     this.workflowId = chunk.workflowId;
-    this.workflowNonce = chunk.nonce;
 
-    // Update the last assistant message with workflow tracking info
     updateMessageById(this.setState, this.assistantMessageId, {
       workflowId: chunk.workflowId,
-      workflowNonce: chunk.nonce,
     });
 
     logger.debug("Workflow started", {
@@ -164,9 +150,6 @@ export class StreamEventHandler {
     if (metadata.workflowId !== undefined) {
       messageUpdates.workflowId = metadata.workflowId;
     }
-    if (chunk.nonce !== undefined) {
-      messageUpdates.workflowNonce = chunk.nonce;
-    }
     if (webResearchSources !== undefined) {
       messageUpdates.webResearchSources = webResearchSources;
     }
@@ -205,12 +188,6 @@ export class StreamEventHandler {
       persisted: true,
     };
 
-    if (chunk.nonce !== undefined) {
-      messageUpdates.workflowNonce = chunk.nonce;
-    }
-    if (chunk.signature !== undefined) {
-      messageUpdates.workflowSignature = chunk.signature;
-    }
     // Do not toggle isGenerating here: rapid-send flows can queue additional
     // messages, and we need a single source of truth for generation/busy state.
     updateMessageById(this.setState, this.assistantMessageId, messageUpdates);

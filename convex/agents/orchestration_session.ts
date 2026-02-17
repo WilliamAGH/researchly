@@ -76,7 +76,7 @@ export async function withErrorContext<T>(
  * Initialize workflow session: create token, verify chat, fetch history, add user message.
  *
  * This function handles the common setup required by both streaming workflows:
- * 1. Create workflow token for SSE signature verification
+ * 1. Create workflow token for access gating
  * 2. Verify chat exists and user has access
  * 3. Fetch recent message history for context
  * 4. Add the user's message to the chat
@@ -85,14 +85,12 @@ export async function withErrorContext<T>(
  * @param ctx - Convex action context
  * @param args - Workflow arguments (chatId, userQuery, etc.)
  * @param workflowId - Unique ID for this workflow execution
- * @param nonce - Cryptographic nonce for payload signing
  * @returns Session result with token ID, chat, and conversation context
  */
 export async function initializeWorkflowSession(
   ctx: WorkflowActionCtx,
   args: StreamingWorkflowArgs,
   workflowId: string,
-  nonce: string,
 ): Promise<WorkflowSessionResult> {
   // Write-access gate: check BEFORE minting a workflow token.
   // Infrastructure failures (network, Convex errors) are caught separately
@@ -125,14 +123,12 @@ export async function initializeWorkflowSession(
   const issuedAt = Date.now();
   const workflowTokenPayload: {
     workflowId: string;
-    nonce: string;
     chatId: Id<"chats">;
     sessionId?: string;
     issuedAt: number;
     expiresAt: number;
   } = {
     workflowId,
-    nonce,
     chatId: args.chatId,
     issuedAt,
     expiresAt: issuedAt + CACHE_TTL.WORKFLOW_TOKEN_MS,

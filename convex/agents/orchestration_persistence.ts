@@ -76,8 +76,6 @@ export interface PersistAssistantMessageParams {
 export interface CompleteWorkflowParams {
   ctx: WorkflowActionCtx;
   workflowTokenId: Id<"workflowTokens"> | null;
-  payload: StreamingPersistPayload;
-  nonce: string;
 }
 
 // ============================================
@@ -149,48 +147,31 @@ export async function persistAssistantMessage(
 }
 
 /**
- * Complete a workflow by signing the payload and marking the token complete.
- * Returns the signature for the persisted event.
+ * Mark a workflow token as completed.
  *
- * @see {@link ../workflowTokensActions.ts} - signPersistedPayload action
  * @see {@link ../workflowTokens.ts} - completeToken mutation
  */
-export async function completeWorkflowWithSignature(
+export async function completeWorkflow(
   params: CompleteWorkflowParams,
-): Promise<string> {
-  const { ctx, workflowTokenId, payload, nonce } = params;
-
-  const signature = await ctx.runAction(
-    internal.workflowTokensActions.signPersistedPayload,
-    {
-      payload,
-      nonce,
-    },
-  );
+): Promise<void> {
+  const { ctx, workflowTokenId } = params;
 
   if (workflowTokenId) {
     await ctx.runMutation(internal.workflowTokens.completeToken, {
       tokenId: workflowTokenId,
-      signature,
     });
   }
-
-  return signature;
 }
 
 /**
  * Combined helper to persist message and complete workflow.
- * Encapsulates the common pattern: persist -> payload -> sign -> return details.
+ * Encapsulates the common pattern: persist -> build payload -> mark complete.
  */
 export async function persistAndCompleteWorkflow(
   params: PersistAssistantMessageParams & {
     workflowTokenId: Id<"workflowTokens"> | null;
-    nonce: string;
   },
-): Promise<{
-  payload: StreamingPersistPayload;
-  signature: string;
-}> {
+): Promise<StreamingPersistPayload> {
   const assistantMessageId = await persistAssistantMessage(params);
 
   const payload: StreamingPersistPayload = {
@@ -200,12 +181,10 @@ export async function persistAndCompleteWorkflow(
     webResearchSources: params.webResearchSources || [],
   };
 
-  const signature = await completeWorkflowWithSignature({
+  await completeWorkflow({
     ctx: params.ctx,
     workflowTokenId: params.workflowTokenId,
-    payload,
-    nonce: params.nonce,
   });
 
-  return { payload, signature };
+  return payload;
 }

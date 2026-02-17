@@ -14,7 +14,7 @@ interface ReasoningDisplayProps {
 }
 
 function getCollapsedPreviewText(reasoning: string): string {
-  const singleLine = reasoning.replace(/\s+/g, " ").trim();
+  const singleLine = reasoning.replaceAll(/\s+/g, " ").trim();
   if (!singleLine) return "";
   if (singleLine.length <= COLLAPSED_PREVIEW_MAX_CHARS) {
     return singleLine;
@@ -31,7 +31,7 @@ export function ReasoningDisplay({
   hasStartedContent = false,
   collapsed,
   onToggle,
-}: ReasoningDisplayProps) {
+}: Readonly<ReasoningDisplayProps>) {
   const handleToggle = useCallback(() => {
     onToggle(`reasoning-${id}`);
   }, [id, onToggle]);
@@ -41,23 +41,21 @@ export function ReasoningDisplay({
   // composited layers when the class is removed without a repaint.
   const spinnerRef = useRef<SVGSVGElement>(null);
   useEffect(() => {
-    if (!isThinkingActive && spinnerRef.current) {
-      const el = spinnerRef.current;
-      el.style.animation = "none";
-      // Reading offsetHeight forces a synchronous reflow/repaint
-      void el.offsetHeight;
-      el.style.animation = "";
-    }
+    if (isThinkingActive || !spinnerRef.current) return;
+    const el = spinnerRef.current;
+    el.style.animation = "none";
+    // Reading offsetHeight forces a synchronous reflow/repaint
+    void el.offsetHeight;
+    el.style.animation = "";
   }, [isThinkingActive]);
 
-  const displayThinkingText = isThinkingActive
-    ? thinkingText?.trim() || "Thinking..."
-    : "Thinking";
+  const shouldRenderThinking = isThinkingActive && isStreaming;
+  if (!shouldRenderThinking) return null;
+
+  const displayThinkingText = thinkingText?.trim() || "Thinking...";
   const normalizedReasoning = reasoning.replace(/^\s*-\s+/, "");
   const hasReasoning = normalizedReasoning.trim().length > 0;
-  const collapsedPreview = isThinkingActive
-    ? getCollapsedPreviewText(normalizedReasoning)
-    : "";
+  const collapsedPreview = getCollapsedPreviewText(normalizedReasoning);
   const showCollapsedPreview = collapsed && collapsedPreview.length > 0;
 
   return (
@@ -66,7 +64,7 @@ export function ReasoningDisplay({
         type="button"
         onClick={handleToggle}
         className="w-full text-left px-2 py-3 rounded bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 active:bg-blue-200/50 dark:active:bg-blue-900/40 transition-colors touch-manipulation"
-        aria-expanded={!collapsed ? "true" : "false"}
+        aria-expanded={collapsed ? "false" : "true"}
         aria-label="Toggle AI thinking display"
       >
         <div className="flex items-center justify-between gap-2">
@@ -74,8 +72,8 @@ export function ReasoningDisplay({
             <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 flex-shrink-0">
               <svg
                 ref={spinnerRef}
-                className={`w-4 h-4 flex-shrink-0 ${isThinkingActive ? "animate-spin" : ""}`}
-                style={{ willChange: isThinkingActive ? "transform" : "auto" }}
+                className="w-4 h-4 flex-shrink-0 animate-spin"
+                style={{ willChange: "transform" }}
                 fill="none"
                 viewBox="0 0 24 24"
               >
@@ -119,7 +117,7 @@ export function ReasoningDisplay({
           </svg>
         </div>
       </button>
-      {!collapsed && hasReasoning && (
+      {collapsed || !hasReasoning ? null : (
         <div className="mt-1 p-2 rounded bg-blue-50/30 dark:bg-blue-900/10 border border-blue-200/30 dark:border-blue-800/30 max-w-full overflow-hidden">
           <div className="text-[10px] sm:text-xs text-blue-700/90 dark:text-blue-300/90 font-mono leading-relaxed whitespace-pre-wrap break-words max-h-48 overflow-auto opacity-90">
             {normalizedReasoning}

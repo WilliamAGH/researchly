@@ -50,7 +50,6 @@ export async function* streamConversationalWorkflow(
 
   const workflowId = generateMessageId();
   const startTime = Date.now();
-  const nonce = generateMessageId();
 
   const writeEvent = (type: string, data: Record<string, unknown>) =>
     createWorkflowEvent(type, data);
@@ -65,16 +64,11 @@ export async function* streamConversationalWorkflow(
   const harvested = createEmptyHarvestedData();
 
   try {
-    const session = await initializeWorkflowSession(
-      ctx,
-      args,
-      workflowId,
-      nonce,
-    );
+    const session = await initializeWorkflowSession(ctx, args, workflowId);
     workflowTokenId = session.workflowTokenId;
     const { chat, conversationContext, imageUrls, imageAnalysis } = session;
 
-    yield writeEvent("workflow_start", { workflowId, nonce });
+    yield writeEvent("workflow_start", { workflowId });
 
     const agentInput = buildAgentInput({
       userQuery: args.userQuery,
@@ -223,11 +217,10 @@ export async function* streamConversationalWorkflow(
       }
     }
 
-    const rawFinalOutput = maxTurnsRecoveryUsed
-      ? accumulatedResponse
-      : typeof agentResult.finalOutput === "string"
-        ? agentResult.finalOutput
-        : accumulatedResponse;
+    let rawFinalOutput = accumulatedResponse;
+    if (!maxTurnsRecoveryUsed && typeof agentResult.finalOutput === "string") {
+      rawFinalOutput = agentResult.finalOutput;
+    }
     const finalOutput = stripTrailingSources(rawFinalOutput);
     const totalDuration = Date.now() - startTime;
 
@@ -264,7 +257,7 @@ export async function* streamConversationalWorkflow(
     ).length;
     logSourcesSummary(webResearchSources.length, urlCount);
 
-    const { payload: persistedPayload, signature } = await withErrorContext(
+    const persistedPayload = await withErrorContext(
       "Failed to persist and complete workflow",
       () =>
         persistAndCompleteWorkflow({
@@ -275,7 +268,6 @@ export async function* streamConversationalWorkflow(
           sessionId: args.sessionId,
           webResearchSources,
           workflowTokenId,
-          nonce,
         }),
     );
 
@@ -288,7 +280,6 @@ export async function* streamConversationalWorkflow(
         hasLimitations: false,
         confidence: 1,
         answerLength: finalOutput.length,
-        nonce,
       }),
     );
 
@@ -307,8 +298,6 @@ export async function* streamConversationalWorkflow(
 
     yield writeEvent("persisted", {
       payload: persistedPayload,
-      nonce,
-      signature,
     });
   } catch (error) {
     await handleError(

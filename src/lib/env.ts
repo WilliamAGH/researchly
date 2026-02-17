@@ -6,7 +6,6 @@ import { logger } from "@/lib/logger";
 
 interface EnvConfig {
   VITE_CONVEX_URL: string;
-  VITE_AGENT_SIGNING_KEY?: string;
   DEV: boolean;
   PROD: boolean;
   MODE: "development" | "production" | "test";
@@ -51,7 +50,6 @@ function validateEnv(): EnvConfig {
 
   return {
     VITE_CONVEX_URL: env.VITE_CONVEX_URL,
-    VITE_AGENT_SIGNING_KEY: env.VITE_AGENT_SIGNING_KEY,
     DEV: env.DEV === true,
     PROD: env.PROD === true,
     MODE: mode,
@@ -69,9 +67,7 @@ let _envCache: EnvConfig | null = null;
  * @throws Error if required environment variables are missing
  */
 export function getEnv(): EnvConfig {
-  if (!_envCache) {
-    _envCache = validateEnv();
-  }
+  _envCache ??= validateEnv();
   return _envCache;
 }
 
@@ -85,9 +81,9 @@ export const env = {
     } catch (error) {
       // Fallback for local development and local preview/testing environments
       const isLocalHost =
-        typeof window !== "undefined" &&
-        (window.location.hostname === "127.0.0.1" ||
-          window.location.hostname === "localhost");
+        globalThis.window !== undefined &&
+        (globalThis.window.location.hostname === "127.0.0.1" ||
+          globalThis.window.location.hostname === "localhost");
       if (import.meta.env.DEV || isLocalHost) {
         logger.warn("Using fallback Convex URL for local environment", {
           error,
@@ -101,10 +97,6 @@ export const env = {
 
   get isDev(): boolean {
     return import.meta.env.DEV === true;
-  },
-
-  get agentSigningKey(): string | undefined {
-    return getEnv().VITE_AGENT_SIGNING_KEY;
   },
 
   get isProd(): boolean {
@@ -168,9 +160,9 @@ export function initializeEnv(): void {
     const isLocalHost = (() => {
       try {
         return (
-          typeof window !== "undefined" &&
-          (window.location.hostname === "127.0.0.1" ||
-            window.location.hostname === "localhost")
+          globalThis.window !== undefined &&
+          (globalThis.window.location.hostname === "127.0.0.1" ||
+            globalThis.window.location.hostname === "localhost")
         );
       } catch (error) {
         logger.error("Failed to detect localhost for env initialization", {

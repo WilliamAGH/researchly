@@ -9,6 +9,10 @@ import type { Doc } from "../../../convex/_generated/dataModel";
 // Import from the dedicated types module (not orchestration_helpers) so we don't pull
 // any Node-only helpers into browser bundles.
 import type { StreamingPersistPayload } from "../../../convex/schemas/agents";
+import type {
+  WebResearchSourceClient,
+  MessageMetadata,
+} from "@/lib/schemas/messageStream";
 export type {
   WebResearchSourceClient,
   MessageMetadata,
@@ -42,10 +46,6 @@ export type ActiveWorkflowStage = Exclude<WorkflowStage, "idle">;
  * These fields are NOT persisted to Convex - they exist only in UI state.
  */
 export interface UIMessageFields {
-  /** Workflow nonce for signature verification (UI-only) */
-  workflowNonce?: string;
-  /** Workflow signature for verification (UI-only) */
-  workflowSignature?: string;
   /** Whether the message has been confirmed persisted (UI-only) */
   persisted?: boolean;
 }
@@ -89,20 +89,17 @@ export type MessageStreamChunk =
       toolUrl?: string;
     }
   | { type: "reasoning"; content: string } // Thinking/reasoning from agents
-  | { type: "metadata"; metadata: MessageMetadata; nonce?: string } // Final metadata (sources, etc.)
+  | { type: "metadata"; metadata: MessageMetadata } // Final metadata (sources, etc.)
   | { type: "complete"; workflow?: unknown } // Workflow completion
   | { type: "error"; error: string } // Error events
   | {
       type: "workflow_start";
       workflowId: string;
-      nonce: string;
     } // Workflow initialization event
   | {
       type: "persisted";
       payload: StreamingPersistPayload;
-      nonce: string;
-      signature: string;
-    }; // Database persistence confirmation with security metadata
+    }; // Database persistence confirmation
 
 /**
  * Search progress state for UI updates
