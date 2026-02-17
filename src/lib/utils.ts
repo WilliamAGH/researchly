@@ -90,9 +90,13 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
   const scheduleReset = () => {
     setTimeout(() => {
       if (trailingArgs) {
-        func(...trailingArgs);
+        const args = trailingArgs;
         trailingArgs = null;
-        scheduleReset();
+        try {
+          func(...args);
+        } finally {
+          scheduleReset();
+        }
       } else {
         inThrottle = false;
       }
