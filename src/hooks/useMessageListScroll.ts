@@ -217,11 +217,12 @@ export function useMessageListScroll({
     };
 
     // Check immediately on mount and message count changes
-    const rafId = requestAnimationFrame(checkOverflow);
+    let rafId = requestAnimationFrame(checkOverflow);
 
-    // Poll during streaming to detect in-place content growth
+    // Poll during streaming to detect in-place content growth.
+    // Each tick overwrites rafId so cleanup cancels the latest frame.
     const intervalId = setInterval(() => {
-      requestAnimationFrame(checkOverflow);
+      rafId = requestAnimationFrame(checkOverflow);
     }, 500);
 
     return () => {
@@ -282,11 +283,9 @@ export function useMessageListScroll({
         }
       }
       // User scrolled up — show FAB
-      else {
-        if (!wasScrolledUp) {
-          setUserHasScrolled(true);
-          lastSeenMessageCountRef.current = messageCount;
-        }
+      else if (!wasScrolledUp) {
+        setUserHasScrolled(true);
+        lastSeenMessageCountRef.current = messageCount;
       }
     }, THROTTLE_MS);
 
