@@ -35,18 +35,16 @@ export function cleanTrailingCitations(
 ): string {
   // Only inspect the tail to avoid false positives in body content
   const tail = content.slice(-500);
-  let matchedPattern: RegExp | null = null;
   let matchResult: RegExpMatchArray | null = null;
 
   for (const pattern of TRAILING_PATTERNS) {
-    const m = tail.match(pattern);
+    const m: RegExpExecArray | null = pattern.exec(tail);
     if (m && (!matchResult || m[0].length > matchResult[0].length)) {
-      matchedPattern = pattern;
       matchResult = m;
     }
   }
 
-  if (!matchedPattern || !matchResult) return content;
+  if (!matchResult) return content;
 
   // Compute match position from the tail offset — never re-run the regex on the
   // full string, which could match an earlier legitimate heading and over-strip.
