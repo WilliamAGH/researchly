@@ -23,7 +23,6 @@ describe("initializeWorkflowSession write access gate", () => {
         ctx,
         { chatId, sessionId: "session-other", userQuery: "Can I write?" },
         "workflow_1",
-        "nonce_1",
       ),
     ).rejects.toThrow("Unauthorized: no write access to chat");
 
@@ -46,7 +45,6 @@ describe("initializeWorkflowSession write access gate", () => {
         ctx,
         { chatId, sessionId: "session-other", userQuery: "Exists?" },
         "workflow_1",
-        "nonce_1",
       ),
     ).rejects.toThrow("Chat not found");
 
@@ -65,7 +63,6 @@ describe("initializeWorkflowSession write access gate", () => {
         ctx,
         { chatId, sessionId: "session-a", userQuery: "infra fail" },
         "workflow_1",
-        "nonce_1",
       ),
     ).rejects.toThrow("Failed to verify write access");
 
@@ -90,7 +87,6 @@ describe("initializeWorkflowSession write access gate", () => {
       ctx,
       { chatId, sessionId: "session-ok", userQuery: "Can I write?" },
       "workflow_1",
-      "nonce_1",
     );
 
     expect(session.workflowTokenId).toBe("token_123");
@@ -119,7 +115,6 @@ describe("initializeWorkflowSession write access gate", () => {
       ctx,
       { chatId, userQuery: "Anon?" },
       "workflow_1",
-      "nonce_1",
     );
 
     expect(ctx.runQuery).toHaveBeenCalledWith(expect.anything(), {
