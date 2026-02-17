@@ -3,6 +3,7 @@ import type { Doc } from "../../../../convex/_generated/dataModel";
 import { IdUtils } from "@/lib/types/unified";
 import type { MessageStreamChunk } from "@/lib/types/message";
 import { logger } from "@/lib/logger";
+import { env } from "@/lib/env";
 import { buildHttpError, readResponseBody } from "@/lib/utils/httpUtils";
 import { getErrorMessage } from "../../../../convex/lib/errors";
 import {
