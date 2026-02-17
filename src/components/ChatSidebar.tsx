@@ -76,7 +76,7 @@ export function ChatSidebar({
   onRequestDeleteChat,
   onToggle,
   isCreatingChat = false,
-}: ChatSidebarProps) {
+}: Readonly<ChatSidebarProps>) {
   const deleteChat = useSessionAwareDeleteChat();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -90,17 +90,17 @@ export function ChatSidebar({
   // Avoid inline functions in JSX: use dataset-driven handlers
   const handleSelectClick = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      const attr = e.currentTarget.getAttribute("data-chat-id");
-      if (!attr) return;
-      const match = chats.find((c) => String(c._id) === attr);
-      handleSelectChat(match ? match._id : attr);
+      const { chatId } = e.currentTarget.dataset;
+      if (!chatId) return;
+      const match = chats.find((c) => String(c._id) === chatId);
+      handleSelectChat(match ? match._id : chatId);
     },
     [chats, handleSelectChat],
   );
 
   const handleDeleteClick = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      const chatId = e.currentTarget.getAttribute("data-chat-id");
+      const { chatId } = e.currentTarget.dataset;
       if (!chatId) return;
       setDeleteTargetId(chatId);
     },
@@ -119,7 +119,7 @@ export function ChatSidebar({
       });
 
       const currentIdString =
-        currentChatId !== null ? String(currentChatId) : null;
+        currentChatId === null ? null : String(currentChatId);
       if (chat?._id && currentIdString === String(chat._id)) {
         onSelectChat(null);
       }
