@@ -301,7 +301,8 @@ export function ShareModalContent({
               </div>
             </div>
           </div>
-      </Dialog.Panel>
+        </Dialog.Panel>
+      </div>
     </>
   );
 }
