@@ -2,8 +2,8 @@ import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 /** Named error prefixes for token mutation failures. */
-const TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND";
-const TOKEN_WRONG_STATUS = "TOKEN_WRONG_STATUS";
+export const TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND";
+export const TOKEN_WRONG_STATUS = "TOKEN_WRONG_STATUS";
 
 export const createToken = internalMutation({
   args: {
