@@ -1,5 +1,4 @@
 import type { ConvexReactClient } from "convex/react";
-import type { Doc } from "../../../../convex/_generated/dataModel";
 import { IdUtils } from "@/lib/types/unified";
 import type { MessageStreamChunk } from "@/lib/types/message";
 import { logger } from "@/lib/logger";
@@ -24,20 +23,10 @@ import {
   PersistedEventSchema,
 } from "@/lib/schemas/chatEvents";
 
-/** Map message role to human-readable label for conversation context. */
-function roleLabel(role: string): string {
-  if (role === "user") return "User";
-  if (role === "assistant") return "Assistant";
-  return "System";
-}
-
 export class ConvexStreamHandler {
   constructor(
     private readonly client: ConvexReactClient,
     private readonly sessionId: string | undefined,
-    private readonly fetchMessages: (
-      chatId: string,
-    ) => Promise<Doc<"messages">[]>,
   ) {}
 
   async *generateResponse(
@@ -45,6 +34,7 @@ export class ConvexStreamHandler {
     message: string,
     imageStorageIds?: string[],
     sessionIdOverride?: string,
+    priorChatSummary?: string,
   ): AsyncGenerator<MessageStreamChunk> {
     try {
       const host = globalThis.location.hostname;
@@ -54,28 +44,21 @@ export class ConvexStreamHandler {
         ? "/api/ai/agent/stream"
         : `${env.convexUrl.replace(".convex.cloud", ".convex.site")}/api/ai/agent/stream`;
 
-      const MAX_CONTEXT_MESSAGES = 20;
-      const MAX_CONTEXT_CHARS = 4000;
-
-      const recent = await this.fetchMessages(chatId);
-      const chatHistory = recent
-        .slice(-MAX_CONTEXT_MESSAGES)
-        .map((m) => ({ role: m.role, content: m.content }));
+      const body: Record<string, unknown> = {
+        message,
+        chatId: IdUtils.toConvexChatId(chatId),
+        sessionId: sessionIdOverride ?? this.sessionId,
+        includeDebugSourceContext,
+        imageStorageIds,
+      };
+      if (priorChatSummary) {
+        body.priorChatSummary = priorChatSummary;
+      }
 
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          chatId: IdUtils.toConvexChatId(chatId),
-          sessionId: sessionIdOverride ?? this.sessionId,
-          conversationContext: chatHistory
-            .map((m) => `${roleLabel(m.role)}: ${m.content}`)
-            .join("\n")
-            .slice(0, MAX_CONTEXT_CHARS),
-          includeDebugSourceContext,
-          imageStorageIds,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

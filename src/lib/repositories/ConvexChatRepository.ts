@@ -33,9 +33,7 @@ export class ConvexChatRepository extends BaseRepository {
 
     this.chatOps = new ChatOperations(client, getSessionId);
     this.messageOps = new MessageOperations(client, getSessionId);
-    this.streamHandler = new ConvexStreamHandler(client, sessionId, (chatId) =>
-      this.messageOps.getMessages(chatId),
-    );
+    this.streamHandler = new ConvexStreamHandler(client, sessionId);
 
     logger.debug("ConvexChatRepository initialized", {
       hasSessionId: !!sessionId,
@@ -50,11 +48,7 @@ export class ConvexChatRepository extends BaseRepository {
     // we should ideally update it there too.
     // For simplicity, re-instantiate streamHandler or add setter.
     // Re-instantiation is safer.
-    this.streamHandler = new ConvexStreamHandler(
-      this.client,
-      sessionId,
-      (chatId) => this.messageOps.getMessages(chatId),
-    );
+    this.streamHandler = new ConvexStreamHandler(this.client, sessionId);
 
     logger.debug("ConvexChatRepository sessionId updated", {
       hasSessionId: !!sessionId,
@@ -152,12 +146,14 @@ export class ConvexChatRepository extends BaseRepository {
     message: string,
     imageStorageIds?: string[],
     sessionIdOverride?: string,
+    priorChatSummary?: string,
   ): AsyncGenerator<MessageStreamChunk> {
     return this.streamHandler.generateResponse(
       chatId,
       message,
       imageStorageIds,
       sessionIdOverride,
+      priorChatSummary,
     );
   }
 }

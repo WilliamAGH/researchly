@@ -71,6 +71,7 @@ export interface IChatRepository {
     message: string,
     imageStorageIds?: string[],
     sessionIdOverride?: string,
+    priorChatSummary?: string,
   ): AsyncGenerator<MessageStreamChunk>;
   searchWeb(query: string): Promise<SearchWebResponse>;
 
@@ -135,6 +136,7 @@ export abstract class BaseRepository implements IChatRepository {
     message: string,
     imageStorageIds?: string[],
     sessionIdOverride?: string,
+    priorChatSummary?: string,
   ): AsyncGenerator<MessageStreamChunk>;
   abstract searchWeb(query: string): Promise<SearchWebResponse>;
 
