@@ -123,6 +123,7 @@ export async function persistAssistantMessage(
   } = params;
 
   if (sessionId) {
+    // @ts-ignore - Known Convex TS2589 issue with complex type inference in ctx.runMutation
     return await ctx.runMutation(internal.messages.addMessageHttp, {
       chatId,
       role: "assistant",
