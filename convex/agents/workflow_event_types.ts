@@ -111,6 +111,8 @@ export interface WorkflowMetadataPayload {
  */
 export interface WorkflowPersistedPayload {
   payload: StreamingPersistPayload;
+  nonce: string;
+  signature: string;
 }
 
 /**
@@ -166,4 +168,6 @@ export interface BuildMetadataEventParams {
  */
 export interface BuildPersistedEventParams {
   payload: StreamingPersistPayload;
+  nonce: string;
+  signature: string;
 }

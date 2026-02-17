@@ -95,10 +95,13 @@ export type MessageStreamChunk =
   | {
       type: "workflow_start";
       workflowId: string;
+      nonce: string;
     } // Workflow initialization event
   | {
       type: "persisted";
       payload: StreamingPersistPayload;
+      nonce: string;
+      signature: string;
     }; // Database persistence confirmation
 
 /**
