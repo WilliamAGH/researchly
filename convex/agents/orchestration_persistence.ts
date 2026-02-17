@@ -157,9 +157,17 @@ export async function completeWorkflow(
   const { ctx, workflowTokenId } = params;
 
   if (workflowTokenId) {
-    await ctx.runMutation(internal.workflowTokens.completeToken, {
-      tokenId: workflowTokenId,
-    });
+    try {
+      await ctx.runMutation(internal.workflowTokens.completeToken, {
+        tokenId: workflowTokenId,
+      });
+    } catch (error) {
+      // Token completion is bookkeeping — don't crash the workflow after
+      // message persistence. Race: error handler may have invalidated
+      // the token concurrently (mirrors invalidateToken caller pattern
+      // in workflow_utils.ts).
+      console.error("[completeWorkflow] Token completion failed:", error);
+    }
   }
 }
 
