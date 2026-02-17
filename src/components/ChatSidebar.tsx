@@ -140,6 +140,7 @@ export function ChatSidebar({
 
   const cancelDeleteChat = React.useCallback(() => {
     setDeleteTargetId(null);
+    setDeleteError(null);
   }, []);
 
   // Always render the sidebar container so tests can locate the "New Chat" button
