@@ -28,6 +28,8 @@ interface ToolProgressIndicatorProps {
   toolReasoning?: string;
   toolQuery?: string;
   toolUrl?: string;
+  /** When true the component plays its exit animation (fade-out + collapse). */
+  isExiting?: boolean;
 }
 
 /** Stage display text - simple lookup for labels and descriptions */
@@ -113,14 +115,21 @@ export function ToolProgressIndicator({
   toolReasoning,
   toolQuery,
   toolUrl,
+  isExiting = false,
 }: ToolProgressIndicatorProps) {
-  if (stage === "idle") return null;
+  if (stage === "idle" && !isExiting) return null;
 
   const displayTarget = toolQuery || toolUrl;
   const stageText = getStageText(stage);
 
   return (
-    <div className="mb-4 animate-slide-up-fade">
+    <div
+      className={
+        isExiting
+          ? "mb-4 animate-slide-down-fade overflow-hidden"
+          : "mb-4 animate-slide-up-fade"
+      }
+    >
       {/* Main container with subtle border */}
       <div className="relative overflow-hidden rounded-lg border border-gray-200/80 dark:border-gray-700/80 bg-gray-50/50 dark:bg-gray-800/30">
         {/* Thin indeterminate progress bar at top */}

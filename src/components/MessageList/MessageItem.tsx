@@ -14,6 +14,7 @@ import { formatConversationWithWebResearchSources } from "@/lib/clipboard";
 import type { Message, SearchProgress } from "@/lib/types/message";
 import { hasWebResearchSources } from "@/lib/domain/webResearchSources";
 import { MessageImages } from "./MessageImages";
+import { useExitTransition } from "@/hooks/useExitTransition";
 
 interface MessageItemProps {
   message: Message;
@@ -52,6 +53,16 @@ export const MessageItem = React.memo(function MessageItem({
     Boolean(message.reasoning?.trim() || message.thinking?.trim());
   const showThinkingDisplay =
     hasReasoningContent && Boolean(message.isStreaming);
+
+  // Smooth exit transition for the progress indicator.
+  // When searchProgress goes idle, `mounted` stays true for 300ms while
+  // `exiting` is true, giving the CSS exit animation time to play.
+  const showProgress =
+    message.role === "assistant" &&
+    Boolean(searchProgress) &&
+    searchProgress?.stage !== "idle";
+  const { mounted: progressMounted, exiting: progressExiting } =
+    useExitTransition(showProgress);
 
   return (
     <div
@@ -131,30 +142,29 @@ export const MessageItem = React.memo(function MessageItem({
           </div>
         )}
 
-        {/* 3) Search progress status when streaming */}
-        {message.role === "assistant" &&
-          searchProgress &&
-          searchProgress.stage !== "idle" && (
-            <ToolProgressIndicator
-              stage={searchProgress.stage}
-              message={searchProgress.message}
-              toolReasoning={
-                typeof searchProgress.toolReasoning === "string"
-                  ? searchProgress.toolReasoning
-                  : undefined
-              }
-              toolQuery={
-                typeof searchProgress.toolQuery === "string"
-                  ? searchProgress.toolQuery
-                  : undefined
-              }
-              toolUrl={
-                typeof searchProgress.toolUrl === "string"
-                  ? searchProgress.toolUrl
-                  : undefined
-              }
-            />
-          )}
+        {/* 3) Search progress status when streaming (with smooth exit) */}
+        {progressMounted && (
+          <ToolProgressIndicator
+            stage={searchProgress?.stage ?? "idle"}
+            message={searchProgress?.message}
+            toolReasoning={
+              typeof searchProgress?.toolReasoning === "string"
+                ? searchProgress.toolReasoning
+                : undefined
+            }
+            toolQuery={
+              typeof searchProgress?.toolQuery === "string"
+                ? searchProgress.toolQuery
+                : undefined
+            }
+            toolUrl={
+              typeof searchProgress?.toolUrl === "string"
+                ? searchProgress.toolUrl
+                : undefined
+            }
+            isExiting={progressExiting}
+          />
+        )}
 
         {/* 4) Images (user messages with attachments) */}
         {message.role === "user" && message.imageStorageIds?.length ? (

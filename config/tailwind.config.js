@@ -32,6 +32,11 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
         },
+        // Smooth slide down + fade out (reverse of slide-up-fade) for exit transitions
+        "slide-down-fade": {
+          "0%": { opacity: "1", transform: "translateY(0)" },
+          "100%": { opacity: "0", transform: "translateY(8px)" },
+        },
       },
       animation: {
         "scan-line": "scan-line 2s ease-in-out infinite",
@@ -39,6 +44,7 @@ export default {
         "progress-indeterminate":
           "progress-indeterminate 1.5s ease-in-out infinite",
         breathe: "breathe 2s ease-in-out infinite",
+        "slide-down-fade": "slide-down-fade 0.3s ease-in forwards",
       },
       colors: {
         background: "hsl(var(--background))",
