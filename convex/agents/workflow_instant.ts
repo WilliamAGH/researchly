@@ -19,7 +19,6 @@ interface InstantPathArgs {
   ctx: WorkflowActionCtx;
   args: StreamingWorkflowArgs;
   workflowId: string;
-  nonce: string;
   workflowTokenId: Id<"workflowTokens"> | null;
   chat: { title?: string };
   instantResponse: string;
@@ -30,7 +29,6 @@ export async function* executeInstantPath({
   ctx,
   args,
   workflowId,
-  nonce,
   workflowTokenId,
   chat,
   instantResponse,
@@ -60,7 +58,6 @@ export async function* executeInstantPath({
       hasLimitations: false,
       confidence: 1,
       answerLength: instantResponse.length,
-      nonce,
     }),
   );
 
@@ -81,21 +78,17 @@ export async function* executeInstantPath({
     intent: args.userQuery,
   });
 
-  const { payload: instantPayload, signature: instantSignature } =
-    await persistAndCompleteWorkflow({
-      ctx,
-      chatId: args.chatId,
-      content: instantResponse,
-      workflowId,
-      sessionId: args.sessionId,
-      webResearchSources: [],
-      workflowTokenId,
-      nonce,
-    });
+  const instantPayload = await persistAndCompleteWorkflow({
+    ctx,
+    chatId: args.chatId,
+    content: instantResponse,
+    workflowId,
+    sessionId: args.sessionId,
+    webResearchSources: [],
+    workflowTokenId,
+  });
 
   yield writeEvent("persisted", {
     payload: instantPayload,
-    nonce,
-    signature: instantSignature,
   });
 }

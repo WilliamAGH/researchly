@@ -1,11 +1,4 @@
-/**
- * Message input textarea component
- * - Auto-resizing textarea up to 200px
- * - Enter to send, Shift+Enter for newline
- * - Mobile-optimized with proper font sizing
- * - Disabled state during generation
- * - Image attachments via paste or file picker
- */
+/** Message input textarea: auto-resize, Enter-to-send, mobile-optimized, image attachments */
 
 import React, { useState, useRef, useCallback } from "react";
 import { useAutoResizeTextarea } from "@/hooks/useAutoResizeTextarea";
@@ -20,56 +13,39 @@ import {
 } from "@/hooks/useImageUpload";
 
 const TEXTAREA_CLASSES = [
-  // layout
   "w-full pr-36 resize-none overflow-y-auto overflow-x-hidden",
-  // typography
-  "text-base tracking-tight font-ui slashed-zero lining-nums tabular-nums",
-  "break-words whitespace-pre-wrap",
-  // shape & border
+  "text-base tracking-tight font-ui slashed-zero lining-nums tabular-nums break-words whitespace-pre-wrap",
   "rounded-2xl border border-gray-200/80 dark:border-gray-700/60 outline-none",
-  // color
-  "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100",
-  "placeholder-gray-400 dark:placeholder-gray-500",
-  // shadow
+  "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500",
   "shadow-sm shadow-gray-200/50 dark:shadow-black/20",
-  // focus
-  "focus:border-emerald-500 dark:focus:border-emerald-400",
-  "focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/30",
+  "focus:border-emerald-500 dark:focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/30",
   "focus:shadow-md focus:shadow-emerald-500/5 dark:focus:shadow-emerald-400/5",
-  // transition
-  "transition-all duration-200",
-  // hooks for JS/CSS selectors
-  "message-input-textarea message-textarea",
+  "transition-all duration-200 message-input-textarea message-textarea",
 ].join(" ");
 
 interface MessageInputProps {
   /** Callback when message is sent (with optional image storage IDs) */
-  onSendMessage: (
+  readonly onSendMessage: (
     message: string,
     imageStorageIds?: string[],
   ) => void | Promise<void>;
   /** Open share modal */
-  onShare?: () => void;
+  readonly onShare?: () => void;
   /** Start a new chat */
-  onNewChat?: () => void;
+  readonly onNewChat?: () => void;
   /** Disable input during generation */
-  disabled?: boolean;
+  readonly disabled?: boolean;
   /** Placeholder text */
-  placeholder?: string;
+  readonly placeholder?: string;
   /** Optional draft-change callback (debounced in parent) */
-  onDraftChange?: (draft: string) => void;
+  readonly onDraftChange?: (draft: string) => void;
   /** Optional history of previous user messages (oldest -> newest) */
-  history?: Array<string>;
+  readonly history?: Array<string>;
   /** Image upload state from useImageUpload hook */
-  imageUpload?: ImageUploadState;
+  readonly imageUpload?: ImageUploadState;
 }
 
-/**
- * Message input with auto-resize and keyboard shortcuts
- * @param onSendMessage - Handler for message submission
- * @param disabled - Prevent input when true
- * @param placeholder - Input placeholder text
- */
+/** Message input with auto-resize and keyboard shortcuts */
 export function MessageInput({
   onSendMessage,
   onShare,
@@ -96,7 +72,6 @@ export function MessageInput({
       textareaRef,
     });
 
-  /** Upload pending images, send message, then clear input. */
   const sendCurrentMessage = React.useCallback(async () => {
     const trimmed = message.trim();
     const hadImages = Boolean(imageUpload?.hasImages);
@@ -153,7 +128,6 @@ export function MessageInput({
     [sendCurrentMessage],
   );
 
-  /** Clear the inline send error when the user starts typing again. */
   const clearSendError = React.useCallback(() => {
     if (sendError) setSendError(null);
   }, [sendError]);
@@ -170,12 +144,28 @@ export function MessageInput({
   /** Enter to send, Shift+Enter for newline, ArrowUp/Down for history. */
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (composingRef.current) return; // avoid sending mid-IME composition
       if (e.key === "Enter" && !e.shiftKey) {
+        const isComposing =
+          composingRef.current || (e.nativeEvent.isComposing ?? false);
+        if (isComposing) {
+          // Defer: if compositionend fires right after (iOS Safari Return),
+          // the microtask will see composingRef === false and send.
+          void Promise.resolve().then(() => {
+            if (!composingRef.current) {
+              void sendCurrentMessage();
+            }
+          });
+          return;
+        }
         e.preventDefault();
         void sendCurrentMessage();
         return;
       }
+
+      // Guard other keys against active composition (CJK arrow keys, etc.)
+      const isComposing =
+        composingRef.current || (e.nativeEvent.isComposing ?? false);
+      if (isComposing) return;
 
       // Ignore modifier combos for history navigation
       if (e.altKey || e.ctrlKey || e.metaKey) return;
@@ -195,7 +185,6 @@ export function MessageInput({
     [sendCurrentMessage, message, handleHistoryNavigation],
   );
 
-  /** Intercept paste events to capture image data from clipboard. */
   const handlePaste = React.useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
       if (!imageUpload) return;

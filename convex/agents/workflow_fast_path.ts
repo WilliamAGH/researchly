@@ -21,7 +21,6 @@ export async function* executeFastPath({
   ctx,
   args,
   workflowId,
-  nonce,
   workflowTokenId,
   chat,
   startTime,
@@ -57,7 +56,6 @@ export async function* executeFastPath({
       hasLimitations: fastParsedAnswer.hasLimitations,
       confidence: fastParsedAnswer.confidence,
       answerLength: fastFinalAnswerText.length,
-      nonce,
     }),
   );
 
@@ -93,21 +91,17 @@ export async function* executeFastPath({
     intent: planningOutput?.userIntent || args.userQuery,
   });
 
-  const { payload: fastPersistedPayload, signature: fastSignature } =
-    await persistAndCompleteWorkflow({
-      ctx,
-      chatId: args.chatId,
-      content: fastFinalAnswerText,
-      workflowId,
-      sessionId: args.sessionId,
-      webResearchSources: [],
-      workflowTokenId,
-      nonce,
-    });
+  const fastPersistedPayload = await persistAndCompleteWorkflow({
+    ctx,
+    chatId: args.chatId,
+    content: fastFinalAnswerText,
+    workflowId,
+    sessionId: args.sessionId,
+    webResearchSources: [],
+    workflowTokenId,
+  });
 
   yield writeEvent("persisted", {
     payload: fastPersistedPayload,
-    nonce,
-    signature: fastSignature,
   });
 }

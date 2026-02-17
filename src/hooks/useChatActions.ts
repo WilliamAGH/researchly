@@ -25,6 +25,7 @@ export interface ChatActions {
     chatId: string,
     content: string,
     imageStorageIds?: string[],
+    chatSessionId?: string,
   ) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
   addMessage: (message: Message) => void;
@@ -202,6 +203,7 @@ export function createChatActions(
       chatId: string,
       content: string,
       imageStorageIds?: string[],
+      chatSessionId?: string,
     ) {
       if (!repository) {
         throw new Error(
@@ -214,6 +216,7 @@ export function createChatActions(
         chatId,
         content,
         imageStorageIds,
+        chatSessionId,
       });
     },
 

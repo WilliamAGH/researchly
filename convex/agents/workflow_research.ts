@@ -39,7 +39,6 @@ export async function* streamResearchWorkflow(
 
   const workflowId = generateMessageId();
   const startTime = Date.now();
-  const nonce = generateMessageId();
 
   const writeEvent = (type: string, data: Record<string, unknown>) =>
     createWorkflowEvent(type, data);
@@ -54,16 +53,11 @@ export async function* streamResearchWorkflow(
   });
 
   try {
-    const session = await initializeWorkflowSession(
-      ctx,
-      args,
-      workflowId,
-      nonce,
-    );
+    const session = await initializeWorkflowSession(ctx, args, workflowId);
     workflowTokenId = session.workflowTokenId;
     const { chat, conversationContext: conversationSource } = session;
 
-    yield writeEvent("workflow_start", { workflowId, nonce });
+    yield writeEvent("workflow_start", { workflowId });
 
     instantResponse = detectInstantResponse(args.userQuery);
 
@@ -72,7 +66,6 @@ export async function* streamResearchWorkflow(
         ctx,
         args,
         workflowId,
-        nonce,
         workflowTokenId,
         chat,
         instantResponse,
@@ -173,7 +166,6 @@ export async function* streamResearchWorkflow(
         ctx,
         args,
         workflowId,
-        nonce,
         workflowTokenId,
         chat,
         startTime,
@@ -189,7 +181,6 @@ export async function* streamResearchWorkflow(
       ctx,
       args,
       workflowId,
-      nonce,
       workflowTokenId,
       chat,
       startTime,

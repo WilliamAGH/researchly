@@ -10,11 +10,6 @@ import {
   isSSEParseError,
   type SSEEvent,
 } from "@/lib/utils/sseParser";
-import {
-  verifyPersistedPayload,
-  isSignatureVerificationAvailable,
-} from "@/lib/security/signature";
-import { env } from "@/lib/env";
 import { z } from "zod/v4";
 import type { StreamingPersistPayload } from "../../../../convex/schemas/agents";
 import {
@@ -48,6 +43,7 @@ export class ConvexStreamHandler {
     chatId: string,
     message: string,
     imageStorageIds?: string[],
+    sessionIdOverride?: string,
   ): AsyncGenerator<MessageStreamChunk> {
     try {
       const host = globalThis.location.hostname;
@@ -71,7 +67,7 @@ export class ConvexStreamHandler {
         body: JSON.stringify({
           message,
           chatId: IdUtils.toConvexChatId(chatId),
-          sessionId: this.sessionId,
+          sessionId: sessionIdOverride ?? this.sessionId,
           conversationContext: chatHistory
             .map((m) => `${roleLabel(m.role)}: ${m.content}`)
             .join("\n")
@@ -188,9 +184,7 @@ export class ConvexStreamHandler {
     return null;
   }
 
-  private async handlePersistedEvent(
-    evt: SSEEvent,
-  ): Promise<MessageStreamChunk | null> {
+  private handlePersistedEvent(evt: SSEEvent): MessageStreamChunk | null {
     const parsed = PersistedEventSchema.safeParse(evt);
     if (!parsed.success) {
       logger.error("Invalid persisted SSE event payload", {
@@ -202,52 +196,6 @@ export class ConvexStreamHandler {
         error:
           "Failed to verify message was saved. Your response may still be available on refresh.",
       };
-    }
-
-    const signingKey = env.agentSigningKey;
-
-    // If event has signature fields, attempt verification
-    if (parsed.data.signature && parsed.data.nonce) {
-      if (signingKey && isSignatureVerificationAvailable()) {
-        const isValid = await verifyPersistedPayload(
-          parsed.data.payload,
-          parsed.data.nonce,
-          parsed.data.signature,
-          signingKey,
-        );
-
-        if (!isValid) {
-          logger.error(
-            "[BLOCKED] Invalid signature detected on persisted event",
-            {
-              workflowId: parsed.data.payload.workflowId,
-              nonce: parsed.data.nonce,
-            },
-          );
-          return {
-            type: "error" as const,
-            error: "Message integrity verification failed. Please refresh.",
-          };
-        }
-
-        logger.debug("[OK] Signature verified for persisted event", {
-          workflowId: parsed.data.payload.workflowId,
-        });
-      } else if (signingKey) {
-        logger.warn(
-          "[WARN] Accepting unverified persisted event: Web Crypto API unavailable",
-          {
-            workflowId: parsed.data.payload.workflowId,
-          },
-        );
-      } else {
-        // Security warning: Backend signs all persisted events, but frontend key is missing
-        // This means we cannot verify the event wasn't tampered with in transit
-        logger.warn(
-          "[WARN] Accepting unverified persisted event: VITE_AGENT_SIGNING_KEY not configured",
-          { workflowId: parsed.data.payload.workflowId },
-        );
-      }
     }
 
     let payloadWithTypedId: StreamingPersistPayload;

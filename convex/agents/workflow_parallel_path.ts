@@ -23,7 +23,7 @@ import type {
 import {
   updateChatTitleIfNeeded,
   persistAssistantMessage,
-  completeWorkflowWithSignature,
+  completeWorkflow,
 } from "./orchestration_persistence";
 import { generateMessageId } from "../lib/id_generator";
 import type { StreamingPersistPayload } from "../schemas/agents";
@@ -47,7 +47,6 @@ export async function* executeParallelPath({
   ctx,
   args,
   workflowId,
-  nonce,
   workflowTokenId,
   chat,
   startTime,
@@ -241,7 +240,6 @@ export async function* executeParallelPath({
       hasLimitations: parsedAnswer.hasLimitations,
       confidence: parsedAnswer.confidence,
       answerLength: finalAnswerText.length,
-      nonce,
     }),
   );
 
@@ -291,11 +289,9 @@ export async function* executeParallelPath({
     answer: finalAnswerText,
     webResearchSources,
   };
-  const signature = await completeWorkflowWithSignature({
+  await completeWorkflow({
     ctx,
     workflowTokenId,
-    payload: persistedPayload,
-    nonce,
   });
 
   logWorkflowComplete({
@@ -307,7 +303,5 @@ export async function* executeParallelPath({
 
   yield writeEvent("persisted", {
     payload: persistedPayload,
-    nonce,
-    signature,
   });
 }

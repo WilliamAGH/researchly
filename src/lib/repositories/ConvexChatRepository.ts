@@ -17,11 +17,11 @@ import { ConvexStreamHandler } from "./convex/ConvexStreamHandler";
 
 export class ConvexChatRepository extends BaseRepository {
   protected storageType = "convex" as const;
-  private client: ConvexReactClient;
+  private readonly client: ConvexReactClient;
   private sessionId?: string;
 
-  private chatOps: ChatOperations;
-  private messageOps: MessageOperations;
+  private readonly chatOps: ChatOperations;
+  private readonly messageOps: MessageOperations;
   private streamHandler: ConvexStreamHandler;
 
   constructor(client: ConvexReactClient, sessionId?: string) {
@@ -151,11 +151,13 @@ export class ConvexChatRepository extends BaseRepository {
     chatId: string,
     message: string,
     imageStorageIds?: string[],
+    sessionIdOverride?: string,
   ): AsyncGenerator<MessageStreamChunk> {
     return this.streamHandler.generateResponse(
       chatId,
       message,
       imageStorageIds,
+      sessionIdOverride,
     );
   }
 }
