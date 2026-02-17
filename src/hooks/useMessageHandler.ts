@@ -64,7 +64,12 @@ interface UseMessageHandlerDeps {
  */
 export function useMessageHandler(deps: UseMessageHandlerDeps) {
   const sendRef = useRef<
-    ((message: string, imageStorageIds?: string[]) => Promise<void>) | null
+    | ((
+        message: string,
+        imageStorageIds?: string[],
+        priorChatSummary?: string,
+      ) => Promise<void>)
+    | null
   >(null);
   const createChatInFlightRef = useRef<Promise<string | null> | null>(null);
 
@@ -90,7 +95,11 @@ export function useMessageHandler(deps: UseMessageHandlerDeps) {
    * @param {string} messageInput - The message to send
    */
   const handleSendMessage = useCallback(
-    async (messageInput: string, imageStorageIds?: string[]) => {
+    async (
+      messageInput: string,
+      imageStorageIds?: string[],
+      priorChatSummary?: string,
+    ) => {
       if (!messageInput.trim() && !imageStorageIds?.length) return;
 
       let activeChatId: string | null = currentChatId;
@@ -147,6 +156,7 @@ export function useMessageHandler(deps: UseMessageHandlerDeps) {
           imageStorageIds,
           chatState.chats.find((chat) => String(chat._id) === activeChatId)
             ?.sessionId,
+          priorChatSummary,
         );
 
         // Title updates handled server-side during streaming persistence
@@ -177,8 +187,8 @@ export function useMessageHandler(deps: UseMessageHandlerDeps) {
   );
 
   useEffect(() => {
-    sendRef.current = async (msg: string, ids?: string[]) =>
-      handleSendMessage(msg, ids);
+    sendRef.current = async (msg: string, ids?: string[], summary?: string) =>
+      handleSendMessage(msg, ids, summary);
   }, [handleSendMessage]);
 
   return {

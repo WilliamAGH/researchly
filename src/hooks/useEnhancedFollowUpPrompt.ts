@@ -5,10 +5,20 @@ import type { Id } from "../../convex/_generated/dataModel";
 import { toConvexId } from "@/lib/utils/idValidation";
 import { isTopicChange } from "@/lib/utils/topicDetection";
 
+/** Minimum user messages between consecutive follow-up prompt appearances. */
+const FOLLOW_UP_COOLDOWN_MESSAGES = 4;
+
 interface UseEnhancedFollowUpPromptProps {
   currentChatId: string | null;
   handleNewChat: (opts?: { userInitiated?: boolean }) => Promise<string | null>;
-  sendRef: RefObject<((message: string) => Promise<void>) | null>;
+  sendRef: RefObject<
+    | ((
+        message: string,
+        imageStorageIds?: string[],
+        priorChatSummary?: string,
+      ) => Promise<void>)
+    | null
+  >;
   summarizeRecentAction?: (args: { chatId: Id<"chats"> }) => Promise<string>;
   chatState: {
     messages?: Array<{ role?: string; content?: string }>;
@@ -105,48 +115,77 @@ export function useEnhancedFollowUpPrompt({
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   /** Guards against dispatching the same pending message twice (race condition). */
   const dispatchedRef = useRef(false);
+  /** Compact summary from the prior chat; stored in a ref so the dispatch effect reads it synchronously. */
+  const priorChatSummaryRef = useRef<string | null>(null);
+  /**
+   * Number of user messages present the last time the prompt was shown.
+   * Initialized to 0 so the first eligible show is gated by the message
+   * minimum in checkFollowUpConditions; after that, the prompt may only
+   * re-appear once at least FOLLOW_UP_COOLDOWN_MESSAGES more have been sent.
+   */
+  const lastShownAtUserMsgCountRef = useRef(0);
   // Candidate message detected from topic shift; never auto-sent by itself.
   const [followUpMessage, setFollowUpMessage] = useState<string | null>(null);
-  const [plannerHint, setPlannerHint] = useState<{
-    reason?: string;
-    confidence?: number;
-  } | null>(null);
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [summaryError, setSummaryError] = useState<Error | null>(null);
 
+  /** Evaluate follow-up conditions with cooldown gating. */
+  const evaluateFollowUp = useCallback(() => {
+    const messages = chatState?.messages || [];
+    const userMsgCount = messages.filter((m) => m?.role === "user").length;
+    const result = checkFollowUpConditions(messages, chatState?.isGenerating);
+    const cooledDown =
+      userMsgCount - lastShownAtUserMsgCountRef.current >=
+      FOLLOW_UP_COOLDOWN_MESSAGES;
+
+    return {
+      ...result,
+      shouldShow: result.shouldShow && cooledDown,
+      userMsgCount,
+    };
+  }, [chatState?.messages, chatState?.isGenerating]);
+
   // Generate follow-up suggestions based on last assistant message
   useEffect(() => {
-    const messages = chatState?.messages || [];
-    const result = checkFollowUpConditions(messages, chatState?.isGenerating);
+    const {
+      shouldShow,
+      suggestions,
+      followUpMessage: msg,
+      userMsgCount,
+    } = evaluateFollowUp();
 
-    if (result.shouldShow) {
-      setFollowUpSuggestions(result.suggestions);
-      setFollowUpMessage(result.followUpMessage);
+    if (shouldShow) {
+      lastShownAtUserMsgCountRef.current = userMsgCount;
+      setFollowUpSuggestions(suggestions);
+      setFollowUpMessage(msg);
       setShowFollowUpPrompt(true);
     } else {
       setShowFollowUpPrompt(false);
       setFollowUpMessage(null);
     }
-  }, [chatState?.messages, chatState?.isGenerating]);
+  }, [evaluateFollowUp]);
 
   const resetFollowUp = useCallback(() => {
     setShowFollowUpPrompt(false);
     setFollowUpSuggestions([]);
     setPendingMessage(null);
     setFollowUpMessage(null);
-    setPlannerHint(null);
     setSummaryError(null);
   }, []);
 
   const maybeShowFollowUpPrompt = useCallback(() => {
-    const messages = chatState?.messages || [];
-    const result = checkFollowUpConditions(messages, chatState?.isGenerating);
+    const {
+      shouldShow,
+      followUpMessage: msg,
+      userMsgCount,
+    } = evaluateFollowUp();
 
-    if (result.shouldShow) {
-      setFollowUpMessage(result.followUpMessage);
+    if (shouldShow) {
+      lastShownAtUserMsgCountRef.current = userMsgCount;
+      setFollowUpMessage(msg);
       setShowFollowUpPrompt(true);
     }
-  }, [chatState?.messages, chatState?.isGenerating]);
+  }, [evaluateFollowUp]);
 
   const handleContinueChat = useCallback(() => {
     resetFollowUp();
@@ -154,6 +193,7 @@ export function useEnhancedFollowUpPrompt({
 
   const handleNewChatForFollowUp = useCallback(async () => {
     const messageToSend = followUpMessage;
+    lastShownAtUserMsgCountRef.current = 0;
     resetFollowUp();
     if (messageToSend) {
       setPendingMessage(messageToSend);
@@ -164,29 +204,31 @@ export function useEnhancedFollowUpPrompt({
   const handleNewChatWithSummary = useCallback(async () => {
     const messageToSend = followUpMessage;
     resetFollowUp();
-    if (messageToSend) {
-      setPendingMessage(messageToSend);
-    }
 
+    // Step 1: Fetch the summary BEFORE navigation so it's ready when the new chat loads.
+    priorChatSummaryRef.current = null;
     if (summarizeRecentAction && currentChatId) {
       const convexChatId = toConvexId<"chats">(currentChatId);
       if (!convexChatId) {
-        await handleNewChat({ userInitiated: true });
+        setSummaryError(new Error("Invalid chat ID — cannot summarize."));
         return;
       }
       try {
-        const summary = await summarizeRecentAction({
-          chatId: convexChatId,
-        });
-        setPlannerHint({ reason: String(summary) });
+        const summary = await summarizeRecentAction({ chatId: convexChatId });
+        priorChatSummaryRef.current = summary;
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         logger.error("Failed to summarize recent chat:", error);
         setSummaryError(error);
-        // Continue with new chat creation despite summary failure
+        // Abort: do not start a new chat if summary fails
+        return;
       }
     }
 
+    // Step 2: Queue the message and navigate — the dispatch effect will attach the summary.
+    if (messageToSend) {
+      setPendingMessage(messageToSend);
+    }
     await handleNewChat({ userInitiated: true });
   }, [
     currentChatId,
@@ -206,10 +248,16 @@ export function useEnhancedFollowUpPrompt({
     if (dispatchedRef.current) return;
 
     dispatchedRef.current = true;
+    const summary = priorChatSummaryRef.current;
+    priorChatSummaryRef.current = null;
     let stale = false;
     const sendMessage = async () => {
       try {
-        await sendRef.current?.(pendingMessage);
+        await sendRef.current?.(
+          pendingMessage,
+          undefined,
+          summary ?? undefined,
+        );
         if (!stale) {
           setPendingMessage(null);
         }
@@ -233,7 +281,6 @@ export function useEnhancedFollowUpPrompt({
   return {
     showFollowUpPrompt,
     pendingMessage,
-    plannerHint,
     resetFollowUp,
     maybeShowFollowUpPrompt,
     setPendingMessage,

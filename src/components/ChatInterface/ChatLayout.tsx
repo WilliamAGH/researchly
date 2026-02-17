@@ -33,10 +33,7 @@ interface ChatLayoutProps {
     message: string;
     action?: () => void;
   } | null;
-  plannerHint?: {
-    reason?: string;
-    confidence?: number;
-  } | null;
+  summaryError?: Error | null;
 
   // Component props
   chatSidebarProps: ChatSidebarProps;
@@ -64,7 +61,7 @@ export function ChatLayout({
   currentChatId,
   currentChat,
   undoBanner,
-  plannerHint,
+  summaryError,
   chatSidebarProps,
   mobileSidebarProps,
   messageListProps,
@@ -149,8 +146,7 @@ export function ChatLayout({
               onContinue={handleContinueChat}
               onNewChat={handleNewChatForFollowUp}
               onNewChatWithSummary={handleNewChatWithSummary}
-              hintReason={plannerHint?.reason}
-              hintConfidence={plannerHint?.confidence}
+              summaryError={summaryError ?? undefined}
             />
 
             {/* Remove share button - now using icon in MessageInput */}
