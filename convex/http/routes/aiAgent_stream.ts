@@ -7,7 +7,6 @@ import { checkIpRateLimit } from "../../lib/rateLimit";
 import { safeConvexId } from "../../lib/validators";
 import { isValidUuidV7 } from "../../lib/uuid";
 import { dlog, formatSseEvent, serializeError } from "../utils";
-import { uuidv7 } from "uuidv7";
 import {
   buildUnauthorizedOriginResponse,
   corsResponse,
@@ -33,56 +32,6 @@ function getEventType(data: unknown): string {
     return data.type;
   }
   return "unknown";
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-/**
- * Compute a hex-encoded SHA-256 digest using the Web Crypto API.
- * Web Crypto is available in both Convex V8 and Node runtimes,
- * unlike `node:crypto` which the Convex HTTP bundler rejects.
- */
-async function sha256Hex(input: string): Promise<string> {
-  const encoded = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest("SHA-256", encoded);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-/**
- * Re-attach grounding contract fields consumed by API clients.
- * These fields are transport-level and are not persisted.
- */
-async function withGroundingFields(
-  event: unknown,
-  streamNonce: string,
-): Promise<Record<string, unknown> | unknown> {
-  if (!isRecord(event) || typeof event.type !== "string") {
-    return event;
-  }
-
-  if (event.type === "workflow_start") {
-    return { ...event, nonce: streamNonce };
-  }
-
-  if (event.type === "persisted") {
-    const signature = await sha256Hex(
-      JSON.stringify({
-        nonce: streamNonce,
-        payload: event.payload ?? null,
-      }),
-    );
-    return {
-      ...event,
-      nonce: streamNonce,
-      signature,
-    };
-  }
-
-  return event;
 }
 
 export async function handleAgentStream(
@@ -240,7 +189,6 @@ export async function handleAgentStream(
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let streamBroken = false;
-      const streamNonce = uuidv7();
       const sendEvent = (data: unknown) => {
         if (streamBroken) return;
         try {
@@ -270,7 +218,7 @@ export async function handleAgentStream(
             );
             break;
           }
-          sendEvent(await withGroundingFields(event, streamNonce));
+          sendEvent(event);
         }
 
         dlog("[OK] STREAMING CONVERSATIONAL WORKFLOW COMPLETE");

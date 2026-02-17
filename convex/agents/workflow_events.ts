@@ -180,8 +180,6 @@ export function buildPersistedEvent(
 ): WorkflowPersistedPayload {
   return {
     payload: params.payload,
-    nonce: params.nonce,
-    signature: params.signature,
   };
 }
 

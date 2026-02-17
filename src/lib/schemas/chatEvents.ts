@@ -41,7 +41,6 @@ export const MetadataEventSchema = z.object({
 export const WorkflowStartEventSchema = z.object({
   type: z.literal("workflow_start"),
   workflowId: z.string(),
-  nonce: z.string(),
 });
 
 export const CompleteEventSchema = z.object({
@@ -57,6 +56,4 @@ export const ErrorEventSchema = z.object({
 export const PersistedEventSchema = z.object({
   type: z.literal("persisted"),
   payload: StreamingPersistPayloadSchema,
-  nonce: z.string(),
-  signature: z.string(),
 });
