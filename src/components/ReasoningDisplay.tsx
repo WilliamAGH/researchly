@@ -44,17 +44,21 @@ export function ReasoningDisplay({
     if (isThinkingActive || !spinnerRef.current) return;
     const el = spinnerRef.current;
     el.style.animation = "none";
-    // Reading offsetHeight forces a synchronous reflow/repaint
-    void el.offsetHeight;
+    // Reading layout forces a synchronous reflow/repaint
+    void el.getBoundingClientRect();
     el.style.animation = "";
   }, [isThinkingActive]);
 
-  const shouldRenderThinking = isThinkingActive && isStreaming;
-  if (!shouldRenderThinking) return null;
-
-  const displayThinkingText = thinkingText?.trim() || "Thinking...";
   const normalizedReasoning = reasoning.replace(/^\s*-\s+/, "");
   const hasReasoning = normalizedReasoning.trim().length > 0;
+  const shouldRenderPanel =
+    isStreaming &&
+    (isThinkingActive || hasReasoning || Boolean(thinkingText?.trim()));
+  if (!shouldRenderPanel) return null;
+
+  const displayThinkingText = isThinkingActive
+    ? thinkingText?.trim() || "Thinking..."
+    : "Reasoning";
   const collapsedPreview = getCollapsedPreviewText(normalizedReasoning);
   const showCollapsedPreview = collapsed && collapsedPreview.length > 0;
 
@@ -72,8 +76,8 @@ export function ReasoningDisplay({
             <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 flex-shrink-0">
               <svg
                 ref={spinnerRef}
-                className="w-4 h-4 flex-shrink-0 animate-spin"
-                style={{ willChange: "transform" }}
+                className={`w-4 h-4 flex-shrink-0 ${isThinkingActive ? "animate-spin" : ""}`}
+                style={{ willChange: isThinkingActive ? "transform" : "auto" }}
                 fill="none"
                 viewBox="0 0 24 24"
               >
