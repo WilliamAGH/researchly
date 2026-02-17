@@ -223,9 +223,16 @@ export async function validateImageBlobContent(
   storageId: Id<"_storage">,
   fileUrl: string,
   fileSize: number,
+  options?: { deleteOnFailure?: boolean },
 ): Promise<void> {
+  const shouldDeleteOnFailure = options?.deleteOnFailure ?? true;
+  const maybeCleanup = async (): Promise<Error | undefined> => {
+    if (!shouldDeleteOnFailure) return undefined;
+    return await deleteStorageBlob(ctx, storageId);
+  };
+
   if (fileSize > MAX_IMAGE_BYTES) {
-    const cleanupError = await deleteStorageBlob(ctx, storageId);
+    const cleanupError = await maybeCleanup();
     throw new Error("Image is too large. Max 10 MB per file.", {
       cause: cleanupError,
     });
@@ -237,7 +244,7 @@ export async function validateImageBlobContent(
     headers: { Range: "bytes=0-11" },
   });
   if (!response.ok) {
-    const cleanupError = await deleteStorageBlob(ctx, storageId);
+    const cleanupError = await maybeCleanup();
     throw new Error("Failed to read uploaded file for validation", {
       cause: cleanupError,
     });
@@ -245,7 +252,7 @@ export async function validateImageBlobContent(
 
   const buffer = new Uint8Array(await response.arrayBuffer());
   if (buffer.length < 3 || !hasImageMagicBytes(buffer)) {
-    const cleanupError = await deleteStorageBlob(ctx, storageId);
+    const cleanupError = await maybeCleanup();
     throw new Error("Unsupported image format. Please upload PNG or JPEG.", {
       cause: cleanupError,
     });
