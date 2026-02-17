@@ -70,10 +70,10 @@ export function useDebounce<Args extends unknown[]>(
  * @param {number} delay - Minimum time between executions in milliseconds
  * @returns {T} Throttled version of the callback
  */
-export function useThrottle<T extends (...args: unknown[]) => void>(
-  callback: T,
+export function useThrottle<Args extends unknown[]>(
+  callback: (...args: Args) => void,
   delay: number,
-): (...args: Parameters<T>) => void {
+): (...args: Args) => void {
   const lastRunRef = useRef<number>(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const callbackRef = useRef(callback);
@@ -84,7 +84,7 @@ export function useThrottle<T extends (...args: unknown[]) => void>(
   }, [callback]);
 
   const throttledCallback = useCallback(
-    (...args: Parameters<T>) => {
+    (...args: Args) => {
       const now = Date.now();
       const timeSinceLastRun = now - lastRunRef.current;
 
