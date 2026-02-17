@@ -216,16 +216,23 @@ export function useMessageListScroll({
       }
     };
 
-    // Check immediately on mount and message count changes
-    let rafId = requestAnimationFrame(checkOverflow);
+    // Guard flag: prevents stale rAF callbacks from firing after cleanup.
+    // When backgrounded, setInterval keeps ticking but rAF is deferred —
+    // without this flag, orphaned callbacks could set state after teardown.
+    let active = true;
+    let rafId = requestAnimationFrame(() => {
+      if (active) checkOverflow();
+    });
 
     // Poll during streaming to detect in-place content growth.
-    // Each tick overwrites rafId so cleanup cancels the latest frame.
     const intervalId = setInterval(() => {
-      rafId = requestAnimationFrame(checkOverflow);
+      rafId = requestAnimationFrame(() => {
+        if (active) checkOverflow();
+      });
     }, 500);
 
     return () => {
+      active = false;
       cancelAnimationFrame(rafId);
       clearInterval(intervalId);
     };
