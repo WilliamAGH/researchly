@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
+import { Dialog } from "@headlessui/react";
 import { logger } from "@/lib/logger";
 import { copyToClipboard } from "@/lib/clipboard";
 import { formatConversationMarkdown } from "@/lib/utils";
@@ -216,19 +217,26 @@ export function ShareModal({
   if (!isOpen) return null;
 
   return (
-    <ShareModalContent
-      selectedPrivacy={selectedPrivacy}
-      displayUrl={displayUrl}
-      busy={busy}
-      urlCopied={urlCopied}
-      markdownCopied={markdownCopied}
-      markdownContent={markdownContent}
-      showMarkdown={Boolean(messages && messages.length > 0)}
-      closeBtnRef={closeBtnRef}
-      onSelectPrivacy={handleSelectPrivacy}
-      onGenerateOrCopy={handleGenerateOrCopy}
-      onCopyMarkdown={handleCopyMarkdown}
+    <Dialog
+      open={isOpen}
       onClose={onClose}
-    />
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      initialFocus={closeBtnRef}
+    >
+      <ShareModalContent
+        selectedPrivacy={selectedPrivacy}
+        displayUrl={displayUrl}
+        busy={busy}
+        urlCopied={urlCopied}
+        markdownCopied={markdownCopied}
+        markdownContent={markdownContent}
+        showMarkdown={Boolean(messages && messages.length > 0)}
+        closeBtnRef={closeBtnRef}
+        onSelectPrivacy={handleSelectPrivacy}
+        onGenerateOrCopy={handleGenerateOrCopy}
+        onCopyMarkdown={handleCopyMarkdown}
+        onClose={onClose}
+      />
+    </Dialog>
   );
 }
