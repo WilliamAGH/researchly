@@ -76,9 +76,10 @@ export function ChatSidebar({
   onRequestDeleteChat,
   onToggle,
   isCreatingChat = false,
-}: ChatSidebarProps) {
+}: Readonly<ChatSidebarProps>) {
   const deleteChat = useSessionAwareDeleteChat();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleSelectChat = React.useCallback(
     (chatId: Id<"chats"> | string) => {
@@ -90,17 +91,17 @@ export function ChatSidebar({
   // Avoid inline functions in JSX: use dataset-driven handlers
   const handleSelectClick = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      const attr = e.currentTarget.getAttribute("data-chat-id");
-      if (!attr) return;
-      const match = chats.find((c) => String(c._id) === attr);
-      handleSelectChat(match ? match._id : attr);
+      const { chatId } = e.currentTarget.dataset;
+      if (!chatId) return;
+      const match = chats.find((c) => String(c._id) === chatId);
+      handleSelectChat(match ? match._id : chatId);
     },
     [chats, handleSelectChat],
   );
 
   const handleDeleteClick = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      const chatId = e.currentTarget.getAttribute("data-chat-id");
+      const { chatId } = e.currentTarget.dataset;
       if (!chatId) return;
       setDeleteTargetId(chatId);
     },
@@ -113,20 +114,20 @@ export function ChatSidebar({
     setDeleteTargetId(null);
 
     try {
+      setDeleteError(null);
       await executeDeleteChat(deleteTargetId, chat, {
         onRequestDeleteChat,
         deleteChat,
       });
 
       const currentIdString =
-        currentChatId !== null ? String(currentChatId) : null;
+        currentChatId === null ? null : String(currentChatId);
       if (chat?._id && currentIdString === String(chat._id)) {
         onSelectChat(null);
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        logger.warn("Chat deletion failed:", err);
-      }
+      logger.warn("Chat deletion failed:", err);
+      setDeleteError("Failed to delete chat. Please try again.");
     }
   }, [
     deleteTargetId,
@@ -228,6 +229,35 @@ export function ChatSidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {deleteError && (
+          <div
+            role="alert"
+            className="mx-2 mt-2 px-3 py-2 text-sm text-red-700 bg-red-50 dark:text-red-300 dark:bg-red-900/20 rounded-lg flex items-center justify-between gap-2"
+          >
+            <span>{deleteError}</span>
+            <button
+              type="button"
+              onClick={() => setDeleteError(null)}
+              className="flex-shrink-0 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+              aria-label="Dismiss error"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <title>Dismiss</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
         {chats.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground">
             No chats yet. Start a new conversation!

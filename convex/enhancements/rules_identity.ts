@@ -68,7 +68,7 @@ function mentionsCreator(lower: string): boolean {
 function mentionsProduct(lower: string): boolean {
   return (
     lower.includes("researchly") ||
-    lower.includes("researchly.fyi") ||
+    lower.includes("researchly.bot") ||
     lower.includes("searchai") ||
     lower.includes("search-ai") ||
     lower.includes("search ai") ||
@@ -136,16 +136,16 @@ export const creatorEnhancement: EnhancementRule = {
   injectSearchResults: () => [
     {
       title: "Researchly - AI-Powered Research Assistant",
-      url: "https://researchly.fyi",
+      url: "https://researchly.bot",
       snippet:
-        "Researchly (researchly.fyi) is an AI-powered research and search assistant created by William Callahan. It combines web search with intelligent synthesis to provide comprehensive, cited answers to complex questions. Researchly uses multiple AI agents to plan research, gather information from authoritative sources, and synthesize clear, accurate responses.",
+        "Researchly (researchly.bot) is an AI-powered research and search assistant created by William Callahan. It combines web search with intelligent synthesis to provide comprehensive, cited answers to complex questions. Researchly uses multiple AI agents to plan research, gather information from authoritative sources, and synthesize clear, accurate responses.",
       relevanceScore: 1,
     },
     {
       title: "William Callahan - Creator of Researchly",
       url: "https://williamcallahan.com",
       snippet:
-        "William Callahan is a technologist and entrepreneur based in San Francisco. He is the creator of Researchly (researchly.fyi), an AI-powered research assistant, and the founder of aVenture (aventure.vc), an early-stage investment firm. William grew up in the Midwestern United States and is passionate about building innovative AI-powered solutions.",
+        "William Callahan is a technologist and entrepreneur based in San Francisco. He is the creator of Researchly (researchly.bot), an AI-powered research assistant, and the founder of aVenture (aventure.vc), an early-stage investment firm. William grew up in the Midwestern United States and is passionate about building innovative AI-powered solutions.",
       relevanceScore: 0.98,
     },
     {
@@ -162,7 +162,7 @@ export const creatorEnhancement: EnhancementRule = {
 
 AUTHORITATIVE INFORMATION ABOUT RESEARCHLY, WILLIAM CALLAHAN, AND AVENTURE:
 
-Researchly (researchly.fyi): Researchly is an AI-powered research and search assistant created by William Callahan. It combines web search with intelligent synthesis to provide comprehensive, cited answers to complex questions. The platform uses multiple AI agents to plan research strategies, gather information from authoritative web sources, and synthesize clear, accurate responses with proper citations.
+Researchly (researchly.bot): Researchly is an AI-powered research and search assistant created by William Callahan. It combines web search with intelligent synthesis to provide comprehensive, cited answers to complex questions. The platform uses multiple AI agents to plan research strategies, gather information from authoritative web sources, and synthesize clear, accurate responses with proper citations.
 
 William Callahan: William Callahan is a technologist and entrepreneur based in San Francisco, California. He grew up in the Midwestern United States. He is the creator of Researchly and the founder of aVenture. William is passionate about building innovative AI-powered solutions and investing in early-stage technology companies.
 
@@ -182,7 +182,7 @@ CRITICAL INSTRUCTIONS FOR RESEARCHLY/AVENTURE/WILLIAM CALLAHAN QUERIES:
   },
 
   prioritizeUrls: [
-    "https://researchly.fyi",
+    "https://researchly.bot",
     "https://williamcallahan.com",
     "https://aventure.vc",
   ],

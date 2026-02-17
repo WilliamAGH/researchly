@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { logger } from "@/lib/logger";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "./EmptyState";
 import { ScrollToBottomFab } from "./ScrollToBottomFab";
 import { MessageItem } from "./MessageItem";
@@ -20,7 +21,6 @@ import type { Message, SearchProgress } from "@/lib/types/message";
 import { useMessageListScroll } from "@/hooks/useMessageListScroll";
 import { resolveMessageKey } from "./messageKey";
 import { hasWebResearchSources } from "@/lib/domain/webResearchSources";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 /** Virtualize message list when exceeding this count for performance */
 const VIRTUALIZATION_THRESHOLD = 100;
