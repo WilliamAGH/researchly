@@ -48,6 +48,8 @@ beforeEach(() => {
       },
     }),
   );
+
+  vi.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
