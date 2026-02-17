@@ -5,17 +5,17 @@
  * Extracted from plan_search_handler.ts for modularity
  */
 
-import type { PlanResult } from "./cache";
-import { setCachedPlan } from "./cache";
+import type { PlanResult } from "../search/cache";
+import { setCachedPlan } from "../search/cache";
 import {
   extractKeyEntities,
   serialize,
   tokSet,
   jaccard,
   diversifyQueries,
-} from "./utils";
-import { getErrorMessage } from "../lib/errors";
-import { buildContextSummary } from "../chats/utils";
+} from "../search/utils";
+import { getErrorMessage } from "../../lib/errors";
+import { buildContextSummary } from "../../chats/utils";
 
 // Local view types for clarity
 type ChatRole = "user" | "assistant" | "system";
@@ -71,7 +71,7 @@ export function computeHeuristics(
     tokSet(serialize(prevUser?.content ?? "")),
     tokSet(newContent),
   );
-  const lastTs = prevUser?.timestamp as number | undefined;
+  const lastTs = prevUser?.timestamp;
   const minutesGap = lastTs ? Math.floor((Date.now() - lastTs) / 60000) : 0;
   const timeSuggestNew = minutesGap >= 120;
 
@@ -162,7 +162,7 @@ export function isFollowUpMessage(message: string): boolean {
     messageLC.includes("what about") ||
     messageLC.includes("how about") ||
     messageLC.startsWith("and ") ||
-    !!messageLC.match(/^(it|they|this|that|these|those)\s/)
+    !!new RegExp(/^(it|they|this|that|these|those)\s/).exec(messageLC)
   );
 }
 

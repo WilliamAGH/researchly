@@ -5,8 +5,8 @@
  * - TTL management
  */
 
-import { CACHE_TTL } from "../lib/constants/cache";
-import type { SearchResponse } from "../schemas/search";
+import { CACHE_TTL } from "../../lib/constants/cache";
+import type { SearchResponse } from "../../schemas/search";
 
 // Types
 export type PlanResult = {

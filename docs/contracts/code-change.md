@@ -64,19 +64,35 @@ Every feature (e.g., `chats`) has a **Public Facade** file and a **Private Modul
 ```text
 convex/
 ├── schema.ts                # Central Database Schema (Single Source of Truth)
-├── auth.ts                  # Facade
+├── tools/                   # CAPABILITIES: Self-contained tool domains
+│   ├── crawl/               #    - Web page content retrieval
+│   ├── search/              #    - Web URL discovery (SerpAPI, OpenRouter, DDG)
+│   ├── plan/                #    - Research planning
+│   └── vision/              #    - Image analysis
+├── ai/                      # LLM INTERACTIONS: Provider config, prompts
+│   ├── providers/           #    - OpenAI client, model resolution, streaming
+│   └── prompts/             #    - Agent and search prompts
+├── agents/                  # ORCHESTRATION: Workflows, streaming, agent definitions
+│   ├── tools.ts             #    - Tool registry (assembles arrays for agent runs)
+│   ├── orchestration.ts     #    - Main orchestrator
+│   └── workflow_*.ts        #    - Workflow variants
 ├── chats.ts                 # FACADE: Public API (exports only what frontend needs)
 ├── chats/                   # MODULE: Domain Logic (Hidden implementation)
 │   ├── core.ts              #    - CRUD primitives
-│   ├── permissions.ts       #    - Auth & Policy rules
-│   ├── actions.ts           #    - Node.js actions ("use node";)
+│   ├── access.ts            #    - Read access validation
+│   ├── writeAccess.ts       #    - Auth & Policy rules
 │   └── utils.ts             #    - Internal helpers (not exported by facade)
 ├── lib/                     # SHARED KERNEL: Stateless utilities only
-│   ├── schemas/             #    - Zod schemas for external APIs (OpenAI, Stripe)
+│   ├── constants/           #    - Shared constants (cache, search, seo)
+│   ├── security/            #    - Security utilities (sanitization, patterns)
 │   ├── validation/          #    - Validation helpers
-│   └── utils.ts             #    - Generic helpers (date, math)
+│   └── url.ts               #    - URL normalization and validation
+├── schemas/                 # Zod schemas for external API boundaries
+├── http/                    # HTTP route handlers
 └── _generated/              # Convex auto-generated code
 ```
+
+For full taxonomy (tools/ | ai/ | agents/ layers), see [`docs/domains/architecture.md`](../domains/architecture.md).
 
 ### Frontend Structure (`src/`)
 

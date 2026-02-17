@@ -1,7 +1,7 @@
 "use node";
 
-import { generateMessageId } from "../id_generator";
-import { isRecord } from "../validators";
+import { generateMessageId } from "../../lib/id_generator";
+import { isRecord } from "../../lib/validators";
 
 /**
  * Type guards for request payload inspection

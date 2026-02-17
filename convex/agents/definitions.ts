@@ -20,7 +20,7 @@ import {
   getOpenAIEnvironment,
   getModelName,
   getVisionModelName,
-} from "../lib/providers/openai";
+} from "../ai/providers/openai";
 import { AGENT_LIMITS } from "../lib/constants/cache";
 import {
   QUERY_PLANNER_PROMPT,
@@ -28,7 +28,7 @@ import {
   ANSWER_SYNTHESIS_PROMPT,
   CONVERSATIONAL_IMAGE_ANALYSIS_GUIDELINES,
   buildConversationalAgentPrompt,
-} from "./prompts";
+} from "../ai/prompts/agent";
 
 // Initialize OpenAI environment once
 const env = getOpenAIEnvironment();

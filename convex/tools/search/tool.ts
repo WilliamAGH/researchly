@@ -3,10 +3,13 @@
 import { z } from "zod"; // v3 - required by @openai/agents peer dependency
 import { tool } from "@openai/agents";
 import type { FunctionTool } from "@openai/agents";
-import { api } from "../_generated/api";
-import { generateMessageId } from "../lib/id_generator";
-import { getErrorMessage } from "../lib/errors";
-import { getActionCtx, type AgentToolRunContext } from "./tools_context";
+import { api } from "../../_generated/api";
+import { generateMessageId } from "../../lib/id_generator";
+import { getErrorMessage } from "../../lib/errors";
+import {
+  getActionCtx,
+  type AgentToolRunContext,
+} from "../../agents/tools_context";
 
 /** Default relevance score when search results don't include one */
 const DEFAULT_RELEVANCE_SCORE = 0.5;
@@ -103,7 +106,7 @@ Always propagate the top-level contextId into every sourcesUsed entry you derive
 
     try {
       // @ts-ignore - Known Convex limitation with complex type inference
-      const results = await actionCtx.runAction(api.search.searchWeb, {
+      const results = await actionCtx.runAction(api.tools.search.action.searchWeb, {
         query: input.query,
         maxResults: input.maxResults || 5,
       });

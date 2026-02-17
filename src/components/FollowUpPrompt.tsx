@@ -1,7 +1,7 @@
 /**
  * Follow-up prompt banner
  * - Suggests starting a new chat vs continuing current
- * - Shows subtle planner hint (reason + confidence)
+ * - Shows inline error if summarization failed
  * - Minimal, unobtrusive UI for quick choice
  */
 
@@ -12,10 +12,8 @@ interface FollowUpPromptProps {
   onContinue: () => void;
   onNewChat: () => void;
   onNewChatWithSummary?: () => void;
-  /** Short reason string from planner (already sanitized) */
-  hintReason?: string;
-  /** Confidence 0-1 from planner */
-  hintConfidence?: number;
+  /** Error from the last summarization attempt, shown inline so the user knows summary failed. */
+  summaryError?: Error;
 }
 
 export function FollowUpPrompt({
@@ -23,21 +21,12 @@ export function FollowUpPrompt({
   onContinue,
   onNewChat,
   onNewChatWithSummary,
-  hintReason,
-  hintConfidence,
-}: FollowUpPromptProps) {
+  summaryError,
+}: Readonly<FollowUpPromptProps>) {
   if (!isOpen) return null;
 
-  const confidencePct =
-    typeof hintConfidence === "number"
-      ? Math.round(hintConfidence * 100)
-      : undefined;
-
   return (
-    <div
-      role="status"
-      className="absolute bottom-full w-full max-w-3xl mx-auto left-0 right-0 px-3 mb-2 animate-slide-up z-40"
-    >
+    <output className="absolute bottom-full w-full max-w-3xl mx-auto left-0 right-0 px-3 mb-2 animate-slide-up z-40 block">
       <div className="w-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-200 rounded-md">
         <div className="px-3 sm:px-4 py-2">
           {/* Headline row */}
@@ -65,21 +54,13 @@ export function FollowUpPrompt({
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
             <div
               className="text-xs text-amber-800/90 dark:text-amber-200/90 sm:flex-1 min-w-0 truncate sm:whitespace-normal"
-              title="New chats keep results focused. Choose how to continue."
+              title="New chats keep results focused and on topic."
             >
-              New chats keep results focused. Choose how to continue.
-              {(hintReason || confidencePct !== undefined) && (
-                <span className="ml-2 inline-flex items-center gap-1">
-                  {confidencePct !== undefined && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/30 border border-amber-300/60 dark:border-amber-700/60 text-[11px]">
-                      {confidencePct}%
-                    </span>
-                  )}
-                  {hintReason && (
-                    <span className="truncate" title={hintReason}>
-                      {hintReason}
-                    </span>
-                  )}
+              Start a new chat for better results on changes from your original
+              topic.
+              {summaryError && (
+                <span className="block mt-1 text-red-600 dark:text-red-400">
+                  Could not load summary. Try again or start a plain new chat.
                 </span>
               )}
             </div>
@@ -87,7 +68,7 @@ export function FollowUpPrompt({
               <button
                 type="button"
                 onClick={onNewChat}
-                className="px-2 md:px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
+                className="px-2 md:px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[13px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
               >
                 Start New Chat
               </button>
@@ -95,7 +76,7 @@ export function FollowUpPrompt({
                 <button
                   type="button"
                   onClick={onNewChatWithSummary}
-                  className="px-2 md:px-2.5 py-1 bg-emerald-600/90 hover:bg-emerald-700 text-white text-[11px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
+                  className="px-2 md:px-2.5 py-1 bg-emerald-600/90 hover:bg-emerald-700 text-white text-[13px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
                 >
                   New Chat w/ Summary
                 </button>
@@ -103,7 +84,7 @@ export function FollowUpPrompt({
               <button
                 type="button"
                 onClick={onContinue}
-                className="px-2 md:px-2.5 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
+                className="px-2 md:px-2.5 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-[13px] font-medium rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
               >
                 Continue Here
               </button>
@@ -111,6 +92,6 @@ export function FollowUpPrompt({
           </div>
         </div>
       </div>
-    </div>
+    </output>
   );
 }

@@ -1,11 +1,11 @@
 "use node";
 
-import { getErrorMessage } from "../lib/errors";
+import { getErrorMessage } from "../../lib/errors";
 import { searchWithOpenRouter } from "./providers/openrouter";
 import { searchWithSerpApiDuckDuckGo } from "./providers/serpapi";
 import { searchWithDuckDuckGo } from "./providers/duckduckgo";
 import { getCachedSearchResults, setCachedSearchResults } from "./cache";
-import { hasOpenRouterStreamingConfig } from "../lib/providers/openai_streaming";
+import { hasOpenRouterStreamingConfig } from "../../ai/providers/openai_streaming";
 
 export async function runSearchWeb(args: {
   query: string;

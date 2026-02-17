@@ -5,22 +5,22 @@
  * Determines search strategy based on conversation context and heuristics.
  */
 
-import type { ActionCtx } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
-import { api } from "../_generated/api";
-import { getErrorMessage } from "../lib/errors";
+import type { ActionCtx } from "../../_generated/server";
+import type { Id } from "../../_generated/dataModel";
+import { api } from "../../_generated/api";
+import { getErrorMessage } from "../../lib/errors";
 import {
   SEARCH_PLANNER_SYSTEM_PROMPT,
   DEFAULT_MODEL,
   DEFAULT_TEMPERATURE,
   DEFAULT_MAX_TOKENS,
-} from "./prompts";
-import { applyEnhancements } from "../enhancements";
+} from "../../ai/prompts/search";
+import { applyEnhancements } from "../../enhancements";
 import {
   collectOpenRouterChatCompletionText,
   hasOpenRouterStreamingConfig,
-} from "../lib/providers/openai_streaming";
-import { serialize, diversifyQueries } from "./utils";
+} from "../../ai/providers/openai_streaming";
+import { serialize, diversifyQueries } from "../search/utils";
 import {
   type PlanResult,
   planCache,
@@ -29,10 +29,10 @@ import {
   recordRateLimitAttempt,
   getCachedPlan,
   setCachedPlan,
-} from "./cache";
-import { safeParseWithLog } from "../lib/validation/zodUtils";
-import { LLMPlanSchema } from "../schemas/planner";
-import type { LLMPlan } from "../schemas/planner";
+} from "../search/cache";
+import { safeParseWithLog } from "../../lib/validation/zodUtils";
+import { LLMPlanSchema } from "../../schemas/planner";
+import type { LLMPlan } from "../../schemas/planner";
 import {
   type ChatMessageView,
   buildEmptyPlan,
@@ -42,7 +42,7 @@ import {
   buildDefaultPlan,
   enhanceDefaultPlanWithContext,
   shouldUseLLMPlanning,
-} from "./plan_search_helpers";
+} from "./helpers";
 
 /** Build cache key from chat context */
 function buildCacheKey(
@@ -68,7 +68,7 @@ function parseLLMResponse(
       responseLength: text.length,
       error: getErrorMessage(jsonError),
     });
-    const match = text.match(/\{[\s\S]*\}/);
+    const match = new RegExp(/\{[\s\S]*\}/).exec(text);
     parsed = match ? JSON.parse(match[0]) : null;
   }
 
@@ -108,7 +108,7 @@ function buildFinalPlanFromLLM(
         .slice(0, 6),
     ),
   );
-  const queries = diversifyQueries(baseList as string[], newMessage);
+  const queries = diversifyQueries(baseList, newMessage);
 
   return {
     shouldSearch: Boolean(plan.shouldSearch),
@@ -239,7 +239,7 @@ export async function runPlanSearch(
     });
 
     const plan = parseLLMResponse(text, args.chatId, args.newMessage);
-    if (plan && plan.shouldSearch !== undefined && plan.queries) {
+    if (plan?.shouldSearch !== undefined && plan.queries) {
       const finalPlan = buildFinalPlanFromLLM(plan, args.newMessage);
       if (finalPlan) {
         setCachedPlan(cacheKey, finalPlan);

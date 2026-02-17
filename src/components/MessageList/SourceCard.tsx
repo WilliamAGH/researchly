@@ -16,16 +16,25 @@ import {
 const HIGH_RELEVANCE_THRESHOLD = 0.8;
 const MEDIUM_RELEVANCE_THRESHOLD = 0.5;
 
-type CrawlState = "succeeded" | "failed" | "not_attempted" | "not_applicable";
+export type CrawlState =
+  | "succeeded"
+  | "failed"
+  | "not_attempted"
+  | "not_applicable";
 
-interface SourceCardProps {
+/** Per-source data computed by the parent and passed as a single object. */
+export interface SourceCardData {
   source: WebSourceCard;
-  messageId: string;
-  index: number;
   crawlState: CrawlState;
   markedLowRelevance: boolean;
   crawlErrorMessage: string | undefined;
   serverContextMarkdown: string | undefined;
+}
+
+interface SourceCardProps {
+  data: SourceCardData;
+  messageId: string;
+  index: number;
   hoveredSourceUrl: string | null;
   onSourceHover: (url: string | null) => void;
   showDevSourceContextCopy: boolean;
@@ -97,17 +106,20 @@ function resolveTypeBadge(
 }
 
 export const SourceCard = React.memo(function SourceCard({
-  source,
+  data,
   messageId,
   index,
-  crawlState,
-  markedLowRelevance,
-  crawlErrorMessage,
-  serverContextMarkdown,
   hoveredSourceUrl,
   onSourceHover,
   showDevSourceContextCopy,
 }: SourceCardProps) {
+  const {
+    source,
+    crawlState,
+    markedLowRelevance,
+    crawlErrorMessage,
+    serverContextMarkdown,
+  } = data;
   const hostname = getDomainFromUrl(source.url) || getSafeHostname(source.url);
   const favicon = getFaviconUrl(source.url);
   const isHovered = hoveredSourceUrl === source.url;

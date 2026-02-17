@@ -8,29 +8,20 @@
  * @see {@link ./orchestration.ts} - consumer of this module
  */
 import { api } from "../_generated/api";
-import { generateMessageId } from "../lib/id_generator";
-import {
-  AGENT_LIMITS,
-  CONTENT_LIMITS,
-  RELEVANCE_SCORES,
-} from "../lib/constants/cache";
+import { AGENT_LIMITS } from "../lib/constants/cache";
 import {
   createEmptyHarvestedData,
   type HarvestedData,
 } from "../schemas/agents";
-import type { ScrapedContent, SerpEnrichment } from "../schemas/search";
+import type { SerpEnrichment } from "../schemas/search";
 import type { WorkflowActionCtx } from "./orchestration_persistence";
+import { logWorkflowError, logWorkflow } from "./workflow_logger";
 import {
   logParallelSearch,
   logSearchResult,
-  logWorkflowError,
   logParallelSearchComplete,
-  logParallelScrape,
-  logScrapeResult,
-  logScrapeSkip,
-  logParallelScrapeComplete,
-  logWorkflow,
-} from "./workflow_logger";
+} from "./workflow_logger_research";
+import { executeScrapePhase } from "./parallel_research_scrape";
 
 // ============================================
 // Types
@@ -173,7 +164,7 @@ export async function* executeParallelResearch(
       const queryStart = Date.now();
       try {
         // @ts-ignore TS2589 - ActionCtx type inference depth exceeded
-        const result = await ctx.runAction(api.search.searchWeb, {
+        const result = await ctx.runAction(api.tools.search.action.searchWeb, {
           query: sq.query,
           maxResults: 8,
         });
@@ -240,96 +231,24 @@ export async function* executeParallelResearch(
   // Phase 2: Parallel Scrape
   // ============================================
 
-  // Deduplicate URLs and select top candidates for scraping
-  const uniqueUrls = Array.from(
-    new Map(harvested.searchResults.map((r) => [r.url, r])).values(),
-  )
-    .filter((r) => r.url && r.url.startsWith("http"))
-    .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
-    .slice(0, maxScrapeUrls);
-
-  if (uniqueUrls.length > 0) {
+  if (harvested.searchResults.length > 0) {
     yield {
       type: "progress",
       stage: "scraping",
-      message: `${uniqueUrls.length} sources in parallel...`,
-      urls: uniqueUrls.map((u) => u.url),
+      message: `Scraping top sources in parallel...`,
+      urls: harvested.searchResults.slice(0, maxScrapeUrls).map((r) => r.url),
     };
 
-    logParallelScrape(uniqueUrls.length);
-
-    const scrapeStart = Date.now();
-
-    const scrapePromises = uniqueUrls.map(async (urlInfo) => {
-      const url = urlInfo.url;
-      const contextId = generateMessageId();
-      const singleScrapeStart = Date.now();
-
-      try {
-        const content = await ctx.runAction(
-          api.search.scraperAction.scrapeUrl,
-          { url },
-        );
-
-        // Skip if we got an error response or minimal content
-        if (content.content.length < CONTENT_LIMITS.MIN_CONTENT_LENGTH) {
-          logScrapeSkip(
-            Date.now() - singleScrapeStart,
-            url,
-            content.content.length,
-          );
-          return null;
-        }
-
-        logScrapeResult(
-          Date.now() - singleScrapeStart,
-          url,
-          content.content.length,
-        );
-
-        const scraped: ScrapedContent = {
-          url,
-          title: content.title,
-          content: content.content,
-          summary:
-            content.summary ||
-            content.content.substring(
-              0,
-              CONTENT_LIMITS.SUMMARY_TRUNCATE_LENGTH,
-            ),
-          contentLength: content.content.length,
-          scrapedAt: Date.now(),
-          contextId,
-          relevanceScore:
-            urlInfo.relevanceScore || RELEVANCE_SCORES.SCRAPED_PAGE,
-        };
-        return scraped;
-      } catch (error) {
-        logWorkflowError(
-          "SCRAPE_FAILED",
-          `${url} [${Date.now() - singleScrapeStart}ms]`,
-          error,
-        );
-        return null;
-      }
-    });
-
-    const scrapeResults = await Promise.all(scrapePromises);
-    stats.scrapeDurationMs = Date.now() - scrapeStart;
-
-    const successfulScrapes = scrapeResults.filter(
-      (r): r is ScrapedContent => r !== null,
+    const scrapeResult = await executeScrapePhase(
+      ctx,
+      harvested.searchResults,
+      maxScrapeUrls,
     );
-    harvested.scrapedContent.push(...successfulScrapes);
 
-    stats.scrapeSuccessCount = successfulScrapes.length;
-    stats.scrapeFailCount = uniqueUrls.length - successfulScrapes.length;
-
-    logParallelScrapeComplete(
-      stats.scrapeDurationMs,
-      stats.scrapeSuccessCount,
-      uniqueUrls.length,
-    );
+    harvested.scrapedContent.push(...scrapeResult.scrapedContent);
+    stats.scrapeDurationMs = scrapeResult.scrapeDurationMs;
+    stats.scrapeSuccessCount = scrapeResult.scrapeSuccessCount;
+    stats.scrapeFailCount = scrapeResult.scrapeFailCount;
 
     yield {
       type: "scrape_complete",

@@ -9,7 +9,7 @@
  */
 
 import type OpenAI from "openai";
-import { getErrorMessage } from "../errors";
+import { getErrorMessage } from "../../lib/errors";
 
 const DEFAULT_HEALTHCHECK_TIMEOUT_MS = 8000;
 const HEALTHCHECK_INPUT = "healthcheck";

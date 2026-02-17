@@ -99,7 +99,7 @@ export function registerScrapeRoutes(http: HttpRouter) {
       dlog("URL:", url);
 
       try {
-        const result = await ctx.runAction(api.search.scraperAction.scrapeUrl, {
+        const result = await ctx.runAction(api.tools.crawl.action.scrapeUrl, {
           url,
         });
 

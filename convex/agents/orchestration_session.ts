@@ -217,7 +217,7 @@ export async function initializeWorkflowSession(
   let imageAnalysis: string | undefined;
   if (imageUrls.length > 0) {
     try {
-      const { analyzeImages } = await import("./vision_analysis");
+      const { analyzeImages } = await import("../tools/vision/analysis");
       const result = await analyzeImages({
         imageUrls,
         userQuery: args.userQuery,

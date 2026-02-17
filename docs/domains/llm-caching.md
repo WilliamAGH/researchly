@@ -6,8 +6,8 @@ This file defines provider-side LLM caching behavior for the active chat pipelin
 
 - The app uses `@openai/agents` `run(...)` from Convex actions ([`convex/agents/workflow_conversational.ts#L89`](../../convex/agents/workflow_conversational.ts#L89)).
 - Provider mode is selected in one place:
-  - OpenRouter or `/chat/completions` endpoint -> Chat Completions API (`setOpenAIAPI("chat_completions")`) ([`convex/lib/providers/openai.ts#L84`](../../convex/lib/providers/openai.ts#L84), [`convex/lib/providers/openai.ts#L99`](../../convex/lib/providers/openai.ts#L99)).
-  - OpenAI endpoint -> Responses API (`setOpenAIAPI("responses")`) ([`convex/lib/providers/openai.ts#L105`](../../convex/lib/providers/openai.ts#L105)).
+  - OpenRouter or `/chat/completions` endpoint -> Chat Completions API (`setOpenAIAPI("chat_completions")`) ([`convex/ai/providers/openai.ts#L84`](../../convex/ai/providers/openai.ts#L84), [`convex/ai/providers/openai.ts#L99`](../../convex/ai/providers/openai.ts#L99)).
+  - OpenAI endpoint -> Responses API (`setOpenAIAPI("responses")`) ([`convex/ai/providers/openai.ts#L105`](../../convex/ai/providers/openai.ts#L105)).
 - Per turn, we send one rebuilt input string (`Previous conversation: ... User: ...`) instead of provider conversation handles ([`convex/agents/workflow_conversational.ts#L78`](../../convex/agents/workflow_conversational.ts#L78)).
 - `run(...)` is called without `previousResponseId` or `conversationId` even though the SDK supports both ([`node_modules/@openai/agents-core/dist/run.d.ts`](../../node_modules/@openai/agents-core/dist/run.d.ts)).
 
@@ -18,7 +18,7 @@ This file defines provider-side LLM caching behavior for the active chat pipelin
 - OpenAI supports automatic [prompt caching](https://platform.openai.com/docs/guides/prompt-caching).
 - OpenAI Responses supports server-managed state via [`previous_response_id` and `conversation`](https://platform.openai.com/docs/guides/conversation-state?api-mode=responses), and request-level cache steering such as [`prompt_cache_key`](https://platform.openai.com/docs/api-reference/responses/create).
 - Current status in this repo:
-  - We use Responses only on OpenAI endpoints ([`convex/lib/providers/openai.ts#L105`](../../convex/lib/providers/openai.ts#L105)).
+  - We use Responses only on OpenAI endpoints ([`convex/ai/providers/openai.ts#L105`](../../convex/ai/providers/openai.ts#L105)).
   - We do not pass `previousResponseId` or `conversationId` into `run(...)` ([`convex/agents/workflow_conversational.ts#L89`](../../convex/agents/workflow_conversational.ts#L89)).
   - We do not set `prompt_cache_key` in model settings/provider data.
 
@@ -27,7 +27,7 @@ This file defines provider-side LLM caching behavior for the active chat pipelin
 - Anthropic prompt caching is explicit and uses `cache_control` breakpoints ([prompt caching docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching), [API prompt caching reference](https://docs.claude.com/en/api/prompt-caching)).
 - Current status in this repo:
   - No active request path sets Anthropic `cache_control`.
-  - `cache_control` exists only in a legacy OpenRouter type and is not wired into live request construction ([`convex/lib/providers/openrouter_types.ts#L8`](../../convex/lib/providers/openrouter_types.ts#L8)).
+  - `cache_control` exists only in a legacy OpenRouter type and is not wired into live request construction ([`convex/ai/providers/openrouter_types.ts#L8`](../../convex/ai/providers/openrouter_types.ts#L8)).
 
 ### OpenRouter
 
@@ -35,8 +35,8 @@ This file defines provider-side LLM caching behavior for the active chat pipelin
   - OpenAI/Grok models: automatic caching.
   - Anthropic models: explicit `cache_control` still required.
 - Current status in this repo:
-  - OpenRouter traffic goes through Chat Completions mode ([`convex/lib/providers/openai.ts#L84`](../../convex/lib/providers/openai.ts#L84), [`convex/lib/providers/openai.ts#L99`](../../convex/lib/providers/openai.ts#L99)).
-  - Provider routing settings are sent (`provider.order`, `allow_fallbacks`) but prompt-cache directives are not ([`convex/lib/providers/openai.ts#L177`](../../convex/lib/providers/openai.ts#L177), [`convex/lib/providers/openai_config.ts#L37`](../../convex/lib/providers/openai_config.ts#L37)).
+  - OpenRouter traffic goes through Chat Completions mode ([`convex/ai/providers/openai.ts#L84`](../../convex/ai/providers/openai.ts#L84), [`convex/ai/providers/openai.ts#L99`](../../convex/ai/providers/openai.ts#L99)).
+  - Provider routing settings are sent (`provider.order`, `allow_fallbacks`) but prompt-cache directives are not ([`convex/ai/providers/openai.ts#L177`](../../convex/ai/providers/openai.ts#L177), [`convex/ai/providers/openai_config.ts#L37`](../../convex/ai/providers/openai_config.ts#L37)).
 
 ### xAI / Grok
 
@@ -49,7 +49,7 @@ This file defines provider-side LLM caching behavior for the active chat pipelin
 
 - Convex actions execute server-side and call third-party APIs; Convex is not the provider-side prompt cache itself ([Convex actions](https://docs.convex.dev/functions/actions)).
 - Current status in this repo:
-  - We have app-level caches for search/scrape/planning lifetimes ([`convex/lib/constants/cache.ts`](../../convex/lib/constants/cache.ts), [`convex/search/cache.ts`](../../convex/search/cache.ts)).
+  - We have app-level caches for search/scrape/planning lifetimes ([`convex/lib/constants/cache.ts`](../../convex/lib/constants/cache.ts), [`convex/tools/search/cache.ts`](../../convex/tools/search/cache.ts)).
   - Those are distinct from OpenAI/Anthropic/OpenRouter/xAI prompt-token caching.
 
 ## Bottom Line for Current Pipeline

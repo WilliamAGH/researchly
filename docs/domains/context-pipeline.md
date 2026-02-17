@@ -26,7 +26,7 @@ For exact runtime details of URL discovery/scraping/crawling, see [`docs/domains
 - One user turn (one `/api/ai/agent/stream` request) can contain multiple agent turns.
 - Example budget in comments: `plan_research (1)` + `search_web up to 3` + `scrape_webpage up to 4` + `final response (1)` = `9` worst-case sequential turns, with headroom set to `12` ([`convex/lib/constants/cache.ts#L22`](../../convex/lib/constants/cache.ts#L22), [`convex/lib/constants/cache.ts#L30`](../../convex/lib/constants/cache.ts#L30)).
 
-- `MAX_SCRAPED_PAGE_CONTENT_CHARS_PER_SCRAPE = 12000` per scraped page body ([`convex/search/scraper.ts#L24`](../../convex/search/scraper.ts#L24), [`convex/search/scraper.ts#L158`](../../convex/search/scraper.ts#L158)).
+- `MAX_SCRAPED_PAGE_CONTENT_CHARS_PER_SCRAPE = 12000` per scraped page body ([`convex/tools/crawl/orchestrator.ts`](../../convex/tools/crawl/orchestrator.ts)).
 - `MAX_WEB_RESEARCH_SOURCES_PER_HTTP_REQUEST = 12` on inbound `payload.webResearchSources` ([`convex/http/routes/aiAgent_utils.ts#L13`](../../convex/http/routes/aiAgent_utils.ts#L13), [`convex/http/routes/aiAgent_utils.ts#L99`](../../convex/http/routes/aiAgent_utils.ts#L99)).
 - `MAX_WEB_RESEARCH_SOURCE_URL_CHARS_PER_HTTP_REQUEST = 2000` and `MAX_WEB_RESEARCH_SOURCE_TITLE_CHARS_PER_HTTP_REQUEST = 500` on inbound source sanitize ([`convex/http/routes/aiAgent_utils.ts#L11`](../../convex/http/routes/aiAgent_utils.ts#L11), [`convex/http/routes/aiAgent_utils.ts#L12`](../../convex/http/routes/aiAgent_utils.ts#L12)).
 
@@ -34,7 +34,7 @@ Undefined in current repo constants for this path:
 
 - `MAX_CHARACTERS_PER_MESSAGE_RECEIVED_FROM_BACKEND = undefined` (assistant output is persisted without a local max-char clamp in this pipeline) ([`convex/agents/workflow_conversational.ts#L214`](../../convex/agents/workflow_conversational.ts#L214), [`convex/messages.ts#L140`](../../convex/messages.ts#L140)).
 - `MAX_CHARACTERS_PER_CHAT_CONVERSATION_ID = undefined` (format validation exists; no explicit max-char constant) ([`convex/lib/validators.ts#L123`](../../convex/lib/validators.ts#L123), [`convex/lib/validators.ts#L175`](../../convex/lib/validators.ts#L175)).
-- `MAX_CHARACTERS_PER_TOOL_CALL = undefined` as a global tool-schema char cap (`z.string()` without `.max(...)`) ([`convex/agents/tools_plan.ts#L42`](../../convex/agents/tools_plan.ts#L42), [`convex/agents/tools_search.ts#L72`](../../convex/agents/tools_search.ts#L72), [`convex/agents/tools_scrape.ts#L39`](../../convex/agents/tools_scrape.ts#L39)).
+- `MAX_CHARACTERS_PER_TOOL_CALL = undefined` as a global tool-schema char cap (`z.string()` without `.max(...)`) ([`convex/tools/plan/tool.ts`](../../convex/tools/plan/tool.ts), [`convex/tools/search/tool.ts`](../../convex/tools/search/tool.ts), [`convex/tools/crawl/tool.ts`](../../convex/tools/crawl/tool.ts)).
 
 Typical English estimate: `4000` chars is about `650-800` words.
 
@@ -105,12 +105,12 @@ Code: [`convex/agents/helpers_builders.ts#L235`](../../convex/agents/helpers_bui
 
 - Client: send turn request; receive stream; render UI ([`src/hooks/chatActions/sendMessage.ts#L17`](../../src/hooks/chatActions/sendMessage.ts#L17)).
 - Server: validate/sanitize request, fetch/save messages, build canonical context, run agent/tools, persist assistant output/metadata ([`convex/http/routes/aiAgent_stream.ts#L21`](../../convex/http/routes/aiAgent_stream.ts#L21), [`convex/agents/workflow_conversational.ts#L44`](../../convex/agents/workflow_conversational.ts#L44)).
-- Tool execution is server-side Convex Node runtime, not client-side ([`convex/agents/tools_plan.ts#L1`](../../convex/agents/tools_plan.ts#L1), [`convex/agents/tools_search.ts#L1`](../../convex/agents/tools_search.ts#L1), [`convex/agents/tools_scrape.ts#L1`](../../convex/agents/tools_scrape.ts#L1)).
+- Tool execution is server-side Convex Node runtime, not client-side ([`convex/tools/plan/tool.ts`](../../convex/tools/plan/tool.ts), [`convex/tools/search/tool.ts`](../../convex/tools/search/tool.ts), [`convex/tools/crawl/tool.ts`](../../convex/tools/crawl/tool.ts)).
 
 ## URL Discovery And Crawling Stack
 
-- URL discovery is `search_web` -> `api.search.searchWeb` with provider cascade SerpAPI -> OpenRouter -> DuckDuckGo -> fallback ([`convex/agents/tools_search.ts#L106`](../../convex/agents/tools_search.ts#L106), [`convex/search/search_web_handler.ts`](../../convex/search/search_web_handler.ts)).
-- Crawling/parsing is `scrape_webpage` -> `api.search.scraperAction.scrapeUrl` -> `scrapeWithCheerio` ([`convex/agents/tools_scrape.ts#L67`](../../convex/agents/tools_scrape.ts#L67), [`convex/search/scraperAction.ts`](../../convex/search/scraperAction.ts), [`convex/search/scraper.ts`](../../convex/search/scraper.ts)).
+- URL discovery is `search_web` -> `api.tools.search.action.searchWeb` with provider cascade SerpAPI -> OpenRouter -> DuckDuckGo -> fallback ([`convex/tools/search/tool.ts`](../../convex/tools/search/tool.ts), [`convex/tools/search/handler.ts`](../../convex/tools/search/handler.ts)).
+- Crawling/parsing is `scrape_webpage` -> `api.tools.crawl.action.scrapeUrl` -> `scrapeWithCheerio` ([`convex/tools/crawl/tool.ts`](../../convex/tools/crawl/tool.ts), [`convex/tools/crawl/action.ts`](../../convex/tools/crawl/action.ts), [`convex/tools/crawl/orchestrator.ts`](../../convex/tools/crawl/orchestrator.ts)).
 - Runtime boundary, dependency list, success/failure rules, and proxy/deployment details are defined in [`docs/domains/scraping-crawling.md`](./scraping-crawling.md).
 
 ## Active Path vs Dormant Code

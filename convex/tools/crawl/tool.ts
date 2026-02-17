@@ -3,11 +3,14 @@
 import { z } from "zod"; // v3 - required by @openai/agents peer dependency
 import { tool } from "@openai/agents";
 import type { FunctionTool } from "@openai/agents";
-import { api } from "../_generated/api";
-import { generateMessageId } from "../lib/id_generator";
-import { getErrorMessage } from "../lib/errors";
-import { CONTENT_LIMITS } from "../lib/constants/cache";
-import { getActionCtx, type AgentToolRunContext } from "./tools_context";
+import { api } from "../../_generated/api";
+import { generateMessageId } from "../../lib/id_generator";
+import { getErrorMessage } from "../../lib/errors";
+import { CONTENT_LIMITS } from "../../lib/constants/cache";
+import {
+  getActionCtx,
+  type AgentToolRunContext,
+} from "../../agents/tools_context";
 
 /**
  * Web Scraping Tool
@@ -65,7 +68,7 @@ Emit exactly one sourcesUsed entry with type "scraped_page" and relevance "high"
 
     try {
       const content = await actionCtx.runAction(
-        api.search.scraperAction.scrapeUrl,
+        api.tools.crawl.action.scrapeUrl,
         {
           url: input.url,
         },

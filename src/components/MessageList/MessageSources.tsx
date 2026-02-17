@@ -18,10 +18,9 @@ import {
   getSafeHostname,
 } from "@/lib/utils/favicon";
 import { SourceCard } from "./SourceCard";
+import type { CrawlState, SourceCardData } from "./SourceCard";
 
 const PREVIEW_SOURCE_COUNT = 3;
-
-type CrawlState = "succeeded" | "failed" | "not_attempted" | "not_applicable";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -81,7 +80,7 @@ export function MessageSources({
   const displaySources = toWebSourceCards(webResearchSources);
   const previewSources = displaySources.slice(0, PREVIEW_SOURCE_COUNT);
   const showDevSourceContextCopy = import.meta.env.DEV;
-  const sourceRows = displaySources.map((source) => ({
+  const sourceRows: SourceCardData[] = displaySources.map((source) => ({
     source,
     crawlState: getSourceCrawlState(source),
     markedLowRelevance: source.metadata?.markedLowRelevance === true,
@@ -191,32 +190,17 @@ export function MessageSources({
       >
         <div className="overflow-hidden min-h-0">
           <div className="mt-2 space-y-2 px-2 max-h-[300px] overflow-y-auto">
-            {sourceRows.map(
-              (
-                {
-                  source,
-                  crawlState,
-                  markedLowRelevance,
-                  crawlErrorMessage,
-                  serverContextMarkdown,
-                },
-                i,
-              ) => (
-                <SourceCard
-                  key={`${messageId}-source-${source.url}-${i}`}
-                  source={source}
-                  messageId={messageId}
-                  index={i}
-                  crawlState={crawlState}
-                  markedLowRelevance={markedLowRelevance}
-                  crawlErrorMessage={crawlErrorMessage}
-                  serverContextMarkdown={serverContextMarkdown}
-                  hoveredSourceUrl={hoveredSourceUrl}
-                  onSourceHover={onSourceHover}
-                  showDevSourceContextCopy={showDevSourceContextCopy}
-                />
-              ),
-            )}
+            {sourceRows.map((row, i) => (
+              <SourceCard
+                key={`${messageId}-source-${row.source.url}-${i}`}
+                data={row}
+                messageId={messageId}
+                index={i}
+                hoveredSourceUrl={hoveredSourceUrl}
+                onSourceHover={onSourceHover}
+                showDevSourceContextCopy={showDevSourceContextCopy}
+              />
+            ))}
           </div>
         </div>
       </div>

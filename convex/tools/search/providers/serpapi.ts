@@ -7,11 +7,11 @@ import type {
   SearchResult,
   SearchProviderResult,
   SerpEnrichment,
-} from "../../schemas/search";
-import { SerpApiResponseSchema } from "../../schemas/search";
-import { safeParseWithLog } from "../../lib/validation/zodUtils";
-import { getErrorMessage } from "../../lib/errors";
-export type { SearchResult } from "../../schemas/search";
+} from "../../../schemas/search";
+import { SerpApiResponseSchema } from "../../../schemas/search";
+import { safeParseWithLog } from "../../../lib/validation/zodUtils";
+import { getErrorMessage } from "../../../lib/errors";
+export type { SearchResult } from "../../../schemas/search";
 
 /**
  * Query SerpAPI (Google engine)

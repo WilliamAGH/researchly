@@ -209,7 +209,7 @@ export const deleteMessage = mutation({
       // @ts-ignore - Known Convex TS2589: type instantiation too deep for scheduler generic
       await ctx.scheduler.runAfter(
         0,
-        internal.search.invalidatePlanCacheForChat,
+        internal.tools.plan.action.invalidatePlanCacheForChat,
         { chatId: message.chatId },
       );
     } catch (schedulerError) {

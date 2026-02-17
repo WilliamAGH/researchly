@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import {
   extractKeywordsForTest as extractKW,
   augmentQueryForTest as augmentQ,
-} from "../../../convex/search/utils";
-import { searchWithDuckDuckGo } from "../../../convex/search/providers/duckduckgo.ts";
+} from "../../../convex/tools/search/utils";
+import { searchWithDuckDuckGo } from "../../../convex/tools/search/providers/duckduckgo.ts";
 
 // Prevent live network calls in restricted environments by stubbing fetch
 beforeAll(() => {

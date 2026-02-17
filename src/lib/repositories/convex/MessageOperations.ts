@@ -140,7 +140,7 @@ export class MessageOperations {
 
   async searchWeb(query: string): Promise<SearchWebResponse> {
     try {
-      return await this.client.action(api.search.searchWeb, {
+      return await this.client.action(api.tools.search.action.searchWeb, {
         query,
         maxResults: 5,
       });

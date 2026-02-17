@@ -196,7 +196,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={openSignUp}
-                      className="inline-flex h-9 items-center justify-center px-3 sm:px-4 text-[11px] font-medium bg-emerald-500 text-white hover:bg-emerald-600 transition-colors rounded-md whitespace-nowrap dark:font-mono"
+                      className="inline-flex h-9 items-center justify-center px-3 sm:px-4 text-[14px] font-medium bg-emerald-500 text-white hover:bg-emerald-600 transition-colors rounded-md whitespace-nowrap dark:font-mono"
                     >
                       <span className="hidden sm:inline">Sign Up</span>
                       <span className="sm:hidden">Sign Up</span>
@@ -204,7 +204,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={openSignIn}
-                      className="hidden sm:inline-flex h-9 items-center justify-center px-3 sm:px-4 text-[11px] font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 whitespace-nowrap dark:font-mono"
+                      className="hidden sm:inline-flex h-9 items-center justify-center px-3 sm:px-4 text-[14px] font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 whitespace-nowrap dark:font-mono"
                     >
                       Sign In
                     </button>

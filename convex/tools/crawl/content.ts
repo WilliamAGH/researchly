@@ -1,13 +1,15 @@
 "use node";
 
+/**
+ * HTML content extraction using Cheerio.
+ * Strategy-agnostic — works with any HTML source (native fetch, Browserless, etc.).
+ */
+
 import type { CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
 
 const cleanText = (text: string): string =>
-  text
-    .replace(/\s+/g, " ")
-    .replace(/\u00a0/g, " ")
-    .trim();
+  text.replaceAll(/\s+/g, " ").replaceAll("\u00a0", " ").trim();
 
 const stripJunk = ($: CheerioAPI) => {
   $("script, style, nav, footer, header, aside, noscript, iframe").remove();

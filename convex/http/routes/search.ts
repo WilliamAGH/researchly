@@ -122,7 +122,7 @@ export function registerSearchRoutes(http: HttpRouter) {
         const enhancedQuery = enh.enhancedQuery || String(query);
         const prioritizedUrls = enh.prioritizedUrls || [];
 
-        const result = await ctx.runAction(api.search.searchWeb, {
+        const result = await ctx.runAction(api.tools.search.action.searchWeb, {
           query: enhancedQuery,
           maxResults: maxResults || 5,
         });

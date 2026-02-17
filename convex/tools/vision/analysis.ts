@@ -15,9 +15,9 @@
 import {
   getOpenAIEnvironment,
   getVisionModelName,
-} from "../lib/providers/openai";
-import { CONTENT_LIMITS } from "../lib/constants/cache";
-import { truncate } from "./helpers_utils";
+} from "../../ai/providers/openai";
+import { CONTENT_LIMITS } from "../../lib/constants/cache";
+import { truncate } from "../../agents/helpers_utils";
 
 const VISION_ANALYSIS_SYSTEM_PROMPT = `You are a precise image analyst. Your job is to produce a thorough, factual description of the image(s) provided.
 

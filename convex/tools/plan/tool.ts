@@ -3,9 +3,9 @@
 import { z } from "zod"; // v3 - required by @openai/agents peer dependency
 import { tool } from "@openai/agents";
 import type { FunctionTool } from "@openai/agents";
-import { generateMessageId } from "../lib/id_generator";
-import { AGENT_LIMITS, CONTENT_LIMITS } from "../lib/constants/cache";
-import type { AgentToolRunContext } from "./tools_context";
+import { generateMessageId } from "../../lib/id_generator";
+import { AGENT_LIMITS, CONTENT_LIMITS } from "../../lib/constants/cache";
+import type { AgentToolRunContext } from "../../agents/tools_context";
 
 /**
  * Research Planning Tool
@@ -85,7 +85,7 @@ The tool returns search queries you should then execute with search_web.`,
       status: "research_planned",
       userQuestion: input.userQuestion,
       researchGoal: input.researchGoal,
-      searchQueries: input.searchQueries.sort(
+      searchQueries: input.searchQueries.toSorted(
         (a, b) => a.priority - b.priority,
       ),
       instruction:

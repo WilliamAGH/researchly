@@ -5,10 +5,13 @@
  * Uses Perplexity Sonar model for AI-powered web search
  */
 
-import type { SearchResult, SearchProviderResult } from "../../schemas/search";
-import { OpenRouterResponseSchema } from "../../schemas/search";
-import { safeParseWithLog } from "../../lib/validation/zodUtils";
-import { collectOpenRouterChatCompletionText } from "../../lib/providers/openai_streaming";
+import type {
+  SearchResult,
+  SearchProviderResult,
+} from "../../../schemas/search";
+import { OpenRouterResponseSchema } from "../../../schemas/search";
+import { safeParseWithLog } from "../../../lib/validation/zodUtils";
+import { collectOpenRouterChatCompletionText } from "../../../ai/providers/openai_streaming";
 
 // Provider-specific relevance scores
 // OpenRouter with Perplexity Sonar provides AI-curated results

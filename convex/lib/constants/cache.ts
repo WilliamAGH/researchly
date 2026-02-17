@@ -81,6 +81,17 @@ export const AGENT_TIMEOUTS = {
 } as const;
 
 /**
+ * Browserless fallback configuration.
+ * Used when native fetch is blocked (403, 401) and Browserless is configured.
+ */
+export const BROWSERLESS = {
+  /** Page load timeout for Browserless /content API (ms) */
+  PAGE_TIMEOUT_MS: 15_000,
+  /** Outer fetch timeout = page timeout + network overhead buffer (ms) */
+  FETCH_TIMEOUT_MS: 20_000,
+} as const;
+
+/**
  * Content length limits for truncation and previews.
  * Centralizes magic numbers used across agent modules.
  */

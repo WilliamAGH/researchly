@@ -8,14 +8,13 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
-import type { QueryCtx, MutationCtx } from "../_generated/server";
 import { generateShareId, generatePublicId } from "../lib/uuid";
 import {
   hasUserAccess,
   hasSessionAccess,
   isValidWorkflowToken,
 } from "../lib/auth";
+import { validateChatAccess } from "./access";
 
 /**
  * Create new chat
@@ -34,7 +33,7 @@ export const createChat = mutation({
   returns: v.id("chats"),
   handler: async (ctx, args) => {
     // Validate sessionId if provided - reject empty strings
-    if (args.sessionId !== undefined && args.sessionId.trim() === "") {
+    if (args.sessionId?.trim() === "") {
       throw new Error("sessionId cannot be an empty string");
     }
 
@@ -104,45 +103,6 @@ export const getUserChats = query({
     return [];
   },
 });
-
-/**
- * Helper function to validate chat access
- * Supports dual ownership: chats can have both userId AND sessionId
- * This enables access via:
- * 1. Convex queries/mutations (use userId from auth context)
- * 2. HTTP endpoints (use sessionId, since httpAction has no auth context)
- */
-async function validateChatAccess(
-  ctx: QueryCtx | MutationCtx,
-  chatId: Id<"chats">,
-  sessionId?: string,
-) {
-  const userId = await getAuthUserId(ctx);
-  const chat = await ctx.db.get(chatId);
-
-  if (!chat) return null;
-
-  // Shared and public chats are accessible regardless of owner or session
-  if (chat.privacy === "shared" || chat.privacy === "public") {
-    return chat;
-  }
-
-  // For authenticated users: check userId matches (Convex queries/mutations)
-  if (hasUserAccess(chat, userId)) {
-    return chat;
-  }
-
-  // For sessionId-based access: HTTP endpoints or anonymous users
-  // Note: HTTP actions don't have auth context, so they rely on sessionId
-  if (!chat.userId && hasSessionAccess(chat, sessionId)) {
-    return chat;
-  }
-
-  // No valid access path
-  // SECURITY: Reject chats without proper ownership (userId or sessionId)
-  // If a chat has neither, it's a data integrity issue that should not grant access
-  return null;
-}
 
 /**
  * Get chat by ID

@@ -35,9 +35,9 @@
  */
 
 import type { Tool } from "@openai/agents";
-import { searchWebTool } from "./tools_search";
-import { scrapeWebpageTool } from "./tools_scrape";
-import { planResearchTool } from "./tools_plan";
+import { searchWebTool } from "../tools/search/tool";
+import { scrapeWebpageTool } from "../tools/crawl/tool";
+import { planResearchTool } from "../tools/plan/tool";
 
 /**
  * All available tools for agents

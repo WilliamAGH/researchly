@@ -2,7 +2,7 @@
  * Search utilities for text processing and entity extraction
  */
 
-import { normalizeWhitespace } from "../lib/text";
+import { normalizeWhitespace } from "../../lib/text";
 
 // Text processing utilities (defined first so test helpers can use them)
 export function serialize(s: string | undefined): string {
@@ -23,7 +23,7 @@ export function extractKeywordsForTest(text: string, max: number): string[] {
     if (tok.length < 4) continue;
     freq.set(tok, (freq.get(tok) || 0) + 1);
   }
-  const limit = Math.max(1, max | 0);
+  const limit = Math.max(1, Math.trunc(max));
   return Array.from(freq.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
@@ -38,7 +38,7 @@ export function augmentQueryForTest(
   const base = serialize(q);
   const words = new Set(tokenize(base));
   const extras: string[] = [];
-  const cap = Math.max(1, maxExtras | 0);
+  const cap = Math.max(1, Math.trunc(maxExtras));
   for (const k of kws || []) {
     if (!words.has(k) && extras.length < cap) extras.push(k);
   }
