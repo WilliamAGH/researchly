@@ -10,8 +10,6 @@ interface MessageInputActionsProps {
   onShare?: () => void;
   message: string;
   disabled: boolean;
-  /** When true the AI is generating a response; disables "New chat" */
-  isGenerating?: boolean;
 }
 
 export function MessageInputActions({
@@ -19,7 +17,6 @@ export function MessageInputActions({
   onShare,
   message,
   disabled,
-  isGenerating: _isGenerating = false,
 }: MessageInputActionsProps) {
   return (
     <div className="absolute right-11 sm:right-10 top-1/2 -translate-y-1/2 h-8 flex items-center gap-1">
