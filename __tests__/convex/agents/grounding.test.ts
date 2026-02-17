@@ -33,7 +33,6 @@ describe("Agent SSE Grounding Specifications", () => {
     const workflowStartEvent = {
       type: "workflow_start",
       workflowId: "019a122e-c507-7851-99f7-b8f5d7345b40",
-      nonce: "019a122e-c507-7851-99f7-b8f5d7345b41",
     };
 
     const uuidV7Regex =
@@ -41,7 +40,6 @@ describe("Agent SSE Grounding Specifications", () => {
 
     expect(workflowStartEvent.type).toBe("workflow_start");
     expect(workflowStartEvent.workflowId).toMatch(uuidV7Regex);
-    expect(workflowStartEvent.nonce).toMatch(uuidV7Regex);
   });
 
   it("validates progress event shape", () => {
@@ -88,7 +86,6 @@ describe("Agent SSE Grounding Specifications", () => {
         confidence: 0.87,
         answerLength: 512,
       },
-      nonce: "019a122e-c507-7851-99f7-b8f5d7345b41",
     };
 
     const completeEvent = {
@@ -105,7 +102,7 @@ describe("Agent SSE Grounding Specifications", () => {
     expect(metadataEvent.metadata.answerLength).toBeGreaterThan(0);
   });
 
-  it("validates persisted event payload and signature fields", () => {
+  it("validates persisted event payload fields", () => {
     const webResearchSource = {
       contextId: "019a122e-c507-7851-99f7-b8f5d7345b42",
       type: "search_result",
@@ -123,16 +120,12 @@ describe("Agent SSE Grounding Specifications", () => {
         answer: "Anthropic is headquartered in San Francisco.",
         webResearchSources: [webResearchSource],
       },
-      nonce: "019a122e-c507-7851-99f7-b8f5d7345b41",
-      signature: "deadbeef",
     };
 
     expect(persistedEvent.type).toBe("persisted");
     expect(persistedEvent.payload.workflowId).toBeTruthy();
     expect(persistedEvent.payload.assistantMessageId).toBeTruthy();
     expect(persistedEvent.payload.answer.length).toBeGreaterThan(0);
-    expect(persistedEvent.nonce.length).toBeGreaterThan(0);
-    expect(persistedEvent.signature.length).toBeGreaterThan(0);
     expect(WebResearchSourceSchema.safeParse(webResearchSource).success).toBe(
       true,
     );

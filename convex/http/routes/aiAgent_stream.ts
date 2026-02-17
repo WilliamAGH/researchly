@@ -152,6 +152,7 @@ export async function handleAgentStream(
       await Promise.all(
         imageStorageIds.map(async (storageId) => {
           const metadata = await ctx.runQuery(
+            // @ts-ignore - TS2589: Known Convex limitation with complex type inference
             internal.storage.getStorageFileMetadata,
             { storageId },
           );
@@ -162,7 +163,10 @@ export async function handleAgentStream(
           if (!url) {
             throw new Error("Uploaded file not found in storage");
           }
-          await validateImageBlobContent(ctx, storageId, url, metadata.size);
+          await validateImageBlobContent(ctx, storageId, url, metadata.size, {
+            // Never delete blobs from untrusted IDs in this request path.
+            deleteOnFailure: false,
+          });
         }),
       );
     } catch (error) {

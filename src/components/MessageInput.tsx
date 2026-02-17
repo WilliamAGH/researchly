@@ -148,6 +148,7 @@ export function MessageInput({
         const isComposing =
           composingRef.current || (e.nativeEvent.isComposing ?? false);
         if (isComposing) {
+          e.preventDefault();
           // Defer: if compositionend fires right after (iOS Safari Return),
           // the microtask will see composingRef === false and send.
           void Promise.resolve().then(() => {

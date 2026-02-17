@@ -152,7 +152,6 @@ import type * as sitemap from "../sitemap.js";
 import type * as storage from "../storage.js";
 import type * as workflowEvents from "../workflowEvents.js";
 import type * as workflowTokens from "../workflowTokens.js";
-import type * as workflowTokensActions from "../workflowTokensActions.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -302,7 +301,6 @@ declare const fullApi: ApiFromModules<{
   storage: typeof storage;
   workflowEvents: typeof workflowEvents;
   workflowTokens: typeof workflowTokens;
-  workflowTokensActions: typeof workflowTokensActions;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

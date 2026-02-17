@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from "react";
+import { logger } from "@/lib/logger";
 
 interface UseKeyboardShortcutsProps {
   isMobile: boolean;
@@ -58,9 +59,12 @@ export function useKeyboardShortcuts({
   );
 
   useEffect(() => {
-    globalThis.window.addEventListener("keydown", handleKeyDown);
-    return () =>
-      globalThis.window.removeEventListener("keydown", handleKeyDown);
+    if (typeof window === "undefined") {
+      logger.debug("useKeyboardShortcuts: skipping — no window (SSR)");
+      return;
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
   // Handler for sidebar toggle button

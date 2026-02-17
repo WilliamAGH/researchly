@@ -16,6 +16,7 @@ import { internal } from "../_generated/api";
 import { generateChatTitle } from "../chats/utils";
 import type { StreamingPersistPayload } from "../schemas/agents";
 import type { WebResearchSource } from "../lib/validators";
+import { TOKEN_NOT_FOUND, TOKEN_WRONG_STATUS } from "../workflowTokens";
 
 // ============================================
 // Types
@@ -123,6 +124,7 @@ export async function persistAssistantMessage(
   } = params;
 
   if (sessionId) {
+    // @ts-ignore - Known Convex TS2589 issue with complex type inference in ctx.runMutation
     return await ctx.runMutation(internal.messages.addMessageHttp, {
       chatId,
       role: "assistant",
@@ -157,9 +159,24 @@ export async function completeWorkflow(
   const { ctx, workflowTokenId } = params;
 
   if (workflowTokenId) {
-    await ctx.runMutation(internal.workflowTokens.completeToken, {
-      tokenId: workflowTokenId,
-    });
+    try {
+      await ctx.runMutation(internal.workflowTokens.completeToken, {
+        tokenId: workflowTokenId,
+      });
+    } catch (error) {
+      // Race: error handler may have already invalidated or completed
+      // this token concurrently. Only suppress that expected race —
+      // infrastructure errors must propagate.
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes(TOKEN_WRONG_STATUS) || msg.includes(TOKEN_NOT_FOUND)) {
+        console.warn("[completeWorkflow] Token already transitioned:", {
+          tokenId: String(workflowTokenId),
+          error: msg,
+        });
+        return;
+      }
+      throw error;
+    }
   }
 }
 
