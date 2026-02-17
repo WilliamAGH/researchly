@@ -3,7 +3,7 @@
  * Refactored to use sub-components for better organization
  */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { logger } from "@/lib/logger";
 import { ConfirmDialog } from "../ConfirmDialog";
