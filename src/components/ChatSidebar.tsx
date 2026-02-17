@@ -79,6 +79,7 @@ export function ChatSidebar({
 }: Readonly<ChatSidebarProps>) {
   const deleteChat = useSessionAwareDeleteChat();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleSelectChat = React.useCallback(
     (chatId: Id<"chats"> | string) => {
@@ -113,6 +114,7 @@ export function ChatSidebar({
     setDeleteTargetId(null);
 
     try {
+      setDeleteError(null);
       await executeDeleteChat(deleteTargetId, chat, {
         onRequestDeleteChat,
         deleteChat,
@@ -124,9 +126,8 @@ export function ChatSidebar({
         onSelectChat(null);
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        logger.warn("Chat deletion failed:", err);
-      }
+      logger.warn("Chat deletion failed:", err);
+      setDeleteError("Failed to delete chat. Please try again.");
     }
   }, [
     deleteTargetId,
@@ -228,6 +229,14 @@ export function ChatSidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {deleteError && (
+          <div
+            role="alert"
+            className="mx-2 mt-2 px-3 py-2 text-sm text-red-700 bg-red-50 dark:text-red-300 dark:bg-red-900/20 rounded-lg"
+          >
+            {deleteError}
+          </div>
+        )}
         {chats.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground">
             No chats yet. Start a new conversation!
