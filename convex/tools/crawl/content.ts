@@ -215,10 +215,21 @@ export function isLowQualityContent(text: string): boolean {
   const alphaWordCount = (text.match(/[A-Za-z]{4,}/g) ?? []).length;
   const readabilityRatio = tokenCount === 0 ? 0 : alphaWordCount / tokenCount;
 
+  // RSC wire-format markers (e.g. "0:A[") are highly specific — unconditional reject.
+  if (hasTransportMarkers) return true;
+
+  // Chunk runtime substrings (__next_f, webpackChunk) can appear in technical
+  // prose (e.g. a blog post about Next.js internals). Only reject when combined
+  // with low readability so legitimate pages are not falsely blocked.
+  if (
+    hasChunkRuntimeNoise &&
+    readabilityRatio < LOW_QUALITY_MIN_READABILITY_RATIO
+  )
+    return true;
+
+  // General readability gate for long content.
   return (
-    hasTransportMarkers ||
-    hasChunkRuntimeNoise ||
-    (tokenCount > LOW_QUALITY_MIN_TOKEN_COUNT &&
-      readabilityRatio < LOW_QUALITY_MIN_READABILITY_RATIO)
+    tokenCount > LOW_QUALITY_MIN_TOKEN_COUNT &&
+    readabilityRatio < LOW_QUALITY_MIN_READABILITY_RATIO
   );
 }
