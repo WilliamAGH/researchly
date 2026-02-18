@@ -9,7 +9,11 @@
 
 import { api } from "../_generated/api";
 import { generateMessageId } from "../lib/id_generator";
-import { CONTENT_LIMITS, RELEVANCE_SCORES } from "../lib/constants/cache";
+import {
+  CONTENT_LIMITS,
+  RELEVANCE_SCORES,
+  URL_PREFIXES,
+} from "../lib/constants/cache";
 import type { ScrapedContent } from "../schemas/search";
 import type { WorkflowActionCtx } from "./orchestration_persistence";
 import { logWorkflowError } from "./workflow_logger";
@@ -37,10 +41,16 @@ export function selectScrapeTargets(
   searchResults: ScrapeCandidate[],
   maxUrls: number,
 ): ScrapeCandidate[] {
-  return Array.from(new Map(searchResults.map((r) => [r.url, r])).values())
-    .filter((r) => r.url?.startsWith("http"))
-    .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
-    .slice(0, maxUrls);
+  const deduplicated = Array.from(
+    new Map(searchResults.map((r) => [r.url, r])).values(),
+  );
+  const httpOnly = deduplicated.filter((r) =>
+    r.url?.startsWith(URL_PREFIXES.HTTP),
+  );
+  const ranked = httpOnly.sort(
+    (a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0),
+  );
+  return ranked.slice(0, maxUrls);
 }
 
 /** Result of the parallel scrape phase. */
