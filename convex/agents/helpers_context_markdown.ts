@@ -1,5 +1,3 @@
-"use node";
-
 /**
  * Debug/provenance markdown builders for source context.
  *
