@@ -171,6 +171,9 @@ export function useEnhancedFollowUpPrompt({
     setPendingMessage(null);
     setFollowUpMessage(null);
     setSummaryError(null);
+    // Reset cooldown baseline so a fresh chat starts with a clean slate.
+    // Fixed by Cline: stale counter from prior chat suppressed follow-up prompt in new chats.
+    lastShownAtUserMsgCountRef.current = 0;
   }, []);
 
   const maybeShowFollowUpPrompt = useCallback(() => {
