@@ -301,7 +301,7 @@ function extractAndClean(url: string, html: string): ScrapeResult {
     metadata.title ||
     metadata.ogTitle ||
     metadata.description ||
-    new URL(url).hostname;
+    extractHostnameForDisplay(url);
 
   const cleanedContent = removeJunkPatterns(content);
 
