@@ -138,48 +138,48 @@ export function MessageSources({
             />
           </svg>
         </div>
+      </button>
 
-        {/* Preview badges — always mounted, animated via grid-rows */}
-        <div
-          className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-            collapsed
-              ? "grid-rows-[1fr] opacity-100"
-              : "grid-rows-[0fr] opacity-0"
-          }`}
-          aria-hidden={!collapsed}
-        >
-          <div className="overflow-hidden min-h-0">
-            <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              {previewSources.map((source, i) => {
-                const hostname =
-                  getDomainFromUrl(source.url) || getSafeHostname(source.url);
-                const favicon = getFaviconUrl(source.url);
-                return (
-                  <a
-                    key={`${messageId}-preview-${source.url}-${i}`}
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    tabIndex={collapsed ? 0 : -1}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
-                  >
-                    {favicon && (
-                      <img src={favicon} alt="" className="w-3 h-3 rounded" />
-                    )}
-                    <span className="max-w-[120px] truncate">{hostname}</span>
-                  </a>
-                );
-              })}
-              {displaySources.length > PREVIEW_SOURCE_COUNT && (
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  +{displaySources.length - PREVIEW_SOURCE_COUNT} more
-                </span>
-              )}
-            </div>
+      {/* Preview badges — always mounted, animated via grid-rows; outside button to avoid nested interactive elements */}
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+          collapsed
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
+        }`}
+        aria-hidden={!collapsed}
+      >
+        <div className="overflow-hidden min-h-0">
+          <div className="mt-1.5 px-2 sm:px-3 flex flex-wrap items-center gap-2">
+            {previewSources.map((source, i) => {
+              const hostname =
+                getDomainFromUrl(source.url) || getSafeHostname(source.url);
+              const favicon = getFaviconUrl(source.url);
+              return (
+                <a
+                  key={`${messageId}-preview-${source.url}-${i}`}
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  tabIndex={collapsed ? 0 : -1}
+                  aria-hidden={!collapsed}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
+                >
+                  {favicon && (
+                    <img src={favicon} alt="" className="w-3 h-3 rounded" />
+                  )}
+                  <span className="max-w-[120px] truncate">{hostname}</span>
+                </a>
+              );
+            })}
+            {displaySources.length > PREVIEW_SOURCE_COUNT && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                +{displaySources.length - PREVIEW_SOURCE_COUNT} more
+              </span>
+            )}
           </div>
         </div>
-      </button>
+      </div>
 
       {/* Expanded source list — always mounted, animated via grid-rows */}
       <div
@@ -199,6 +199,7 @@ export function MessageSources({
                 hoveredSourceUrl={hoveredSourceUrl}
                 onSourceHover={onSourceHover}
                 showDevSourceContextCopy={showDevSourceContextCopy}
+                isCollapsed={collapsed}
               />
             ))}
           </div>

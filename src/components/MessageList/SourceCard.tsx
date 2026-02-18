@@ -38,6 +38,8 @@ interface SourceCardProps {
   hoveredSourceUrl: string | null;
   onSourceHover: (url: string | null) => void;
   showDevSourceContextCopy: boolean;
+  /** When true, removes card links from the tab order (expanded list is hidden). */
+  isCollapsed?: boolean;
 }
 
 function resolveCrawlStatus(
@@ -112,6 +114,7 @@ export const SourceCard = React.memo(function SourceCard({
   hoveredSourceUrl,
   onSourceHover,
   showDevSourceContextCopy,
+  isCollapsed = false,
 }: SourceCardProps) {
   const {
     source,
@@ -141,6 +144,8 @@ export const SourceCard = React.memo(function SourceCard({
         href={source.url}
         target="_blank"
         rel="noopener noreferrer"
+        tabIndex={isCollapsed ? -1 : 0}
+        aria-hidden={isCollapsed}
         className={`block flex-1 min-w-0 p-2 sm:p-3 rounded-lg border transition-all ${
           isHovered
             ? "border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20"
