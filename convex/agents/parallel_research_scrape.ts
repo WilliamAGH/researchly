@@ -95,12 +95,17 @@ export async function executeScrapePhase(
       });
 
       // Reject error-as-data results from scrapeWithCheerio (which returns
-      // error details in content/error fields instead of throwing), and
-      // reject pages with too little useful content.
-      if (
-        content.error ||
-        content.content.length < CONTENT_LIMITS.MIN_CONTENT_LENGTH
-      ) {
+      // error details in content/error fields instead of throwing).
+      if (content.error) {
+        logWorkflowError(
+          "SCRAPE_FAILED",
+          `${url} error-as-data: ${content.error} [${Date.now() - singleScrapeStart}ms]`,
+        );
+        return null;
+      }
+
+      // Reject pages with too little useful content.
+      if (content.content.length < CONTENT_LIMITS.MIN_CONTENT_LENGTH) {
         logScrapeSkip(
           Date.now() - singleScrapeStart,
           url,
