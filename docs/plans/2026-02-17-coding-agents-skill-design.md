@@ -49,6 +49,7 @@ A Claude Code skill (`coding-agents`) containing:
 ## Decisions
 
 - Approach A (flat-copy with mapping.json) chosen over adapter pattern
-- Claude Code is the single source of truth for commands/skills
-- `~/.agents/` is also canonical, synced TO Claude and all others
+- Both Claude Code (`~/.claude/`) and `~/.agents/` serve as canonical sources
+- `~/.agents/` syncs TO Claude and all other targets
+- Claude Code syncs its native content to all targets (except `~/.agents/`, which is also a source)
 - MCP config sync excluded (formats differ too much per agent)

@@ -23,7 +23,7 @@ short summary and inject it as a system-level prefix in the new chat's first tur
 
 ## 2. Correct Modern Pattern
 
-```
+```text
 [Old Chat] → summarize(last N messages + rollingSummary)
            → compact string (≤ 2 KB)
            → inject into new chat's FIRST agent call
@@ -38,7 +38,7 @@ that `initializeWorkflowSession` receives. It must **not** live only in ephemera
 
 ## 3. Fixed Flow (Current State)
 
-```
+```text
 User clicks "New Chat w/ Summary"
   → handleNewChatWithSummary (useEnhancedFollowUpPrompt.ts)
       1. await summarizeRecentAction({ chatId })      ← sequential, not racing

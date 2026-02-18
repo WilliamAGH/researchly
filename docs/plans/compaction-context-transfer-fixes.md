@@ -57,7 +57,7 @@
 String manipulation alone cannot invert question structure into a topic noun phrase.
 The ideal 2026 approach is an LLM micro-prompt call when `currentTitle === "New Chat"`:
 
-```
+```text
 System: "Generate a 3-5 word noun phrase title. No verbs. No questions. Output ONLY the title."
 User: "<first message>"
 ```
@@ -80,7 +80,7 @@ Both solve variations of the same problem without sharing a primitive.
 
 ### Recommended Clean Architecture (Future Work)
 
-```
+```text
 convex/context/
   extraction.ts    — extractMessages(chatId, limit): common DB query primitive
   formatting.ts    — formatAsConversation(messages): for agent workflow context
