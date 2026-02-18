@@ -49,7 +49,8 @@ This file defines the exact active behavior for URL discovery, scraping, and sou
   - [`scrapeWithCheerio` orchestrator](../../convex/tools/crawl/orchestrator.ts)
 - **Fetch strategy pipeline** (priority order):
   1. **Native fetch** ([`convex/tools/crawl/native.ts`](../../convex/tools/crawl/native.ts)) — platform `fetch()` with 10s timeout. Zero added latency on the happy path.
-  2. **Browserless fallback** ([`convex/tools/crawl/browserless_generic.ts`](../../convex/tools/crawl/browserless_generic.ts)) — Browserless `/content` API, triggered only on HTTP 4xx (403, 401). Adds ~2-5s only for blocked URLs.
+  2. **Browserless fallback** ([`convex/tools/crawl/browserless_generic.ts`](../../convex/tools/crawl/browserless_generic.ts)) — Browserless `/content` API, triggered on native `HTTP_CLIENT_ERROR`, `TIMEOUT`, and `FETCH_FAILED`, plus retry after native extraction failures (`Content too short`).
+  3. **Browserless anti-bot fallback** (`/unblock`) — invoked when `/content` indicates target-site 403 via `X-Response-Code`.
 - HTML content extraction: [`convex/tools/crawl/content.ts`](../../convex/tools/crawl/content.ts) — Cheerio-based, strategy-agnostic.
 - Strategy contracts: [`convex/tools/crawl/types.ts`](../../convex/tools/crawl/types.ts) — `FetchStrategy`, `FetchResult`, `FetchErrorCode`.
 - Playwright is not available in the Convex deployment runtime.
@@ -59,6 +60,8 @@ This file defines the exact active behavior for URL discovery, scraping, and sou
 - `BROWSERLESS_API_TOKEN` — Required for fallback. If absent, fallback is silently skipped and native fetch errors are returned as-is.
 - `BROWSERLESS_BASE_URL` — Optional, defaults to `https://production-sfo.browserless.io`.
 - Timeout constants in [`convex/lib/constants/cache.ts`](../../convex/lib/constants/cache.ts): `BROWSERLESS.PAGE_TIMEOUT_MS` (15s), `BROWSERLESS.FETCH_TIMEOUT_MS` (20s).
+- Browserless request waits are configured for JS-rendered pages (`gotoOptions.waitUntil: networkidle2`, `waitForSelector`, `waitForTimeout`) to avoid early `domcontentloaded` snapshots.
+- Browserless `/content` retries on transient API rate/time failures with bounded exponential backoff.
 
 ## Scrape Success/Failure Rules
 
