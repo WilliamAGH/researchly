@@ -1,5 +1,3 @@
-"use node";
-
 /**
  * Helper functions for search planning
  * Extracted from plan_search_handler.ts for modularity
