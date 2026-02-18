@@ -182,10 +182,17 @@ function ChatInterfaceComponent({
   useEffect(() => {
     if (isCreatingChat && currentChatId) setIsCreatingChat(false);
   }, [isCreatingChat, currentChatId]);
-  const sendRefTemp = useRef<((message: string) => Promise<void>) | null>(null);
+  const sendRefTemp = useRef<
+    | ((
+        message: string,
+        imageStorageIds?: string[],
+        priorChatSummary?: string,
+      ) => Promise<void>)
+    | null
+  >(null);
   const {
     showFollowUpPrompt,
-    plannerHint,
+    summaryError,
     resetFollowUp,
     maybeShowFollowUpPrompt,
     setPendingMessage,
@@ -284,7 +291,7 @@ function ChatInterfaceComponent({
       currentChatId={currentChatId}
       currentChat={currentChat}
       undoBanner={undoBanner}
-      plannerHint={plannerHint}
+      summaryError={summaryError}
       chatSidebarProps={chatSidebarProps}
       mobileSidebarProps={mobileSidebarProps}
       messageListProps={messageListProps}

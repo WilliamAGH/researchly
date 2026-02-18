@@ -33,6 +33,8 @@ export interface StreamingWorkflowArgs {
   webResearchSources?: WebResearchSource[];
   includeDebugSourceContext?: boolean;
   imageStorageIds?: Id<"_storage">[];
+  /** Compact summary from the prior chat, injected as context prefix on the first turn. */
+  priorChatSummary?: string;
 }
 
 /**
@@ -207,8 +209,12 @@ export async function initializeWorkflowSession(
 
   const recentMessages: MessageQueryResult[] = recentMessagesResult ?? [];
 
-  // 4. Build context — single path per [RC1a]; empty context is correct for new chats
-  const conversationContext = buildConversationContext(recentMessages);
+  // 4. Build context — single path per [RC1a]; empty context is correct for new chats.
+  // If a prior-chat summary was provided, prepend it so the agent has cross-chat continuity.
+  const baseContext = buildConversationContext(recentMessages);
+  const conversationContext = args.priorChatSummary
+    ? `[CONTEXT FROM PRIOR CONVERSATION]\n${args.priorChatSummary}\n\n[CURRENT CONVERSATION]\n${baseContext}`
+    : baseContext;
 
   // 5. Resolve image storage IDs to serving URLs via batch query
   const imageUrls = await resolveImageUrls(ctx, args);
@@ -217,7 +223,7 @@ export async function initializeWorkflowSession(
   let imageAnalysis: string | undefined;
   if (imageUrls.length > 0) {
     try {
-      const { analyzeImages } = await import("./vision_analysis");
+      const { analyzeImages } = await import("../tools/vision/analysis");
       const result = await analyzeImages({
         imageUrls,
         userQuery: args.userQuery,

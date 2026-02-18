@@ -12,6 +12,12 @@ import { generateMessageId } from "../lib/id_generator";
 import { normalizeHttpUrl } from "../lib/urlHttp";
 import type { WebResearchSource } from "../lib/validators";
 import { isUuidV7, normalizeUrl } from "./helpers_utils";
+import {
+  buildScrapedSourceContextMarkdown,
+  buildSearchSourceContextMarkdown,
+  type ScrapedHarvestedSource,
+  type SearchHarvestedSource,
+} from "./helpers_context_markdown";
 
 const MAX_SOURCE_URL_LENGTH = 2048;
 
@@ -41,95 +47,6 @@ function toNormalizedUrlSet(urls: string[]): Set<string> {
       .map((url) => normalizeUrl(url))
       .filter((url): url is string => url !== null),
   );
-}
-
-type ScrapedHarvestedSource = {
-  contextId: string;
-  url: string;
-  title: string;
-  content: string;
-  summary: string;
-  contentLength: number;
-  scrapedAt?: number;
-  relevanceScore?: number;
-};
-
-type SearchHarvestedSource = {
-  contextId?: string;
-  url: string;
-  title: string;
-  snippet: string;
-  relevanceScore?: number;
-};
-
-function formatIsoDate(timestamp: number | undefined): string {
-  if (typeof timestamp !== "number") {
-    return "unknown";
-  }
-  return new Date(timestamp).toISOString();
-}
-
-/**
- * Build debug/provenance markdown for a scraped page source.
- *
- * This is a developer-inspection payload only. It documents exactly what this
- * Convex run harvested for the source. It does NOT affect model context.
- */
-function buildScrapedSourceContextMarkdown(
-  scraped: ScrapedHarvestedSource,
-): string {
-  return [
-    "## Convex Server Source Context",
-    "- sourceType: scraped_page",
-    `- contextId: ${scraped.contextId}`,
-    `- url: ${scraped.url}`,
-    `- title: ${scraped.title || "Untitled"}`,
-    `- scrapedAt: ${formatIsoDate(scraped.scrapedAt)}`,
-    `- relevanceScore: ${scraped.relevanceScore ?? RELEVANCE_SCORES.SCRAPED_PAGE}`,
-    `- contentLength: ${scraped.contentLength}`,
-    "",
-    "### Summary",
-    scraped.summary || "_none_",
-    "",
-    "### Content",
-    "```text",
-    scraped.content || "",
-    "```",
-  ].join("\n");
-}
-
-/**
- * Build debug/provenance markdown for a search-result source.
- *
- * This is a developer-inspection payload only. It documents the harvested
- * search metadata associated with the source. It does NOT affect model context.
- */
-function buildSearchSourceContextMarkdown(params: {
-  source: SearchHarvestedSource;
-  crawlAttempted: boolean;
-  crawlSucceeded: boolean;
-  crawlErrorMessage?: string;
-  markedLowRelevance: boolean;
-}): string {
-  const { source } = params;
-
-  return [
-    "## Convex Server Source Context",
-    "- sourceType: search_result",
-    `- contextId: ${source.contextId ?? "generated-after-harvest"}`,
-    `- url: ${source.url}`,
-    `- title: ${source.title || "Untitled"}`,
-    `- relevanceScore: ${source.relevanceScore ?? RELEVANCE_SCORES.SEARCH_RESULT}`,
-    `- crawlAttempted: ${params.crawlAttempted ? "true" : "false"}`,
-    `- crawlSucceeded: ${params.crawlSucceeded ? "true" : "false"}`,
-    params.crawlErrorMessage
-      ? `- crawlErrorMessage: ${params.crawlErrorMessage}`
-      : "- crawlErrorMessage: none",
-    `- markedLowRelevance: ${params.markedLowRelevance ? "true" : "false"}`,
-    "",
-    "### Snippet",
-    source.snippet || "_none_",
-  ].join("\n");
 }
 
 export function normalizeSourceContextIds(

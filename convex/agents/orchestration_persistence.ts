@@ -168,6 +168,9 @@ export async function completeWorkflow(
       // this token concurrently. Only suppress that expected race —
       // infrastructure errors must propagate.
       const msg = error instanceof Error ? error.message : String(error);
+      // Use includes() rather than startsWith() — Convex may wrap or prefix
+      // error messages during ctx.runMutation propagation across action/mutation
+      // boundaries, so a prefix-only check risks missing the expected race.
       if (msg.includes(TOKEN_WRONG_STATUS) || msg.includes(TOKEN_NOT_FOUND)) {
         console.warn("[completeWorkflow] Token already transitioned:", {
           tokenId: String(workflowTokenId),

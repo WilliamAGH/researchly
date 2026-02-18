@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENT_LIMITS } from "../../../convex/lib/constants/cache";
-import { buildVisionAnalysisUserPromptText } from "../../../convex/agents/vision_analysis";
+import { buildVisionAnalysisUserPromptText } from "../../../convex/tools/vision/analysis";
 
 describe("buildVisionAnalysisUserPromptText", () => {
   it("truncates long userQuery to VISION_USER_QUERY_CONTEXT_CHARS", () => {

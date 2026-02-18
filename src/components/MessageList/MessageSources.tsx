@@ -3,10 +3,10 @@
  *
  * Renders the canonical `webResearchSources` domain object.
  * UI cards are derived-only via a single adapter.
+ * Collapse/expand uses CSS grid-template-rows for smooth height transitions.
  */
 
 import React from "react";
-import { CopyButton } from "@/components/CopyButton";
 import {
   hasWebResearchSources,
   toWebSourceCards,
@@ -17,12 +17,10 @@ import {
   getFaviconUrl,
   getSafeHostname,
 } from "@/lib/utils/favicon";
+import { SourceCard } from "./SourceCard";
+import type { CrawlState, SourceCardData } from "./SourceCard";
 
 const PREVIEW_SOURCE_COUNT = 3;
-const HIGH_RELEVANCE_THRESHOLD = 0.8;
-const MEDIUM_RELEVANCE_THRESHOLD = 0.5;
-
-type CrawlState = "succeeded" | "failed" | "not_attempted" | "not_applicable";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -32,36 +30,22 @@ function getSourceCrawlState(source: {
   type?: WebResearchSourceClient["type"];
   metadata?: WebResearchSourceClient["metadata"];
 }): CrawlState {
-  if (source.type === "research_summary") {
-    return "not_applicable";
-  }
-  if (source.type === "scraped_page") {
-    return "succeeded";
-  }
-  if (!isRecord(source.metadata)) {
-    return "not_attempted";
-  }
+  if (source.type === "research_summary") return "not_applicable";
+  if (source.type === "scraped_page") return "succeeded";
+  if (!isRecord(source.metadata)) return "not_attempted";
 
   const attempted = source.metadata.crawlAttempted;
   const succeeded = source.metadata.crawlSucceeded;
-  if (source.metadata.markedLowRelevance === true) {
-    return "not_attempted";
-  }
-  if (attempted === true && succeeded === false) {
-    return "failed";
-  }
-  if (attempted === true && succeeded === true) {
-    return "succeeded";
-  }
+  if (source.metadata.markedLowRelevance === true) return "not_attempted";
+  if (attempted === true && succeeded === false) return "failed";
+  if (attempted === true && succeeded === true) return "succeeded";
   return "not_attempted";
 }
 
 function getServerContextMarkdown(
   metadata: WebResearchSourceClient["metadata"],
 ): string | undefined {
-  if (!isRecord(metadata)) {
-    return undefined;
-  }
+  if (!isRecord(metadata)) return undefined;
   const raw = metadata.serverContextMarkdown;
   return typeof raw === "string" && raw.length > 0 ? raw : undefined;
 }
@@ -96,7 +80,7 @@ export function MessageSources({
   const displaySources = toWebSourceCards(webResearchSources);
   const previewSources = displaySources.slice(0, PREVIEW_SOURCE_COUNT);
   const showDevSourceContextCopy = import.meta.env.DEV;
-  const sourceRows = displaySources.map((source) => ({
+  const sourceRows: SourceCardData[] = displaySources.map((source) => ({
     source,
     crawlState: getSourceCrawlState(source),
     markedLowRelevance: source.metadata?.markedLowRelevance === true,
@@ -154,9 +138,19 @@ export function MessageSources({
             />
           </svg>
         </div>
+      </button>
 
-        {collapsed && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+      {/* Preview badges — always mounted, animated via grid-rows; outside button to avoid nested interactive elements */}
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+          collapsed
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
+        }`}
+        aria-hidden={!collapsed}
+      >
+        <div className="overflow-hidden min-h-0">
+          <div className="mt-1.5 px-2 sm:px-3 flex flex-wrap items-center gap-2">
             {previewSources.map((source, i) => {
               const hostname =
                 getDomainFromUrl(source.url) || getSafeHostname(source.url);
@@ -167,7 +161,8 @@ export function MessageSources({
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                  tabIndex={collapsed ? 0 : -1}
+                  aria-hidden={!collapsed}
                   className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
                 >
                   {favicon && (
@@ -183,155 +178,33 @@ export function MessageSources({
               </span>
             )}
           </div>
-        )}
-      </button>
-
-      {!collapsed && (
-        <div className="mt-2 space-y-2 px-2 max-h-[300px] overflow-y-auto">
-          {sourceRows.map(
-            (
-              {
-                source,
-                crawlState,
-                markedLowRelevance,
-                crawlErrorMessage,
-                serverContextMarkdown,
-              },
-              i,
-            ) => {
-              const hostname =
-                getDomainFromUrl(source.url) || getSafeHostname(source.url);
-              const favicon = getFaviconUrl(source.url);
-              const isHovered = hoveredSourceUrl === source.url;
-              const crawlStatus =
-                source.type === "research_summary"
-                  ? null
-                  : markedLowRelevance
-                    ? {
-                        label: "Low relevance source",
-                        dotColor: "bg-slate-500/70 dark:bg-slate-400/70",
-                      }
-                    : crawlState === "succeeded"
-                      ? {
-                          label: "Crawl successful",
-                          dotColor: "bg-emerald-500/80",
-                        }
-                      : crawlState === "failed"
-                        ? {
-                            label: crawlErrorMessage
-                              ? `Crawl failed: ${crawlErrorMessage.length > 120 ? crawlErrorMessage.slice(0, 120) + "..." : crawlErrorMessage}. Some sites do not allow automated visitors — other sources were used instead.`
-                              : "Crawl attempted, failed. Some sites do not allow automated visitors — other sources were used instead.",
-                            dotColor: "bg-amber-500/80",
-                          }
-                        : null;
-
-              const relevanceBadge =
-                source.relevanceScore !== undefined &&
-                source.relevanceScore >= HIGH_RELEVANCE_THRESHOLD
-                  ? {
-                      label: "high",
-                      color:
-                        "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
-                    }
-                  : source.relevanceScore !== undefined &&
-                      source.relevanceScore >= MEDIUM_RELEVANCE_THRESHOLD
-                    ? {
-                        label: "medium",
-                        color:
-                          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-                      }
-                    : null;
-
-              const typeBadge =
-                source.type === "scraped_page"
-                  ? {
-                      label: "crawled",
-                      color:
-                        "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-                    }
-                  : source.type === "research_summary"
-                    ? {
-                        label: "summary",
-                        color:
-                          "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-                      }
-                    : null;
-
-              return (
-                <div
-                  key={`${messageId}-source-${source.url}-${i}`}
-                  className="flex items-start gap-2"
-                >
-                  <a
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`block flex-1 min-w-0 p-2 sm:p-3 rounded-lg border transition-all ${
-                      isHovered
-                        ? "border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20"
-                        : "border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    }`}
-                    onMouseEnter={() => onSourceHover(source.url)}
-                    onMouseLeave={() => onSourceHover(null)}
-                  >
-                    <div className="flex items-start gap-2">
-                      {favicon && (
-                        <img
-                          src={favicon}
-                          alt=""
-                          className="w-4 h-4 mt-0.5 rounded"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <div className="font-medium text-[15px] sm:text-base text-gray-900 dark:text-gray-100 line-clamp-1 flex-1 min-w-0">
-                            {source.title}
-                          </div>
-                          {typeBadge && (
-                            <span
-                              className={`px-1.5 py-0.5 text-[10px] sm:text-xs font-medium rounded flex-shrink-0 ${typeBadge.color}`}
-                            >
-                              {typeBadge.label}
-                            </span>
-                          )}
-                          {relevanceBadge && (
-                            <span
-                              className={`px-1.5 py-0.5 text-[10px] sm:text-xs font-medium rounded flex-shrink-0 ${relevanceBadge.color}`}
-                            >
-                              {relevanceBadge.label}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                          <span className="inline-flex items-center gap-1.5">
-                            {crawlStatus && (
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${crawlStatus.dotColor}`}
-                                title={crawlStatus.label}
-                                aria-label={crawlStatus.label}
-                              />
-                            )}
-                            <span>{hostname}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </a>
-                  {showDevSourceContextCopy && serverContextMarkdown && (
-                    <CopyButton
-                      text={serverContextMarkdown}
-                      size="sm"
-                      className="mt-2 sm:mt-3 shrink-0"
-                      title="Copy Convex source context (Markdown)"
-                      ariaLabel="Copy Convex source context markdown"
-                    />
-                  )}
-                </div>
-              );
-            },
-          )}
         </div>
-      )}
+      </div>
+
+      {/* Expanded source list — always mounted, animated via grid-rows */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+          collapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
+        }`}
+        aria-hidden={collapsed}
+      >
+        <div className="overflow-hidden min-h-0">
+          <div className="mt-2 space-y-2 px-2 max-h-[300px] overflow-y-auto">
+            {sourceRows.map((row, i) => (
+              <SourceCard
+                key={`${messageId}-source-${row.source.url}-${i}`}
+                data={row}
+                messageId={messageId}
+                index={i}
+                hoveredSourceUrl={hoveredSourceUrl}
+                onSourceHover={onSourceHover}
+                showDevSourceContextCopy={showDevSourceContextCopy}
+                isCollapsed={collapsed}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

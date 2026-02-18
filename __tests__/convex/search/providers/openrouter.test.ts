@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../../../convex/lib/providers/openai_streaming.ts", () => ({
+vi.mock("../../../../convex/ai/providers/openai_streaming.ts", () => ({
   collectOpenRouterChatCompletionText: vi.fn(),
 }));
 
-import { collectOpenRouterChatCompletionText } from "../../../../convex/lib/providers/openai_streaming.ts";
-import { searchWithOpenRouter } from "../../../../convex/search/providers/openrouter.ts";
+import { collectOpenRouterChatCompletionText } from "../../../../convex/ai/providers/openai_streaming.ts";
+import { searchWithOpenRouter } from "../../../../convex/tools/search/providers/openrouter.ts";
 
 const mockCollect = vi.mocked(collectOpenRouterChatCompletionText);
 
@@ -37,10 +37,15 @@ describe("openrouter provider", () => {
       ],
     };
 
-    mockCollect.mockResolvedValue({
+    const mockValue: Awaited<
+      ReturnType<typeof collectOpenRouterChatCompletionText>
+    > = {
       text: "Answer text",
-      completion: completion as unknown as Record<string, unknown>,
-    });
+      completion: completion as Awaited<
+        ReturnType<typeof collectOpenRouterChatCompletionText>
+      >["completion"],
+    };
+    mockCollect.mockResolvedValue(mockValue);
 
     const result = await searchWithOpenRouter("test", 5);
 
@@ -60,10 +65,15 @@ describe("openrouter provider", () => {
       ],
     };
 
-    mockCollect.mockResolvedValue({
+    const mockValue2: Awaited<
+      ReturnType<typeof collectOpenRouterChatCompletionText>
+    > = {
       text: "See https://example.org for details.",
-      completion: completion as unknown as Record<string, unknown>,
-    });
+      completion: completion as Awaited<
+        ReturnType<typeof collectOpenRouterChatCompletionText>
+      >["completion"],
+    };
+    mockCollect.mockResolvedValue(mockValue2);
 
     const result = await searchWithOpenRouter("test", 5);
 

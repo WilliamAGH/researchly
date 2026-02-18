@@ -104,6 +104,7 @@ describe("useMessageHandler regressions", () => {
       "hello",
       undefined,
       "session_from_chat",
+      undefined,
     );
   });
 });

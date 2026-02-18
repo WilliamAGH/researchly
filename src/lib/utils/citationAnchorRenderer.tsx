@@ -11,7 +11,7 @@ import { logger } from "@/lib/logger";
 
 /** Style classes for citation pills */
 const CITATION_PILL_BASE =
-  "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[15px] sm:text-base font-medium transition-colors no-underline align-baseline citation-pill";
+  "inline-flex items-center gap-0.5 px-1.5 py-0.5 mx-1 rounded-md text-[15px] sm:text-base font-medium transition-colors no-underline align-baseline citation-pill";
 
 const CITATION_PILL_NORMAL =
   "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-300";

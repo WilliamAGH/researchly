@@ -47,10 +47,11 @@ const DANGEROUS_PATTERNS = [
 
 /**
  * Event handler patterns to remove
- * Matches quoted and unquoted attribute values
+ * Matches quoted and unquoted attribute values.
+ * The `i` flag makes [a-z] case-insensitive, covering camelCase handlers
+ * like onClick, onMouseEnter, onLoad, etc.
  */
-const EVENT_HANDLER_PATTERN =
-  /\s*on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+const EVENT_HANDLER_PATTERN = /\s*on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
 
 /**
  * Dangerous protocols to remove
@@ -96,7 +97,7 @@ export function validateScrapedContent(html: string): ValidationResult {
     const matches = cleanedHtml.match(pattern);
     if (matches && matches.length > 0) {
       removed.push(`${name} (${matches.length} occurrences)`);
-      cleanedHtml = cleanedHtml.replace(pattern, "");
+      cleanedHtml = cleanedHtml.replaceAll(pattern, "");
 
       // Increase risk level based on what was found
       if (name.includes("Script") || name.includes("Iframe")) {
@@ -109,7 +110,7 @@ export function validateScrapedContent(html: string): ValidationResult {
   const eventHandlerMatches = cleanedHtml.match(EVENT_HANDLER_PATTERN);
   if (eventHandlerMatches && eventHandlerMatches.length > 0) {
     removed.push(`Event handlers (${eventHandlerMatches.length} occurrences)`);
-    cleanedHtml = cleanedHtml.replace(EVENT_HANDLER_PATTERN, "");
+    cleanedHtml = cleanedHtml.replaceAll(EVENT_HANDLER_PATTERN, "");
     risk = risk === "low" ? "medium" : risk;
   }
 
@@ -118,7 +119,7 @@ export function validateScrapedContent(html: string): ValidationResult {
     const matches = cleanedHtml.match(pattern);
     if (matches && matches.length > 0) {
       removed.push(`${name} (${matches.length} occurrences)`);
-      cleanedHtml = cleanedHtml.replace(pattern, "");
+      cleanedHtml = cleanedHtml.replaceAll(pattern, "");
       risk = "high"; // Protocol injections are high risk
     }
   }
@@ -162,7 +163,9 @@ export function validateScrapedContent(html: string): ValidationResult {
 
   // 7. Adjust risk based on how much was removed
   if (removedPercentage > 50) {
-    risk = risk === "low" ? "high" : risk === "medium" ? "high" : risk;
+    if (risk === "low" || risk === "medium") {
+      risk = "high";
+    }
   } else if (removedPercentage > 25) {
     risk = risk === "low" ? "medium" : risk;
   }
@@ -181,60 +184,8 @@ export function validateScrapedContent(html: string): ValidationResult {
   };
 }
 
-/**
- * Validate multiple pieces of web content
- * @param htmlArray - Array of HTML content to validate
- * @returns Array of validation results
- */
-export function validateMultipleContent(
-  htmlArray: string[],
-): ValidationResult[] {
-  return htmlArray.map((html) => validateScrapedContent(html));
-}
-
-/**
- * Validate URLs extracted from web content
- * @param url - URL to validate
- * @returns Whether the URL is safe to use
- */
-export function isUrlSafe(url: string): boolean {
-  if (!url || typeof url !== "string") {
-    return false;
-  }
-
-  const lowerUrl = url.toLowerCase().trim();
-
-  // Check for dangerous protocols
-  const dangerousProtocols = [
-    "javascript:",
-    "data:",
-    "vbscript:",
-    "file:",
-    "about:",
-    "chrome:",
-  ];
-
-  for (const protocol of dangerousProtocols) {
-    if (lowerUrl.startsWith(protocol)) {
-      return false;
-    }
-  }
-
-  // Check for encoded dangerous protocols
-  if (lowerUrl.includes("%6a%61%76%61%73%63%72%69%70%74")) {
-    // javascript
-    return false;
-  }
-
-  // Allow only http, https, and relative URLs
-  return (
-    lowerUrl.startsWith("http://") ||
-    lowerUrl.startsWith("https://") ||
-    lowerUrl.startsWith("/") ||
-    lowerUrl.startsWith("./") ||
-    lowerUrl.startsWith("../")
-  );
-}
+// URL safety validation extracted to ./webContent_url.ts per [LOC1a]
+export { isUrlSafe } from "./webContent_url";
 
 /**
  * Sanitize CSS content to prevent style-based attacks
@@ -247,95 +198,25 @@ export function sanitizeCss(css: string): string {
   let clean = css;
 
   // Remove CSS comments which can hide payloads
-  clean = clean.replace(/\/\*[\s\S]*?\*\//g, "");
+  clean = clean.replaceAll(/\/\*[\s\S]*?\*\//g, "");
 
   // Remove javascript: protocol in CSS
-  clean = clean.replace(/javascript:/gi, "");
+  clean = clean.replaceAll(/javascript:/gi, "");
 
   // Remove expression() (IE specific)
-  clean = clean.replace(/expression\s*\([^)]*\)/gi, "");
+  clean = clean.replaceAll(/expression\s*\([^)]*\)/gi, "");
 
   // Remove @import statements (can load external resources)
-  clean = clean.replace(/@import[^;]+;/gi, "");
+  clean = clean.replaceAll(/@import[^;]+;/gi, "");
 
   // Remove behavior property (IE specific)
-  clean = clean.replace(/behavior\s*:\s*[^;]+;/gi, "");
+  clean = clean.replaceAll(/behavior\s*:\s*[^;]+;/gi, "");
 
   // Remove -moz-binding (Firefox specific)
-  clean = clean.replace(/-moz-binding\s*:\s*[^;]+;/gi, "");
+  clean = clean.replaceAll(/-moz-binding\s*:\s*[^;]+;/gi, "");
 
   // Remove url(data:...) to prevent SVG/script vectors embedded as images
-  clean = clean.replace(/url\(\s*(['"]?)\s*data:[^)]+\)/gi, "url()");
+  clean = clean.replaceAll(/url\(\s*(['"]?)\s*data:[^)]+\)/gi, "url()");
 
   return clean;
-}
-
-/**
- * Create a summary report of validation results
- */
-export function createValidationReport(results: ValidationResult[]): {
-  totalProcessed: number;
-  safeContent: number;
-  lowRisk: number;
-  mediumRisk: number;
-  highRisk: number;
-  criticalRisk: number;
-  averageRemovalPercentage: number;
-  commonInjectionTypes: string[];
-} {
-  const report = {
-    totalProcessed: results.length,
-    safeContent: 0,
-    lowRisk: 0,
-    mediumRisk: 0,
-    highRisk: 0,
-    criticalRisk: 0,
-    averageRemovalPercentage: 0,
-    commonInjectionTypes: [] as string[],
-  };
-
-  const injectionTypeCount: Record<string, number> = {};
-  let totalRemovalPercentage = 0;
-
-  for (const result of results) {
-    // Count risk levels
-    switch (result.risk) {
-      case "low":
-        report.lowRisk++;
-        if (!result.injectionDetected && result.removed.length === 0) {
-          report.safeContent++;
-        }
-        break;
-      case "medium":
-        report.mediumRisk++;
-        break;
-      case "high":
-        report.highRisk++;
-        break;
-      case "critical":
-        report.criticalRisk++;
-        break;
-    }
-
-    // Track injection types
-    for (const type of result.injectionTypes) {
-      injectionTypeCount[type] = (injectionTypeCount[type] || 0) + 1;
-    }
-
-    // Sum removal percentages
-    totalRemovalPercentage += result.metadata.removedPercentage;
-  }
-
-  // Calculate averages and find common injection types
-  report.averageRemovalPercentage =
-    results.length > 0
-      ? Math.round(totalRemovalPercentage / results.length)
-      : 0;
-
-  report.commonInjectionTypes = Object.entries(injectionTypeCount)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([type]) => type);
-
-  return report;
 }

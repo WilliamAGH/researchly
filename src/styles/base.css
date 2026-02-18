@@ -143,10 +143,10 @@
   }
 
   /* Buttons and selects: match light mode body (serif) for consistency */
+  /* font-size intentionally omitted — let Tailwind utilities control size per element */
   html:not(.dark) button,
   html:not(.dark) select {
     font-family: "Playfair Display", "Georgia", "Times New Roman", serif;
-    font-size: 16px;
   }
 
   html.dark button,
@@ -154,7 +154,6 @@
     font-family:
       "JetBrains Mono", "SF Mono", "Monaco", "Inconsolata", "Roboto Mono",
       "Source Code Pro", monospace !important;
-    font-size: 16px;
   }
 
   /* Force 16px font size on mobile inputs */

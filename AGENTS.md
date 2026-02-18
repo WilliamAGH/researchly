@@ -18,6 +18,7 @@ alwaysApply: true
 - [LOC1a-d] Repository File Length Limit (<= 350 LOC; excludes generated files)
 - [DOC1a-f] Documentation Architecture (AGENTS = rules; docs = how/why; no barrels; no .cursor rules)
 - [GT1a-j] Git, history safety, hooks/signing, lock files, and clean commits
+- [GT1k] LLM bug-traceability attribution in commits/docstrings
 - [CX1a-h] Convex runtimes: `"use node";` boundaries for Node-only imports
 - [RC1a-d] Root Cause Resolution (single implementation, no fallbacks, no shims/workarounds)
 - [IM1a-d] Import Rules (no barrel files, `@/` alias only, no relative imports)
@@ -72,13 +73,14 @@ alwaysApply: true
   - Forbidden: `git commit -n`, `git commit -n -c commit.gpgsign=false`, setting `HUSKY=0` / `SKIP_HUSKY=1`, or otherwise forcing a commit.
 - [GT1b] If hooks fail (network/SSO agent issues, Convex checks, etc.), fix the environment or follow the project’s documented process; if blocked, escalate in the task thread—do not force the commit.
 - [GT1c] Read-only git commands (e.g., `git status`, `git diff`, `git log`, `git show`) never require permission. Any git command that writes to the working tree, index, or history requires explicit permission (see [GT1g]).
-- [GT1d] Commit message standards: one logical change per commit; describe the change and purpose; no tooling/AI references; no `Co-authored-by` or AI attribution.
+- [GT1d] Commit message standards: one logical change per commit; describe the change and purpose; no `Co-authored-by` or generic AI attribution.
 - [GT1e] Do not amend or rewrite history (no `--amend`, no force pushes) without explicit user permission.
 - [GT1f] Do not change branches (checkout/merge/rebase/pull) unless the user explicitly instructs it.
 - [GT1g] Destructive git commands are prohibited unless explicitly ordered by the user (e.g., `git restore`, `git reset`, force checkout). Destructive commands are a subset of write operations; read-only commands are always allowed without permission per [GT1c].
 - [GT1j] Examples of write operations that require permission: `git add`, `git commit`, `git checkout`, `git merge`, `git rebase`, `git reset`, `git restore`, `git clean`, `git cherry-pick`.
 - [GT1h] Never delete lock files automatically (including `.git/index.lock`). Stop and ask for instruction.
 - [GT1i] Treat existing staged/unstaged changes as intentional unless the user says otherwise; never “clean up” someone else’s work unprompted.
+- [GT1k] If a code change is explicitly fixing a bug reported by an LLM agent (for example Claude Code, Codex, OpenCode, Cline), the corrective commit message MUST name that exact agent for traceability; if no commit is made, add the same attribution succinctly in a nearby docstring/comment for the exact fix.
 
 ## [CX1] Convex Runtimes: Node-only Helpers Must Live in `"use node";` Modules
 

@@ -12,6 +12,7 @@ import { TitleUtils } from "@/lib/types/unified";
 import { getErrorMessage } from "../../convex/lib/errors";
 import { logger } from "@/lib/logger";
 import { sendMessageWithStreaming } from "@/hooks/chatActions/sendMessage";
+import { createUiStateActions } from "@/hooks/chatActions/uiStateActions";
 
 export interface ChatActions {
   // Chat management
@@ -26,6 +27,7 @@ export interface ChatActions {
     content: string,
     imageStorageIds?: string[],
     chatSessionId?: string,
+    priorChatSummary?: string,
   ) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
   addMessage: (message: Message) => void;
@@ -204,6 +206,7 @@ export function createChatActions(
       content: string,
       imageStorageIds?: string[],
       chatSessionId?: string,
+      priorChatSummary?: string,
     ) {
       if (!repository) {
         throw new Error(
@@ -217,6 +220,7 @@ export function createChatActions(
         content,
         imageStorageIds,
         chatSessionId,
+        priorChatSummary,
       });
     },
 
@@ -286,33 +290,8 @@ export function createChatActions(
       }
     },
 
-    // UI State Management
-    handleToggleSidebar() {
-      setState((prev) => ({ ...prev, isSidebarOpen: !prev.isSidebarOpen }));
-    },
-
-    setShowFollowUpPrompt(show: boolean) {
-      setState((prev) => ({ ...prev, showFollowUpPrompt: show }));
-    },
-
-    setShowShareModal(show: boolean) {
-      setState((prev) => ({ ...prev, showShareModal: show }));
-    },
-
-    setPendingMessage(message: string) {
-      setState((prev) => ({ ...prev, pendingMessage: message }));
-    },
-
-    addToHistory(message: string) {
-      setState((prev) => ({
-        ...prev,
-        userHistory: [...prev.userHistory, message],
-      }));
-    },
-
-    setError(message: string) {
-      setState((prev) => ({ ...prev, error: message }));
-    },
+    // UI State Management — extracted to chatActions/uiStateActions.ts
+    ...createUiStateActions(setState),
 
     // Utility
     async refreshChats() {
@@ -334,10 +313,6 @@ export function createChatActions(
           error: getErrorMessage(error, "Failed to refresh chats"),
         }));
       }
-    },
-
-    clearError() {
-      setState((prev) => ({ ...prev, error: null }));
     },
   };
 }

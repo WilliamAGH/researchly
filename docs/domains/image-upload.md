@@ -29,7 +29,7 @@ description: "Documents the image upload data flow from clipboard/file picker th
 | `convex/messages_insert_document.ts`           | `imageStorageIds` in persistence pipeline         |
 | `convex/chats/messageProjection.ts`            | Projects `imageStorageIds` to client              |
 | `convex/agents/orchestration_session.ts`       | Resolves storage IDs to URLs                      |
-| `convex/agents/vision_analysis.ts`             | Generates and persists `imageAnalysis`            |
+| `convex/tools/vision/analysis.ts`              | Generates and persists `imageAnalysis`            |
 | `convex/agents/input_builder.ts`               | Builds multimodal `AgentInputItem[]`              |
 | `convex/agents/workflow_conversational.ts`     | Builds multimodal `AgentInputItem[]`              |
 | `convex/http/routes/aiAgent_stream.ts`         | Sanitizes + passes `imageStorageIds`              |
