@@ -168,7 +168,16 @@ async function callContentApi(
     }
   }
 
-  const html = await response.text();
+  let html: string;
+  try {
+    html = await response.text();
+  } catch (bodyError) {
+    return callError(
+      "FETCH_FAILED",
+      `Browserless response body read failed: ${bodyError instanceof Error ? bodyError.message : "unknown"}`,
+      { shouldRetry: true },
+    );
+  }
   if (!html || html.trim().length === 0) {
     return callError("FETCH_FAILED", "Browserless returned empty HTML");
   }
@@ -219,7 +228,15 @@ async function callUnblockApi(
     );
   }
 
-  const raw: unknown = await response.json();
+  let raw: unknown;
+  try {
+    raw = await response.json();
+  } catch (parseError) {
+    return callError(
+      "FETCH_FAILED",
+      `Browserless /unblock JSON parse failed: ${parseError instanceof Error ? parseError.message : "unknown"}`,
+    );
+  }
   const html =
     typeof raw === "object" &&
     raw !== null &&
@@ -245,6 +262,9 @@ async function callUnblockApi(
 export const fetchBrowserless: FetchStrategy = async (url) => {
   const token = process.env.BROWSERLESS_API_TOKEN;
   if (!token) {
+    console.error(
+      "[CRITICAL] BROWSERLESS_API_TOKEN is not set. Browserless fallback is disabled.",
+    );
     return {
       ok: false,
       errorCode: "FETCH_FAILED",
