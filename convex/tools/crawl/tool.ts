@@ -12,7 +12,9 @@ import {
   type AgentToolRunContext,
 } from "../../agents/tools_context";
 
-const SCRAPE_TOOL_TIMEOUT_MS = 12_000;
+// Must exceed native fetch timeout (10s) + Browserless fetch timeout (20s) to allow
+// the full fallback pipeline to complete. Set to 35s: 10s native + 20s Browserless + 5s overhead.
+const SCRAPE_TOOL_TIMEOUT_MS = 35_000;
 
 type ScrapeToolResponse = {
   contextId: string;
