@@ -147,3 +147,11 @@ export const TOKEN_BUDGETS = {
   /** Maximum tokens per individual page */
   MAX_TOKENS_PER_PAGE: 3_000,
 } as const;
+
+/**
+ * URL validation constants.
+ */
+export const URL_PREFIXES = {
+  /** Only URLs starting with this prefix are considered valid scrape targets. */
+  HTTP: "http",
+} as const;
