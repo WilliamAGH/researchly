@@ -2,13 +2,12 @@
 
 /**
  * Convex action entry point for web scraping.
- * Validates the URL and delegates to the crawl orchestrator.
+ * Delegates to scrapeWithCheerio which handles URL validation internally.
  */
 
 import { v } from "convex/values";
 import { action } from "../../_generated/server";
 import { scrapeWithCheerio } from "./orchestrator";
-import { validateScrapeUrl } from "../../lib/url";
 
 export const scrapeUrl = action({
   args: {
@@ -23,10 +22,6 @@ export const scrapeUrl = action({
     errorCode: v.optional(v.string()),
   }),
   handler: async (_ctx, args) => {
-    const validation = validateScrapeUrl(args.url);
-    if (!validation.ok) {
-      throw new Error(validation.error);
-    }
-    return await scrapeWithCheerio(validation.url);
+    return await scrapeWithCheerio(args.url);
   },
 });
