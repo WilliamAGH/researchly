@@ -287,6 +287,13 @@ export const fetchBrowserless: FetchStrategy = async (url) => {
     }
 
     const backoffMs = RETRY_BASE_DELAY_MS * 2 ** (attempt - 1);
+    console.warn("[CRAWL] Browserless retry after error:", {
+      url,
+      attempt,
+      backoffMs,
+      errorCode: result.errorCode,
+      message: result.message,
+    });
     await sleep(backoffMs);
   }
 
