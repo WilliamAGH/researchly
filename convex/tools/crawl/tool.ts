@@ -73,18 +73,22 @@ async function runScrapeActionWithTimeout(
   actionCtx: ReturnType<typeof getActionCtx>,
   url: string,
 ): Promise<Awaited<ReturnType<typeof actionCtx.runAction>>> {
-  // Promise.race attaches internal handlers to all inputs, so the losing
-  // promise's eventual rejection is handled (no unhandled-rejection risk).
-  return Promise.race([
-    actionCtx.runAction(api.tools.crawl.action.scrapeUrl, { url }),
-    new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        reject(
-          new Error(`Scrape tool timeout after ${SCRAPE_TOOL_TIMEOUT_MS}ms`),
-        );
-      }, SCRAPE_TOOL_TIMEOUT_MS);
-    }),
-  ]);
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(
+        new Error(`Scrape tool timeout after ${SCRAPE_TOOL_TIMEOUT_MS}ms`),
+      );
+    }, SCRAPE_TOOL_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([
+      actionCtx.runAction(api.tools.crawl.action.scrapeUrl, { url }),
+      timeoutPromise,
+    ]);
+  } finally {
+    if (timeoutId !== null) clearTimeout(timeoutId);
+  }
 }
 
 /**

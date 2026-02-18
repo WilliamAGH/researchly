@@ -1,5 +1,3 @@
-"use node";
-
 /**
  * Parallel research logging utilities.
  *

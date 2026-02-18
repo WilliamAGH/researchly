@@ -31,7 +31,7 @@ A Claude Code skill (`coding-agents`) containing:
 
 | Agent       | Commands dir                            | Skills dir                    | Verified                 |
 | ----------- | --------------------------------------- | ----------------------------- | ------------------------ |
-| Claude Code | `~/.claude/skills/`                     | `~/.claude/skills/`           | Disk ls                  |
+| Claude Code | `~/.claude/commands/`                   | `~/.claude/skills/`           | Disk ls                  |
 | Codex       | `~/.codex/prompts/`                     | `~/.codex/skills/`            | Disk ls, symlink targets |
 | OpenCode    | `~/.config/opencode/command/`           | `~/.config/opencode/skills/`  | Disk ls, symlink targets |
 | Kilo        | `~/.config/kilo/command/`               | `~/.config/kilo/skills/`      | Disk ls, symlink targets |

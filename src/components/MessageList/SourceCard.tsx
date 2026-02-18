@@ -193,7 +193,7 @@ export const SourceCard = React.memo(function SourceCard({
           </div>
         </div>
       </a>
-      {showDevSourceContextCopy && serverContextMarkdown && (
+      {!isCollapsed && showDevSourceContextCopy && serverContextMarkdown && (
         <CopyButton
           text={serverContextMarkdown}
           size="sm"

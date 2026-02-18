@@ -179,8 +179,6 @@ export const extractMainContent = ($: CheerioAPI): string => {
   return cleanText($("body").text());
 };
 
-export const normalizeScrapedText = (text: string): string => cleanText(text);
-
 const JUNK_PATTERNS = [
   /cookie policy/gi,
   /accept cookies/gi,
