@@ -37,12 +37,15 @@ describe("openrouter provider", () => {
       ],
     };
 
-    mockCollect.mockResolvedValue({
-      text: "Answer text",
-      completion: completion,
-    } as unknown as Awaited<
+    const mockValue: Awaited<
       ReturnType<typeof collectOpenRouterChatCompletionText>
-    >);
+    > = {
+      text: "Answer text",
+      completion: completion as Awaited<
+        ReturnType<typeof collectOpenRouterChatCompletionText>
+      >["completion"],
+    };
+    mockCollect.mockResolvedValue(mockValue);
 
     const result = await searchWithOpenRouter("test", 5);
 
@@ -62,12 +65,15 @@ describe("openrouter provider", () => {
       ],
     };
 
-    mockCollect.mockResolvedValue({
-      text: "See https://example.org for details.",
-      completion: completion,
-    } as unknown as Awaited<
+    const mockValue2: Awaited<
       ReturnType<typeof collectOpenRouterChatCompletionText>
-    >);
+    > = {
+      text: "See https://example.org for details.",
+      completion: completion as Awaited<
+        ReturnType<typeof collectOpenRouterChatCompletionText>
+      >["completion"],
+    };
+    mockCollect.mockResolvedValue(mockValue2);
 
     const result = await searchWithOpenRouter("test", 5);
 

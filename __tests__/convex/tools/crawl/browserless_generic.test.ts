@@ -30,15 +30,8 @@ describe("browserless_generic", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const [, options] = fetchMock.mock.calls[0];
-    const body = JSON.parse(String(options?.body)) as {
-      gotoOptions?: { waitUntil?: string; timeout?: number };
-      waitForSelector?: {
-        selector?: string;
-        timeout?: number;
-        visible?: boolean;
-      };
-      waitForTimeout?: number;
-    };
+    // JSON.parse returns `any`; no cast needed — TypeScript already treats it as any.
+    const body = JSON.parse(String(options?.body));
     expect(body.gotoOptions?.waitUntil).toBe("networkidle2");
     expect(body.waitForSelector?.selector).toContain("main");
     expect(body.waitForSelector?.visible).toBe(true);
