@@ -231,12 +231,22 @@ export async function* executeParallelResearch(
   // Phase 2: Parallel Scrape
   // ============================================
 
-  if (harvested.searchResults.length > 0) {
+  // Compute the filtered scrape targets (dedup + http-only) so the progress
+  // event reflects the actual URLs that will be scraped, not raw search results.
+  const scrapeTargetUrls = Array.from(
+    new Map(harvested.searchResults.map((r) => [r.url, r])).values(),
+  )
+    .filter((r) => r.url?.startsWith("http"))
+    .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
+    .slice(0, maxScrapeUrls)
+    .map((r) => r.url);
+
+  if (scrapeTargetUrls.length > 0) {
     yield {
       type: "progress",
       stage: "scraping",
       message: `Scraping top sources in parallel...`,
-      urls: harvested.searchResults.slice(0, maxScrapeUrls).map((r) => r.url),
+      urls: scrapeTargetUrls,
     };
 
     const scrapeResult = await executeScrapePhase(
