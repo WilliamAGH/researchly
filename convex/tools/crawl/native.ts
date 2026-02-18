@@ -5,9 +5,8 @@
  * Primary (fast) path — uses the built-in Node fetch with a 10s timeout.
  */
 
+import { NATIVE_FETCH } from "../../lib/constants/cache";
 import type { FetchStrategy } from "./types";
-
-const NATIVE_TIMEOUT_MS = 10_000;
 
 /**
  * Fetch raw HTML using the platform's built-in `fetch()`.
@@ -26,7 +25,7 @@ export const fetchNative: FetchStrategy = async (url) => {
         "Accept-Encoding": "gzip, deflate",
         Connection: "keep-alive",
       },
-      signal: AbortSignal.timeout(NATIVE_TIMEOUT_MS),
+      signal: AbortSignal.timeout(NATIVE_FETCH.TIMEOUT_MS),
     });
   } catch (error) {
     const message =

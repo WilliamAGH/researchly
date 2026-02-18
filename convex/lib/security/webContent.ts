@@ -184,17 +184,6 @@ export function validateScrapedContent(html: string): ValidationResult {
   };
 }
 
-/**
- * Validate multiple pieces of web content
- * @param htmlArray - Array of HTML content to validate
- * @returns Array of validation results
- */
-export function validateMultipleContent(
-  htmlArray: string[],
-): ValidationResult[] {
-  return htmlArray.map((html) => validateScrapedContent(html));
-}
-
 // URL safety validation extracted to ./webContent_url.ts per [LOC1a]
 export { isUrlSafe } from "./webContent_url";
 
@@ -230,74 +219,4 @@ export function sanitizeCss(css: string): string {
   clean = clean.replaceAll(/url\(\s*(['"]?)\s*data:[^)]+\)/gi, "url()");
 
   return clean;
-}
-
-/**
- * Create a summary report of validation results
- */
-export function createValidationReport(results: ValidationResult[]): {
-  totalProcessed: number;
-  safeContent: number;
-  lowRisk: number;
-  mediumRisk: number;
-  highRisk: number;
-  criticalRisk: number;
-  averageRemovalPercentage: number;
-  commonInjectionTypes: string[];
-} {
-  const report = {
-    totalProcessed: results.length,
-    safeContent: 0,
-    lowRisk: 0,
-    mediumRisk: 0,
-    highRisk: 0,
-    criticalRisk: 0,
-    averageRemovalPercentage: 0,
-    commonInjectionTypes: [] as string[],
-  };
-
-  const injectionTypeCount: Record<string, number> = {};
-  let totalRemovalPercentage = 0;
-
-  for (const result of results) {
-    // Count risk levels
-    switch (result.risk) {
-      case "low":
-        report.lowRisk++;
-        if (!result.injectionDetected && result.removed.length === 0) {
-          report.safeContent++;
-        }
-        break;
-      case "medium":
-        report.mediumRisk++;
-        break;
-      case "high":
-        report.highRisk++;
-        break;
-      case "critical":
-        report.criticalRisk++;
-        break;
-    }
-
-    // Track injection types
-    for (const type of result.injectionTypes) {
-      injectionTypeCount[type] = (injectionTypeCount[type] || 0) + 1;
-    }
-
-    // Sum removal percentages
-    totalRemovalPercentage += result.metadata.removedPercentage;
-  }
-
-  // Calculate averages and find common injection types
-  report.averageRemovalPercentage =
-    results.length > 0
-      ? Math.round(totalRemovalPercentage / results.length)
-      : 0;
-
-  report.commonInjectionTypes = Object.entries(injectionTypeCount)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([type]) => type);
-
-  return report;
 }

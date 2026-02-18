@@ -262,9 +262,13 @@ export function useEnhancedFollowUpPrompt({
           setPendingMessage(null);
         }
       } catch (err) {
-        logger.error("Failed to send follow-up message:", err);
+        // Surface the failure so the UI can show feedback [EH1c].
+        // Fixed by Cline: send errors were previously swallowed silently [EH1a].
+        const error = err instanceof Error ? err : new Error(String(err));
+        logger.error("Failed to send follow-up message:", error);
         if (!stale) {
           setPendingMessage(null);
+          setSummaryError(error);
         }
       } finally {
         // Always reset guard so new pending messages can dispatch,

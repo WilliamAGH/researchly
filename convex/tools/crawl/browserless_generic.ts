@@ -34,8 +34,6 @@ const MAX_BROWSERLESS_ATTEMPTS = 2;
 const RETRY_BASE_DELAY_MS = 250;
 const WAIT_FOR_SELECTOR_TIMEOUT_MS = 4_000;
 const WAIT_FOR_RENDER_TIMEOUT_MS = 800;
-const UNBLOCK_TIMEOUT_QUERY_MS = 12_000;
-const UNBLOCK_FETCH_TIMEOUT_MS = 14_000;
 
 /** Resource types to skip — we only need DOM HTML, not visual assets. */
 const BLOCKED_RESOURCES = ["image", "stylesheet", "font", "media"] as const;
@@ -183,7 +181,7 @@ async function callUnblockApi(
   token: string,
   url: string,
 ): Promise<BrowserlessCallResult> {
-  const endpoint = `${baseUrl}/unblock?token=${token}&${UNBLOCK_QUERY}&timeout=${UNBLOCK_TIMEOUT_QUERY_MS}`;
+  const endpoint = `${baseUrl}/unblock?token=${token}&${UNBLOCK_QUERY}&timeout=${BROWSERLESS.UNBLOCK_TIMEOUT_QUERY_MS}`;
   let response: Response;
   try {
     response = await fetch(endpoint, {
@@ -202,7 +200,7 @@ async function callUnblockApi(
           timeout: BROWSERLESS.PAGE_TIMEOUT_MS,
         },
       }),
-      signal: AbortSignal.timeout(UNBLOCK_FETCH_TIMEOUT_MS),
+      signal: AbortSignal.timeout(BROWSERLESS.UNBLOCK_FETCH_TIMEOUT_MS),
     });
   } catch (error) {
     const message =

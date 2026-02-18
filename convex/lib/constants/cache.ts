@@ -89,6 +89,19 @@ export const BROWSERLESS = {
   PAGE_TIMEOUT_MS: 15_000,
   /** Outer fetch timeout = page timeout + network overhead buffer (ms) */
   FETCH_TIMEOUT_MS: 20_000,
+  /** Timeout passed as query param to /unblock endpoint (ms) */
+  UNBLOCK_TIMEOUT_QUERY_MS: 12_000,
+  /** Outer fetch timeout for /unblock request = query timeout + overhead (ms) */
+  UNBLOCK_FETCH_TIMEOUT_MS: 14_000,
+} as const;
+
+/**
+ * Native fetch configuration.
+ * Used by the primary (fast-path) scrape strategy.
+ */
+export const NATIVE_FETCH = {
+  /** Timeout for the built-in platform fetch() (ms) */
+  TIMEOUT_MS: 10_000,
 } as const;
 
 /**

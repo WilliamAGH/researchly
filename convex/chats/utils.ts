@@ -86,6 +86,64 @@ export function buildContextSummary(params: {
 const DEFAULT_TITLE_MAX_LENGTH = 25;
 
 /**
+ * Common question/request prefixes stripped from user intent before title generation.
+ * Applied iteratively so compound openers like "Can you please tell me about X"
+ * reduce fully to "X" in multiple passes.
+ * Module-level constant — defined once, never re-allocated per call.
+ */
+const QUESTION_PREFIXES = [
+  "what is a ",
+  "what is an ",
+  "what is the ",
+  "what are the ",
+  "what are some ",
+  "what are ",
+  "what is ",
+  "what's the ",
+  "what's a ",
+  "what's an ",
+  "what's ",
+  "what was ",
+  "what were ",
+  "how do i ",
+  "how do you ",
+  "how does ",
+  "how would i ",
+  "how would you ",
+  "how can i ",
+  "how to ",
+  "how do ",
+  "can you ",
+  "can i ",
+  "could you ",
+  "would you ",
+  "should i ",
+  "give me a ",
+  "give me an ",
+  "give me ",
+  "find me a ",
+  "find me an ",
+  "find me ",
+  "show me ",
+  "tell me about ",
+  "tell me ",
+  "explain the ",
+  "explain ",
+  "understand the ",
+  "define ",
+  "describe ",
+  "list ",
+  "please ",
+  "i need a ",
+  "i need an ",
+  "i need ",
+  "i want a ",
+  "i want ",
+  "definition of ",
+  "meaning of ",
+] as const;
+
+/**
  * Generate a concise chat title from user intent/message
  *
  * SINGLE SOURCE OF TRUTH for all chat title generation.
@@ -109,59 +167,7 @@ export function generateChatTitle(params: {
 
   // Remove common question/request prefixes to expose the core topic.
   // Applied iteratively so compound openers like "Can you please tell me about X"
-  // reduce fully to "X" in multiple passes.
-  const QUESTION_PREFIXES = [
-    "what is a ",
-    "what is an ",
-    "what is the ",
-    "what are the ",
-    "what are some ",
-    "what are ",
-    "what is ",
-    "what's the ",
-    "what's a ",
-    "what's an ",
-    "what's ",
-    "what was ",
-    "what were ",
-    "how do i ",
-    "how do you ",
-    "how does ",
-    "how would i ",
-    "how would you ",
-    "how can i ",
-    "how to ",
-    "how do ",
-    "can you ",
-    "can i ",
-    "could you ",
-    "would you ",
-    "should i ",
-    "give me a ",
-    "give me an ",
-    "give me ",
-    "find me a ",
-    "find me an ",
-    "find me ",
-    "show me ",
-    "tell me about ",
-    "tell me ",
-    "explain the ",
-    "explain ",
-    "understand the ",
-    "define ",
-    "describe ",
-    "list ",
-    "please ",
-    "i need a ",
-    "i need an ",
-    "i need ",
-    "i want a ",
-    "i want ",
-    "definition of ",
-    "meaning of ",
-  ];
-
+  // reduce fully to "X" in multiple passes. Uses module-level QUESTION_PREFIXES.
   let compressed = sanitized.toLowerCase();
   let prev: string;
   do {
