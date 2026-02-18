@@ -1,5 +1,3 @@
-"use node";
-
 /**
  * Fetch strategy contracts for the crawl pipeline.
  * Pure types — no runtime dependencies.
