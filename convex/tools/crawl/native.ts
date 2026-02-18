@@ -46,7 +46,10 @@ export const fetchNative: FetchStrategy = async (url) => {
   }
 
   const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("text/html")) {
+  if (
+    !contentType.includes("text/html") &&
+    !contentType.includes("application/xhtml+xml")
+  ) {
     return {
       ok: false,
       errorCode: "NOT_HTML",
