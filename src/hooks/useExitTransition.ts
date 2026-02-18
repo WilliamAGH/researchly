@@ -16,7 +16,7 @@ export function useExitTransition(
 ): { mounted: boolean; exiting: boolean } {
   const [mounted, setMounted] = useState(show);
   const [exiting, setExiting] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (show) {
