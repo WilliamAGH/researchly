@@ -79,11 +79,18 @@ export async function executeScrapePhase(
     const singleScrapeStart = Date.now();
 
     try {
+      // @ts-ignore TS2589 - convex action type inference depth exceeded
       const content = await ctx.runAction(api.tools.crawl.action.scrapeUrl, {
         url,
       });
 
-      if (content.content.length < CONTENT_LIMITS.MIN_CONTENT_LENGTH) {
+      // Reject error-as-data results from scrapeWithCheerio (which returns
+      // error details in content/error fields instead of throwing), and
+      // reject pages with too little useful content.
+      if (
+        content.error ||
+        content.content.length < CONTENT_LIMITS.MIN_CONTENT_LENGTH
+      ) {
         logScrapeSkip(
           Date.now() - singleScrapeStart,
           url,
