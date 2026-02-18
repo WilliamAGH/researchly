@@ -7,6 +7,12 @@
  * RSC/streaming pages (Next.js App Router, React streaming SSR) deliver all content
  * inside self.__next_f.push([1,"..."]) script tags. stripJunk() removes all <script>
  * tags, so we must extract RSC text BEFORE stripping. See extractRscContent().
+ *
+ * Call order matters:
+ *   1. extractRscContent($)   — if RSC page (reads scripts before stripJunk)
+ *   2. needsJsRendering($)    — checks scripts/noscript elements
+ *   3. extractPageMetadata($) — reads JSON-LD from script[type="application/ld+json"]
+ *   4. extractMainContent($)  — calls stripJunk() internally, removing all <script> tags
  */
 
 import type { CheerioAPI } from "cheerio";
