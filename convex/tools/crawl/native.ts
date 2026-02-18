@@ -1,8 +1,6 @@
-"use node";
-
 /**
  * Native platform fetch strategy.
- * Primary (fast) path — uses the built-in Node fetch with a 10s timeout.
+ * Primary (fast) path — uses the built-in fetch with a 10s timeout.
  */
 
 import { NATIVE_FETCH } from "../../lib/constants/cache";
