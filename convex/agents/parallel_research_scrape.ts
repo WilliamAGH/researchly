@@ -21,9 +21,26 @@ import {
 } from "./workflow_logger_research";
 
 /** Minimal search result shape needed for scrape candidate selection. */
-interface ScrapeCandidate {
+export interface ScrapeCandidate {
   url: string;
   relevanceScore?: number;
+}
+
+/**
+ * Select and rank scrape targets from raw search results.
+ *
+ * Deduplicates by URL, keeps only HTTP(S), sorts by relevance, and caps at
+ * `maxUrls`. Used by both the progress event and the actual scrape dispatch
+ * so the two never diverge (see [CC1b] DRY).
+ */
+export function selectScrapeTargets(
+  searchResults: ScrapeCandidate[],
+  maxUrls: number,
+): ScrapeCandidate[] {
+  return Array.from(new Map(searchResults.map((r) => [r.url, r])).values())
+    .filter((r) => r.url?.startsWith("http"))
+    .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
+    .slice(0, maxUrls);
 }
 
 /** Result of the parallel scrape phase. */
@@ -42,12 +59,7 @@ export async function executeScrapePhase(
   searchResults: ScrapeCandidate[],
   maxScrapeUrls: number,
 ): Promise<ScrapePhaseResult> {
-  const uniqueUrls = Array.from(
-    new Map(searchResults.map((r) => [r.url, r])).values(),
-  )
-    .filter((r) => r.url?.startsWith("http"))
-    .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
-    .slice(0, maxScrapeUrls);
+  const uniqueUrls = selectScrapeTargets(searchResults, maxScrapeUrls);
 
   if (uniqueUrls.length === 0) {
     return {
