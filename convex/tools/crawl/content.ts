@@ -1,5 +1,3 @@
-"use node";
-
 /**
  * HTML content extraction using Cheerio.
  * Strategy-agnostic — works with any HTML source (native fetch, Browserless, etc.).
