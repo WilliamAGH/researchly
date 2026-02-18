@@ -12,8 +12,10 @@ import { getErrorMessage } from "../../lib/errors";
 import {
   extractMainContent,
   extractPageMetadata,
+  extractRscContent,
+  isLowQualityContent,
   needsJsRendering,
-  normalizeScrapedText,
+  removeJunkPatterns,
 } from "./content";
 import { fetchNative } from "./native";
 import { fetchBrowserless } from "./browserless_generic";
@@ -48,9 +50,81 @@ const getScrapeCache = (): Map<string, CacheEntry> => {
   return globalThis.__scrapeCache;
 };
 
-/** Only attempt Browserless for client-side blocks (403, 401, etc.). */
+/** Attempt Browserless for network-level failures likely fixed by headless rendering. */
 function shouldAttemptBrowserless(errorCode: FetchErrorCode): boolean {
-  return errorCode === "HTTP_CLIENT_ERROR";
+  return (
+    errorCode === "HTTP_CLIENT_ERROR" ||
+    errorCode === "TIMEOUT" ||
+    errorCode === "FETCH_FAILED"
+  );
+}
+
+/** Retry with Browserless when native HTML extracts to unusably short content. */
+function shouldRetryBrowserlessAfterExtractionFailure(
+  errorMessage: string,
+): boolean {
+  return (
+    errorMessage.includes("Content too short") ||
+    errorMessage.includes("Content quality check failed")
+  );
+}
+
+type FetchSuccess = {
+  html: string;
+  source: "native" | "browserless";
+};
+
+function tryExtractAndClean(
+  url: string,
+  html: string,
+): { ok: true; result: ScrapeResult } | { ok: false; error: string } {
+  try {
+    return { ok: true, result: extractAndClean(url, html) };
+  } catch (error) {
+    return { ok: false, error: getErrorMessage(error) };
+  }
+}
+
+/** Retry extraction via Browserless when native HTML was unusable. */
+async function retryExtractionWithBrowserless(
+  url: string,
+  nativeError: string,
+): Promise<ScrapeResult> {
+  console.info(
+    "[CRAWL] Native extraction failed, trying Browserless fallback:",
+    { url, error: nativeError },
+  );
+  const browserlessResult = await fetchBrowserless(url);
+  if (!browserlessResult.ok) {
+    throw new Error(
+      `Native extraction failed: ${nativeError}; Browserless fetch failed: ${browserlessResult.message}`,
+    );
+  }
+
+  const retryAttempt = tryExtractAndClean(url, browserlessResult.html);
+  if (retryAttempt.ok) {
+    console.info("[OK] Browserless extraction fallback succeeded:", {
+      url,
+      contentLength: retryAttempt.result.content.length,
+    });
+    return retryAttempt.result;
+  }
+  throw new Error(
+    `Native extraction failed: ${nativeError}; Browserless extraction failed: ${retryAttempt.error}`,
+  );
+}
+
+/** Extract hostname for display labels. Falls back to URL prefix for malformed URLs. */
+function extractHostnameForDisplay(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch (error) {
+    console.warn("[WARN] Failed to parse URL for hostname:", {
+      url: url.substring(0, 100),
+      error: getErrorMessage(error),
+    });
+    return url.substring(0, 50);
+  }
 }
 
 function buildErrorResult(
@@ -58,20 +132,7 @@ function buildErrorResult(
   errorMessage: string,
   errorCode: string,
 ): ScrapeResult {
-  // Hostname extraction is display-only (title/summary labels), not business logic.
-  // Fallback to URL prefix is intentional graceful degradation; the actual error is
-  // surfaced via errorMessage/errorCode fields in the returned ScrapeResult.
-  let hostname = "";
-  try {
-    hostname = new URL(url).hostname;
-  } catch (error) {
-    console.warn("[WARN] Failed to parse URL for hostname:", {
-      url: url.substring(0, 100),
-      error: getErrorMessage(error),
-    });
-    hostname = url.substring(0, 50);
-  }
-
+  const hostname = extractHostnameForDisplay(url);
   return {
     title: hostname,
     content: `Unable to fetch content from ${url}: ${errorMessage}`,
@@ -80,6 +141,37 @@ function buildErrorResult(
     error: errorMessage,
     errorCode,
   };
+}
+
+/** Check cache and evict expired entries; return hit if present. */
+function getCachedScrape(url: string): ScrapeResult | undefined {
+  const cache = getScrapeCache();
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (entry.exp <= now) cache.delete(key);
+  }
+  const cached = cache.get(url);
+  if (cached && cached.exp > now) {
+    // Move-to-end for LRU ordering
+    cache.delete(url);
+    cache.set(url, cached);
+    return cached.val;
+  }
+  return undefined;
+}
+
+function cacheScrapeResult(
+  url: string,
+  val: ScrapeResult,
+  ttlMs: number,
+): void {
+  const cache = getScrapeCache();
+  cache.set(url, { exp: Date.now() + ttlMs, val });
+  while (cache.size > SCRAPE_CACHE_MAX_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) break;
+    cache.delete(oldestKey);
+  }
 }
 
 export async function scrapeWithCheerio(url: string): Promise<ScrapeResult> {
@@ -95,40 +187,32 @@ export async function scrapeWithCheerio(url: string): Promise<ScrapeResult> {
     };
   }
   const validatedUrl = validation.url;
-  const cache = getScrapeCache();
-  const now = Date.now();
 
-  // Evict expired entries
-  for (const [key, entry] of cache) {
-    if (entry.exp <= now) cache.delete(key);
-  }
-
-  const cached = cache.get(validatedUrl);
-  if (cached && cached.exp > now) {
-    cache.delete(validatedUrl);
-    cache.set(validatedUrl, cached);
-    return cached.val;
-  }
+  const cached = getCachedScrape(validatedUrl);
+  if (cached) return cached;
 
   console.info("Scraping URL initiated:", { url: validatedUrl });
 
-  const enforceCapacity = () => {
-    while (cache.size > SCRAPE_CACHE_MAX_ENTRIES) {
-      const oldestKey = cache.keys().next().value;
-      if (!oldestKey) break;
-      cache.delete(oldestKey);
-    }
-  };
-
   try {
-    const html = await fetchWithFallback(validatedUrl);
-    const result = extractAndClean(validatedUrl, html);
+    const fetched = await fetchWithFallback(validatedUrl);
+    const attempt = tryExtractAndClean(validatedUrl, fetched.html);
 
-    cache.set(validatedUrl, {
-      exp: Date.now() + CACHE_TTL.SCRAPE_MS,
-      val: result,
-    });
-    enforceCapacity();
+    let result: ScrapeResult;
+    if (attempt.ok) {
+      result = attempt.result;
+    } else if (
+      fetched.source === "native" &&
+      shouldRetryBrowserlessAfterExtractionFailure(attempt.error)
+    ) {
+      result = await retryExtractionWithBrowserless(
+        validatedUrl,
+        attempt.error,
+      );
+    } else {
+      throw new Error(attempt.error);
+    }
+
+    cacheScrapeResult(validatedUrl, result, CACHE_TTL.SCRAPE_MS);
     console.info("[OK] Scraping completed:", {
       url: validatedUrl,
       contentLength: result.content.length,
@@ -137,16 +221,13 @@ export async function scrapeWithCheerio(url: string): Promise<ScrapeResult> {
   } catch (error) {
     const errorMessage = getErrorMessage(error);
     const errorCode = classifyError(errorMessage);
-
     console.error("[ERROR] Scraping failed:", {
       url: validatedUrl,
       error: errorMessage,
       errorCode,
     });
-
     const val = buildErrorResult(validatedUrl, errorMessage, errorCode);
-    cache.set(validatedUrl, { exp: Date.now() + ERROR_CACHE_TTL_MS, val });
-    enforceCapacity();
+    cacheScrapeResult(validatedUrl, val, ERROR_CACHE_TTL_MS);
     return val;
   }
 }
@@ -155,7 +236,7 @@ export async function scrapeWithCheerio(url: string): Promise<ScrapeResult> {
  * Try native fetch first. If blocked (4xx), attempt Browserless fallback.
  * Throws on unrecoverable failure so the caller's catch block handles it.
  */
-async function fetchWithFallback(url: string): Promise<string> {
+async function fetchWithFallback(url: string): Promise<FetchSuccess> {
   const nativeResult = await fetchNative(url);
 
   if (nativeResult.ok) {
@@ -163,7 +244,7 @@ async function fetchWithFallback(url: string): Promise<string> {
       url,
       contentLength: nativeResult.html.length,
     });
-    return nativeResult.html;
+    return { html: nativeResult.html, source: "native" };
   }
 
   if (shouldAttemptBrowserless(nativeResult.errorCode)) {
@@ -176,7 +257,7 @@ async function fetchWithFallback(url: string): Promise<string> {
     const browserlessResult = await fetchBrowserless(url);
     if (browserlessResult.ok) {
       console.info("[OK] Browserless fallback succeeded:", { url });
-      return browserlessResult.html;
+      return { html: browserlessResult.html, source: "browserless" };
     }
 
     console.warn("[WARN] Browserless fallback also failed:", {
@@ -185,7 +266,9 @@ async function fetchWithFallback(url: string): Promise<string> {
       message: browserlessResult.message,
     });
     // Throw the original native error since Browserless also failed
-    throw new Error(nativeResult.message);
+    throw new Error(
+      `${nativeResult.message}; Browserless fallback failed: ${browserlessResult.message}`,
+    );
   }
 
   throw new Error(nativeResult.message);
@@ -195,9 +278,19 @@ async function fetchWithFallback(url: string): Promise<string> {
 function extractAndClean(url: string, html: string): ScrapeResult {
   const $ = load(html);
   const metadata = extractPageMetadata($);
-  const bodyText = normalizeScrapedText($("body").text());
-  const needsRender = needsJsRendering($, bodyText.length);
-  const extractedContent = extractMainContent($);
+
+  // needsJsRendering MUST be called before extractMainContent (which calls stripJunk
+  // and removes all <script> tags, destroying RSC payloads and noscript signals).
+  const needsRender = needsJsRendering($);
+
+  // For RSC/streaming pages, extract text from script payloads before stripJunk runs.
+  // extractMainContent calls stripJunk internally, so RSC content must be read first.
+  const rscContent = needsRender ? extractRscContent($) : "";
+
+  const extractedContent =
+    rscContent.length >= MIN_CONTENT_LENGTH
+      ? rscContent
+      : extractMainContent($);
 
   const content =
     extractedContent.length > MAX_CONTENT_LENGTH
@@ -217,6 +310,9 @@ function extractAndClean(url: string, html: string): ScrapeResult {
       `Content too short after cleaning (${cleanedContent.length} characters)`,
     );
   }
+  if (isLowQualityContent(cleanedContent)) {
+    throw new Error("Content quality check failed (non-readable extraction)");
+  }
 
   const summaryLength = Math.min(SUMMARY_MAX_LENGTH, cleanedContent.length);
   const summary =
@@ -229,24 +325,6 @@ function extractAndClean(url: string, html: string): ScrapeResult {
     summary,
     needsJsRendering: needsRender,
   };
-}
-
-const JUNK_PATTERNS = [
-  /cookie policy/gi,
-  /accept cookies/gi,
-  /privacy policy/gi,
-  /terms of service/gi,
-  /subscribe to newsletter/gi,
-  /follow us on/gi,
-  /share this article/gi,
-];
-
-function removeJunkPatterns(text: string): string {
-  let cleaned = text;
-  for (const pattern of JUNK_PATTERNS) {
-    cleaned = cleaned.replaceAll(pattern, "");
-  }
-  return cleaned.trim();
 }
 
 function classifyError(message: string): string {

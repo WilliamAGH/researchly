@@ -12,6 +12,79 @@ import {
   type AgentToolRunContext,
 } from "../../agents/tools_context";
 
+const SCRAPE_TOOL_TIMEOUT_MS = 12_000;
+
+type ScrapeToolResponse = {
+  contextId: string;
+  url: string;
+  reasoning: string;
+  title: string;
+  content: string;
+  summary: string;
+  contentLength: number;
+  scrapedAt: number;
+  error?: string;
+  errorMessage?: string;
+  _toolCallMetadata: {
+    toolName: "scrape_webpage";
+    callStart: number;
+    durationMs: number;
+  };
+};
+
+function buildScrapeResponse(
+  base: {
+    contextId: string;
+    url: string;
+    reasoning: string;
+    callStart: number;
+  },
+  content: {
+    title: string;
+    content: string;
+    summary: string;
+    contentLength: number;
+  },
+  failure?: { error: string; errorMessage: string },
+): ScrapeToolResponse {
+  return {
+    contextId: base.contextId,
+    url: base.url,
+    reasoning: base.reasoning,
+    title: content.title,
+    content: content.content,
+    summary: content.summary,
+    contentLength: content.contentLength,
+    scrapedAt: Date.now(),
+    ...(failure
+      ? { error: failure.error, errorMessage: failure.errorMessage }
+      : {}),
+    _toolCallMetadata: {
+      toolName: "scrape_webpage",
+      callStart: base.callStart,
+      durationMs: Date.now() - base.callStart,
+    },
+  };
+}
+
+async function runScrapeActionWithTimeout(
+  actionCtx: ReturnType<typeof getActionCtx>,
+  url: string,
+): Promise<Awaited<ReturnType<typeof actionCtx.runAction>>> {
+  // Promise.race attaches internal handlers to all inputs, so the losing
+  // promise's eventual rejection is handled (no unhandled-rejection risk).
+  return Promise.race([
+    actionCtx.runAction(api.tools.crawl.action.scrapeUrl, { url }),
+    new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(
+          new Error(`Scrape tool timeout after ${SCRAPE_TOOL_TIMEOUT_MS}ms`),
+        );
+      }, SCRAPE_TOOL_TIMEOUT_MS);
+    }),
+  ]);
+}
+
 /**
  * Web Scraping Tool
  *
@@ -66,15 +139,11 @@ Emit exactly one sourcesUsed entry with type "scraped_page" and relevance "high"
       timestamp: new Date().toISOString(),
     });
 
-    try {
-      const content = await actionCtx.runAction(
-        api.tools.crawl.action.scrapeUrl,
-        {
-          url: input.url,
-        },
-      );
+    const base = { contextId, url: input.url, reasoning: input.reasoning, callStart };
 
-      const durationMs = Date.now() - callStart;
+    try {
+      const content = await runScrapeActionWithTimeout(actionCtx, input.url);
+
       if (
         (typeof content.error === "string" && content.error.length > 0) ||
         (typeof content.errorCode === "string" && content.errorCode.length > 0)
@@ -88,26 +157,19 @@ Emit exactly one sourcesUsed entry with type "scraped_page" and relevance "high"
           url: input.url,
           error: errorMessage,
           errorCode: content.errorCode,
-          durationMs,
+          durationMs: Date.now() - callStart,
         });
 
-        return {
-          contextId,
-          url: input.url,
-          reasoning: input.reasoning,
-          error: "Scrape failed",
-          errorMessage,
-          title: content.title,
-          content: content.content,
-          summary: content.summary || `Content unavailable from ${content.title}`,
-          contentLength: 0,
-          scrapedAt: Date.now(),
-          _toolCallMetadata: {
-            toolName: "scrape_webpage",
-            callStart,
-            durationMs,
+        return buildScrapeResponse(
+          base,
+          {
+            title: content.title,
+            content: content.content,
+            summary: content.summary || `Content unavailable from ${content.title}`,
+            contentLength: 0,
           },
-        };
+          { error: "Scrape failed", errorMessage },
+        );
       }
 
       console.info("[OK] SCRAPE TOOL SUCCESS:", {
@@ -115,33 +177,23 @@ Emit exactly one sourcesUsed entry with type "scraped_page" and relevance "high"
         url: input.url,
         titleLength: content.title.length,
         contentLength: content.content.length,
-        durationMs,
+        durationMs: Date.now() - callStart,
       });
 
-      return {
-        contextId,
-        url: input.url,
-        reasoning: input.reasoning,
+      return buildScrapeResponse(base, {
         title: content.title,
         content: content.content,
         summary:
           content.summary ||
           `${content.content.substring(0, CONTENT_LIMITS.SUMMARY_TRUNCATE_LENGTH)}...`,
         contentLength: content.content.length,
-        scrapedAt: Date.now(),
-        _toolCallMetadata: {
-          toolName: "scrape_webpage",
-          callStart,
-          durationMs,
-        },
-      };
+      });
     } catch (error) {
-      const durationMs = Date.now() - callStart;
       console.error("[ERROR] SCRAPE TOOL ERROR:", {
         contextId,
         url: input.url,
         error: getErrorMessage(error),
-        durationMs,
+        durationMs: Date.now() - callStart,
       });
 
       // Extract hostname for display purposes only (not business logic).
@@ -157,23 +209,16 @@ Emit exactly one sourcesUsed entry with type "scraped_page" and relevance "high"
         });
       }
 
-      return {
-        contextId,
-        url: input.url,
-        reasoning: input.reasoning,
-        error: "Scrape failed",
-        errorMessage: getErrorMessage(error, "Unknown scrape error"),
-        title: hostname,
-        content: `Unable to fetch content from ${input.url}`,
-        summary: `Content unavailable from ${hostname}`,
-        contentLength: 0,
-        scrapedAt: Date.now(),
-        _toolCallMetadata: {
-          toolName: "scrape_webpage",
-          callStart,
-          durationMs,
+      return buildScrapeResponse(
+        base,
+        {
+          title: hostname,
+          content: `Unable to fetch content from ${input.url}`,
+          summary: `Content unavailable from ${hostname}`,
+          contentLength: 0,
         },
-      };
+        { error: "Scrape failed", errorMessage: getErrorMessage(error, "Unknown scrape error") },
+      );
     }
   },
 });
