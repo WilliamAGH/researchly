@@ -97,7 +97,7 @@ export function validateScrapedContent(html: string): ValidationResult {
     const matches = cleanedHtml.match(pattern);
     if (matches && matches.length > 0) {
       removed.push(`${name} (${matches.length} occurrences)`);
-      cleanedHtml = cleanedHtml.replace(pattern, "");
+      cleanedHtml = cleanedHtml.replaceAll(pattern, "");
 
       // Increase risk level based on what was found
       if (name.includes("Script") || name.includes("Iframe")) {
