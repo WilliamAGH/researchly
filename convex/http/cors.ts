@@ -1,10 +1,21 @@
 /**
- * CORS utilities for HTTP endpoints with strict origin validation
+ * CORS utilities for HTTP endpoints with strict origin validation.
+ *
+ * Security model:
+ * - Origin present + valid   → response with CORS headers (cross-origin browser)
+ * - Origin present + invalid → 403 (unauthorized cross-origin browser)
+ * - Origin absent            → plain response (native app, same-origin, server-to-server)
+ *
+ * Browsers always set the Origin header for cross-origin requests (it is a
+ * "forbidden" header that JavaScript cannot modify or omit). Absence of Origin
+ * therefore means the request is NOT a cross-origin browser request — it is a
+ * native mobile app (iOS/macOS URLSession, Android OkHttp), a server-to-server
+ * call, or a same-origin navigation. These are allowed without CORS headers.
  */
 
 /**
- * Get allowed origins from environment variable
- * Returns null if CONVEX_ALLOWED_ORIGINS is not set (rejects all cross-origin requests)
+ * Get allowed origins from environment variable.
+ * Returns null if CONVEX_ALLOWED_ORIGINS is not set (rejects cross-origin browser requests).
  */
 function getAllowedOrigins(): string[] | null {
   const raw = (process.env.CONVEX_ALLOWED_ORIGINS || "").trim();
@@ -80,30 +91,22 @@ function normalizeDevOrigins(origins: string[]): string[] {
 }
 
 /**
- * Validate if origin is allowed
- * Returns the validated origin or null if not allowed
+ * Validate a cross-origin request's Origin header against the allowlist.
+ * Returns the validated origin string, or null if not allowed.
+ *
+ * Callers that need to distinguish "no Origin header" from "invalid Origin"
+ * should check `request.headers.get("Origin")` first; this function treats
+ * both cases as null.
  */
 export function validateOrigin(requestOrigin: string | null): string | null {
-  if (!requestOrigin) {
-    // No origin header means same-origin or direct API call
-    // For security, we reject these by default
-    return null;
-  }
+  if (!requestOrigin) return null;
 
   const allowList = getAllowedOrigins();
-  if (!allowList || allowList.length === 0) {
-    return null; // No origins allowed
-  }
+  if (!allowList || allowList.length === 0) return null;
 
-  // Check exact match
-  if (allowList.includes(requestOrigin)) {
-    return requestOrigin;
-  }
+  if (allowList.includes(requestOrigin)) return requestOrigin;
 
-  // Check if request origin matches allowed patterns
   for (const allowed of allowList) {
-    // Support wildcard subdomains: *.example.com
-    // Parse origin as URL to prevent bypass via non-http protocols or path injection
     if (allowed.startsWith("*.")) {
       const domain = allowed.slice(2);
       try {
@@ -194,13 +197,26 @@ function buildContentResponse(
 }
 
 /**
- * Build a response with CORS headers after strict origin validation.
- * @returns Response with CORS headers, or 403 if origin not allowed
+ * Build a response with CORS headers when appropriate.
+ *
+ * - Origin present + valid   → CORS headers attached
+ * - Origin present + invalid → 403 (unauthorized cross-origin browser request)
+ * - Origin absent            → plain response (native app / same-origin / direct)
+ *
+ * Native iOS/macOS apps (URLSession), Android, server-to-server calls, and
+ * same-origin browser requests never send an Origin header. Browsers always
+ * attach Origin for cross-origin requests and it cannot be forged by JS.
  */
 export function corsResponse(params: CorsResponseParams) {
   const { body, status = 200, origin, contentType, extraHeaders } = params;
+
+  if (!origin) {
+    return buildContentResponse(body, status, contentType, extraHeaders);
+  }
+
   const validOrigin = validateOrigin(origin);
   if (!validOrigin) return buildUnauthorizedOriginResponse();
+
   return buildContentResponse(
     body,
     status,
@@ -210,32 +226,25 @@ export function corsResponse(params: CorsResponseParams) {
   );
 }
 
-/**
- * Build a response that supports both CORS and direct (non-CORS) access.
- * - Origin present + valid → response with CORS headers
- * - Origin present + invalid → 403
- * - Origin absent → plain response (direct browser navigation, crawlers, server-to-server)
- *
- * Use for public-facing endpoints (e.g., export/share) that serve content
- * accessible via both XHR/fetch (CORS) and direct URL navigation (no Origin).
- */
-export function publicCorsResponse(params: CorsResponseParams) {
-  if (params.origin) return corsResponse(params);
-  const { body, status = 200, contentType, extraHeaders } = params;
-  return buildContentResponse(body, status, contentType, extraHeaders);
-}
+/** @deprecated Use {@link corsResponse} — it now handles both CORS and direct access. */
+export const publicCorsResponse = corsResponse;
 
 /**
- * CORS preflight response for OPTIONS requests with strict origin validation.
- * @returns CORS preflight response, or 403 if origin not allowed
+ * CORS preflight response for OPTIONS requests.
+ *
+ * - Origin present + valid   → 204 with CORS headers
+ * - Origin present + invalid → 403
+ * - Origin absent            → 204 (not a browser preflight; native app / curl)
  */
 export function corsPreflightResponse(request: Request, methods?: string) {
   const requestOrigin = request.headers.get("Origin");
-  const validOrigin = validateOrigin(requestOrigin);
 
-  if (!validOrigin) {
-    return buildUnauthorizedOriginResponse();
+  if (!requestOrigin) {
+    return new Response(null, { status: 204 });
   }
+
+  const validOrigin = validateOrigin(requestOrigin);
+  if (!validOrigin) return buildUnauthorizedOriginResponse();
 
   const requested = request.headers.get("Access-Control-Request-Headers");
   return new Response(null, {
