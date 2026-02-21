@@ -21,7 +21,7 @@ import {
   vMessageProjection,
 } from "./messageProjection";
 
-const DEFAULT_PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
 
 function normalizePageSize(limit: number | undefined): number {
@@ -103,9 +103,7 @@ export const getChatMessagesPaginated = query({
       const hasMorePage = docs.length > pageSize;
       const pageDocs = docs.slice(0, pageSize);
       const nextCursorPage =
-        hasMorePage && pageDocs.length > 0
-          ? pageDocs[pageDocs.length - 1]._id
-          : undefined;
+        hasMorePage && pageDocs.length > 0 ? pageDocs.at(-1)?._id : undefined;
       const formatted = [...pageDocs].reverse().map(projectMessage);
       return {
         messages: formatted,
@@ -117,9 +115,11 @@ export const getChatMessagesPaginated = query({
     // If we have a cursor, validate it BEFORE using it in any query
     if (args.cursor) {
       const cursorMessage = await ctx.db.get(args.cursor);
+      const cursorChatId = cursorMessage?.chatId;
+      const cursorCreationTime = cursorMessage?._creationTime;
       // SECURITY: Validate cursor belongs to the requested chat BEFORE any query execution
       // This prevents a malicious cursor from a different chat exposing unauthorized data
-      if (!cursorMessage || cursorMessage.chatId !== args.chatId) {
+      if (cursorChatId !== args.chatId || cursorCreationTime === undefined) {
         return EMPTY_PAGE;
       }
 
@@ -127,7 +127,7 @@ export const getChatMessagesPaginated = query({
       // NOTE: This assumes _creationTime is monotonically increasing within a chat.
       // Messages restored from backup or cross-shard replication may violate this.
       baseQuery = baseQuery.filter((q) =>
-        q.lt(q.field("_creationTime"), cursorMessage._creationTime),
+        q.lt(q.field("_creationTime"), cursorCreationTime),
       );
     }
 

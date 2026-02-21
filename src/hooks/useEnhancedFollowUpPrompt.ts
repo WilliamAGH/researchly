@@ -159,11 +159,11 @@ export function useEnhancedFollowUpPrompt({
       setFollowUpSuggestions(suggestions);
       setFollowUpMessage(msg);
       setShowFollowUpPrompt(true);
-    } else {
+    } else if (!summaryError) {
       setShowFollowUpPrompt(false);
       setFollowUpMessage(null);
     }
-  }, [evaluateFollowUp]);
+  }, [evaluateFollowUp, summaryError]);
 
   const resetFollowUp = useCallback(() => {
     setShowFollowUpPrompt(false);
@@ -206,7 +206,7 @@ export function useEnhancedFollowUpPrompt({
 
   const handleNewChatWithSummary = useCallback(async () => {
     const messageToSend = followUpMessage;
-    resetFollowUp();
+    setSummaryError(null);
 
     // Step 1: Fetch the summary BEFORE navigation so it's ready when the new chat loads.
     priorChatSummaryRef.current = null;
@@ -223,12 +223,13 @@ export function useEnhancedFollowUpPrompt({
         const error = err instanceof Error ? err : new Error(String(err));
         logger.error("Failed to summarize recent chat:", error);
         setSummaryError(error);
-        // Abort: do not start a new chat if summary fails
+        // Abort and keep prompt visible so the inline error message can be shown.
         return;
       }
     }
 
     // Step 2: Queue the message and navigate — the dispatch effect will attach the summary.
+    resetFollowUp();
     if (messageToSend) {
       setPendingMessage(messageToSend);
     }
