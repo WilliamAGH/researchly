@@ -89,6 +89,7 @@ export async function* executeFastPath({
     chatId: args.chatId,
     currentTitle: chat.title,
     intent: planningOutput?.userIntent || args.userQuery,
+    chatTitle: planningOutput?.chatTitle,
   });
 
   const fastPersistedPayload = await persistAndCompleteWorkflow({

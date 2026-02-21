@@ -1,17 +1,13 @@
 /*
  * Prose styles for message content
  * - Assistant messages (Markdown) render inside a `.prose` wrapper
- * - We intentionally inherit the page font here:
- *     - Light mode: elegant serif (Playfair)
- *     - Dark mode: compact mono (JetBrains Mono)
+ * - Font inherits from body (serif default; mono when toggled via ControlPanel)
  * - Numeric style is set to `lining-nums` for readability, but we DO NOT
  *   force a specific font-family here to avoid fighting page-level choices.
- * - If you need to change assistant output typography, do it by wrapping the
- *   message block in component code, not by overriding `.prose` globally.
  */
 .prose {
   @apply text-foreground;
-  /* Keep prose inheriting page font (Playfair light, Mono dark) */
+  /* Keep prose inheriting page font (serif or mono based on user toggle) */
   font-family: inherit;
   font-variant-numeric: lining-nums;
   /* Prevent long strings from breaking mobile viewport */
@@ -69,7 +65,7 @@
 /* Strengthen bold contrast in dark mode */
 html.dark .prose strong,
 html.dark .prose b {
-  @apply font-extrabold;
+  @apply font-bold;
   color: hsl(var(--foreground));
 }
 

@@ -38,8 +38,11 @@ export async function handleAgentStream(
   ctx: ActionCtx,
   request: Request,
 ): Promise<Response> {
-  const origin = validateOrigin(request.headers.get("Origin"));
-  if (!origin) return buildUnauthorizedOriginResponse();
+  // Native apps (iOS URLSession, macOS) omit Origin; browsers always send it
+  // for cross-origin requests. Reject only when Origin IS present but invalid.
+  const rawOrigin = request.headers.get("Origin");
+  const origin = rawOrigin ? validateOrigin(rawOrigin) : null;
+  if (rawOrigin && !origin) return buildUnauthorizedOriginResponse();
 
   const rateLimit = checkIpRateLimit(request, "/api/ai/agent/stream");
   if (!rateLimit.allowed) {
@@ -246,16 +249,18 @@ export async function handleAgentStream(
     },
   });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no",
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Headers": "Content-Type",
-      Vary: "Origin",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    },
-  });
+  const headers: Record<string, string> = {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+    Vary: "Origin",
+  };
+  if (origin) {
+    headers["Access-Control-Allow-Origin"] = origin;
+    headers["Access-Control-Allow-Headers"] = "Content-Type";
+    headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
+  }
+
+  return new Response(stream, { headers });
 }

@@ -9,7 +9,7 @@ interface EmptyStateProps {
   onToggleSidebar: () => void;
 }
 
-export function EmptyState({ onToggleSidebar }: EmptyStateProps) {
+export function EmptyState({ onToggleSidebar }: Readonly<EmptyStateProps>) {
   return (
     <div className="flex-1 flex items-center justify-center min-h-[60vh]">
       <div className="text-center max-w-sm sm:max-w-lg px-4 sm:px-6">
@@ -35,11 +35,11 @@ export function EmptyState({ onToggleSidebar }: EmptyStateProps) {
           </svg>
         </button>
         <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 text-gray-900 dark:text-white">
-          Search the web with AI
+          A powerful research tool
         </h2>
         <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-          Ask me anything and I'll search the web in real-time to give you
-          accurate, up-to-date information with sources.
+          Get direct answers to your questions with citations pulled straight
+          from the web. Save hours with a bot that does the research for you.
         </p>
       </div>
     </div>

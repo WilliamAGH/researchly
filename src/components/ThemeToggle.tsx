@@ -1,23 +1,26 @@
+/**
+ * Standalone theme toggle button (light/dark).
+ * Kept for backward compatibility; primary UX is via ControlPanel.
+ */
+
 import React from "react";
-import { useTheme } from "./ThemeProvider";
+import { useTheme } from "@/components/ThemeProvider";
 
 export function ThemeToggle() {
-  const { setTheme, actualTheme } = useTheme();
+  const { resolvedTheme, setThemeMode } = useTheme();
 
   const toggleTheme = React.useCallback(() => {
-    // Simple toggle between light and dark
-    setTheme(actualTheme === "dark" ? "light" : "dark");
-  }, [actualTheme, setTheme]);
+    setThemeMode(resolvedTheme === "dark" ? "light" : "dark");
+  }, [resolvedTheme, setThemeMode]);
 
   return (
     <button
       onClick={toggleTheme}
       className="group relative flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-      title={`Switch to ${actualTheme === "dark" ? "light" : "dark"} mode`}
-      aria-label={`Current theme: ${actualTheme}. Click to switch to ${actualTheme === "dark" ? "light" : "dark"} mode.`}
+      title={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
+      aria-label={`Current theme: ${resolvedTheme}. Click to switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode.`}
     >
-      {actualTheme === "dark" ? (
-        // Abstract crescent moon (lucide/feather style) for dark mode
+      {resolvedTheme === "dark" ? (
         <svg
           className="w-5 h-5 text-gray-200"
           viewBox="0 0 24 24"
@@ -31,7 +34,6 @@ export function ThemeToggle() {
           <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z" />
         </svg>
       ) : (
-        // Minimal sun with central disc + rays
         <svg
           className="w-5 h-5 text-gray-700"
           viewBox="0 0 24 24"

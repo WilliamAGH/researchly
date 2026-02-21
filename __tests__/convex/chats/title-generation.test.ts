@@ -4,7 +4,7 @@
  * CRITICAL: Title generation is done ONLY by convex/chats/utils.ts:generateChatTitle
  * Frontend TitleUtils only provides sanitization.
  *
- * These tests verify the backend title generation with 25 character limit.
+ * These tests verify the backend title generation with 50 character limit.
  */
 
 import { describe, it, expect } from "vitest";
@@ -12,21 +12,21 @@ import { TitleUtils } from "../../../src/lib/types/unified.ts";
 import { generateChatTitle } from "../../../convex/chats/utils.ts";
 
 describe("Chat Title Generation", () => {
-  describe("Backend generateChatTitle (25 char limit)", () => {
+  describe("Backend generateChatTitle (50 char limit)", () => {
     it("generates title from short message", () => {
       const title = generateChatTitle({ intent: "Configure database" });
       expect(title).toBe("Configure database");
     });
 
-    it("truncates long messages at 25 characters", () => {
+    it("truncates long messages at 50 characters", () => {
       const longMessage =
         "This is a very long message that exceeds the twenty-five character limit";
       const title = generateChatTitle({ intent: longMessage });
       // Verify it's truncated and has ellipsis
       expect(title.endsWith("...")).toBe(true);
-      expect(title.length).toBeLessThanOrEqual(28); // 25 chars + "..."
+      expect(title.length).toBeLessThanOrEqual(53); // 50 chars + "..."
       // The actual title depends on word boundary truncation
-      expect(title).toBe("This is a very long...");
+      expect(title).toBe("This is a very long message that exceeds the...");
     });
 
     it("removes filler words before truncating", () => {
@@ -36,20 +36,18 @@ describe("Chat Title Generation", () => {
       expect(title).toBe("Artificial intelligence");
     });
 
-    it("removes 'what is the' filler", () => {
+    it("keeps question words like 'what is the'", () => {
       const message = "What is the meaning of life?";
       const title = generateChatTitle({ intent: message });
-      // After removing "what is the", we get "meaning of life?"
-      // But this gets truncated to fit in 25 chars
-      expect(title.toLowerCase()).toContain("life");
-      // The exact output after filler removal and capitalization
-      expect(title).toBe("Life?");
+      // Question words are kept for research context (fits within 50 chars)
+      expect(title).toBe("What is the meaning of life?");
     });
 
-    it("removes 'how do i' filler", () => {
+    it("keeps question words like 'how do i'", () => {
       const message = "How do I configure my database?";
       const title = generateChatTitle({ intent: message });
-      expect(title).toBe("Configure my database?");
+      // Question words kept; function lowercases then capitalizes first char
+      expect(title).toBe("How do i configure my database?");
     });
 
     it("handles empty messages", () => {
@@ -68,12 +66,12 @@ describe("Chat Title Generation", () => {
       expect(title.charAt(0)).toBe(title.charAt(0).toUpperCase());
     });
 
-    it("preserves word boundaries when truncating at 25 chars", () => {
+    it("preserves word boundaries when truncating at 50 chars", () => {
       const message = "Understanding complex database optimization techniques";
       const title = generateChatTitle({ intent: message });
       // Should break at word boundary, not mid-word
       expect(title.endsWith("...")).toBe(true);
-      expect(title.length).toBeLessThanOrEqual(28);
+      expect(title.length).toBeLessThanOrEqual(53);
     });
 
     it("handles custom max length", () => {
@@ -85,7 +83,7 @@ describe("Chat Title Generation", () => {
     it("handles very long messages efficiently", () => {
       const veryLong = "a".repeat(10000);
       const title = generateChatTitle({ intent: veryLong });
-      expect(title.length).toBeLessThanOrEqual(28); // 25 + "..."
+      expect(title.length).toBeLessThanOrEqual(53); // 50 + "..."
     });
   });
 
@@ -110,7 +108,7 @@ describe("Chat Title Generation", () => {
 
   describe("End-to-End Title Flow", () => {
     it("backend generates, frontend sanitizes", () => {
-      // Backend generates title with filler removal + 25 char limit
+      // Backend generates title with filler removal + 50 char limit
       const backendTitle = generateChatTitle({
         intent: "What is the best way to optimize database queries?",
       });
@@ -118,7 +116,7 @@ describe("Chat Title Generation", () => {
       // Frontend sanitizes for display
       const displayTitle = TitleUtils.sanitize(backendTitle);
 
-      expect(displayTitle.length).toBeLessThanOrEqual(28);
+      expect(displayTitle.length).toBeLessThanOrEqual(53);
       expect(displayTitle).toBe(backendTitle); // Should be same if no dirty input
     });
   });

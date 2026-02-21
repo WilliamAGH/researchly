@@ -71,11 +71,13 @@ function parsePublishMessages(raw: unknown): ParsedPublishPayload["messages"] {
 
 function buildShareUrls(
   result: { shareId: string; publicId: string },
-  allowOrigin: string,
+  allowOrigin: string | null,
   siteUrl: string,
 ) {
   const baseUrl =
-    allowOrigin !== "*" && allowOrigin !== "null" ? allowOrigin : siteUrl;
+    allowOrigin && allowOrigin !== "*" && allowOrigin !== "null"
+      ? allowOrigin
+      : siteUrl;
   // Use the branded base URL for export links so they point to
   // researchly.bot/api/exportChat instead of the raw Convex deployment.
   // The /api/* proxy (server.mjs) forwards to Convex transparently.
@@ -89,14 +91,14 @@ function buildShareUrls(
   };
 }
 
-/** Handle authenticated chat publication with CORS origin validation */
+/** Handle chat publication with CORS origin validation */
 export async function handlePublishChat(
   ctx: ActionCtx,
   request: Request,
 ): Promise<Response> {
-  const origin = request.headers.get("Origin");
-  const allowOrigin = validateOrigin(origin);
-  if (!allowOrigin) return buildUnauthorizedOriginResponse();
+  const rawOrigin = request.headers.get("Origin");
+  const allowOrigin = rawOrigin ? validateOrigin(rawOrigin) : null;
+  if (rawOrigin && !allowOrigin) return buildUnauthorizedOriginResponse();
 
   const rateLimit = checkIpRateLimit(request, "/api/publish_chat", 5, 60_000);
   if (!rateLimit.allowed) {
@@ -117,7 +119,7 @@ export async function handlePublishChat(
           : {}),
       }),
       status: 400,
-      origin,
+      origin: rawOrigin,
     });
   }
 
@@ -126,7 +128,7 @@ export async function handlePublishChat(
     return corsResponse({
       body: JSON.stringify({ error: "Invalid request payload" }),
       status: 400,
-      origin,
+      origin: rawOrigin,
     });
   }
 
@@ -146,7 +148,7 @@ export async function handlePublishChat(
     return corsResponse({
       body: JSON.stringify({ ...result, ...urls }),
       status: 200,
-      origin,
+      origin: rawOrigin,
     });
   } catch (error: unknown) {
     const errorInfo = serializeError(error);
@@ -159,7 +161,7 @@ export async function handlePublishChat(
           : {}),
       }),
       status: 500,
-      origin,
+      origin: rawOrigin,
     });
   }
 }

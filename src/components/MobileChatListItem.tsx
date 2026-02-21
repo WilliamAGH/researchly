@@ -15,22 +15,28 @@ export function MobileChatListItem({
   onDelete,
 }: Readonly<MobileChatListItemProps>) {
   return (
-    <div className="flex items-center gap-2 pr-2 min-w-0">
+    <div className="group flex items-start gap-1.5 min-w-0">
       <button
         type="button"
         data-chat-id={String(chat._id)}
         onClick={onSelect}
-        className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-          isActive ? "bg-gray-100 dark:bg-gray-800" : ""
+        className={`flex-1 min-w-0 px-3 py-2.5 rounded-lg text-left transition-colors duration-150 ${
+          isActive
+            ? "bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-200/60 dark:ring-emerald-700/40"
+            : "hover:bg-gray-50 dark:hover:bg-gray-800/60"
         }`}
       >
-        <div className="text-xs font-medium truncate min-w-0 leading-tight">
+        <div
+          className={`text-[13px] font-medium leading-snug line-clamp-2 min-w-0 ${
+            isActive
+              ? "text-emerald-800 dark:text-emerald-300"
+              : "text-gray-700 dark:text-gray-300"
+          }`}
+        >
           {chat.title}
         </div>
-        <div className="text-[11px] text-gray-500 flex items-center gap-1 min-w-0 mt-0.5">
-          <span className="truncate">
-            {new Date(chat.updatedAt).toLocaleDateString()}
-          </span>
+        <div className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 font-ui">
+          {new Date(chat.updatedAt).toLocaleDateString()}
         </div>
       </button>
       <button
@@ -38,20 +44,18 @@ export function MobileChatListItem({
         data-chat-id={String(chat._id)}
         data-current={isActive ? "1" : "0"}
         onClick={onDelete}
-        className="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+        className="flex-shrink-0 mt-2 p-1.5 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-red-500 dark:hover:text-red-400 rounded-md transition-all duration-150"
         title="Delete chat"
         aria-label="Delete chat"
       >
         <svg
-          className="w-4 h-4"
+          className="w-3.5 h-3.5"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
           viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-label="Delete chat"
+          aria-hidden="true"
         >
-          <title>Delete chat</title>
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

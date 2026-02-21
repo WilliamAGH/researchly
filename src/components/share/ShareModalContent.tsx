@@ -1,4 +1,4 @@
-import { Dialog } from "@headlessui/react";
+import { DialogPanel, DialogTitle } from "@headlessui/react";
 import type { PrivacyOption } from "@/components/share/shareModalTypes";
 
 type ShareModalContentProps = {
@@ -16,6 +16,55 @@ type ShareModalContentProps = {
   onClose: () => void;
 };
 
+function getPlaceholder(privacy: PrivacyOption): string {
+  if (privacy === "llm") return "Generate LLM-friendly .txt link";
+  if (privacy === "shared") return "Generate shared link";
+  return "Generate public link";
+}
+
+function getActionAriaLabel(displayUrl: string, busy: boolean): string {
+  if (displayUrl) return "Copy URL to clipboard";
+  if (busy) return "Generating…";
+  return "Generate URL";
+}
+
+function ActionButtonContent({
+  displayUrl,
+  urlCopied,
+  busy,
+}: Readonly<{
+  displayUrl: string;
+  urlCopied: boolean;
+  busy: boolean;
+}>) {
+  if (displayUrl) {
+    return <>{urlCopied ? "Copied!" : "Copy"}</>;
+  }
+  if (busy) {
+    return (
+      <span className="inline-flex items-center gap-2">
+        <svg
+          className="w-4 h-4 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            strokeWidth="4"
+            className="opacity-25"
+          />
+          <path d="M4 12a8 8 0 018-8" strokeWidth="4" className="opacity-75" />
+        </svg>
+        Generating…
+      </span>
+    );
+  }
+  return <>Generate URL</>;
+}
+
 export function ShareModalContent({
   selectedPrivacy,
   displayUrl,
@@ -29,18 +78,21 @@ export function ShareModalContent({
   onGenerateOrCopy,
   onCopyMarkdown,
   onClose,
-}: ShareModalContentProps) {
+}: Readonly<ShareModalContentProps>) {
+  const showLinkSection =
+    selectedPrivacy === "shared" ||
+    selectedPrivacy === "public" ||
+    selectedPrivacy === "llm";
+
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         aria-hidden="true"
       />
 
       <div className="fixed inset-0 flex items-center justify-center">
-        {/* Modal */}
-        <Dialog.Panel className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full mx-4 p-5 sm:p-6 border border-gray-200 dark:border-gray-700 font-serif dark:font-mono">
+        <DialogPanel className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full mx-4 p-5 sm:p-6 border border-gray-200 dark:border-gray-700 font-serif">
           <button
             ref={closeBtnRef}
             onClick={onClose}
@@ -78,12 +130,12 @@ export function ShareModalContent({
                 />
               </svg>
             </div>
-            <Dialog.Title
+            <DialogTitle
               id="share-modal-title"
               className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 dark:uppercase dark:tracking-wide"
             >
               Share this conversation
-            </Dialog.Title>
+            </DialogTitle>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
               {selectedPrivacy === "private" &&
                 "Only you can access this chat."}
@@ -97,104 +149,12 @@ export function ShareModalContent({
           </div>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <fieldset>
-                <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Privacy Level
-                </legend>
-                <div className="mt-1 flex flex-col space-y-2">
-                  <label
-                    className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                    aria-label="Private"
-                  >
-                    <input
-                      type="radio"
-                      name="privacy"
-                      value="private"
-                      checked={selectedPrivacy === "private"}
-                      onChange={() => onSelectPrivacy("private")}
-                      className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 focus:ring-emerald-500"
-                    />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Private
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Only you can see this chat.
-                      </div>
-                    </div>
-                  </label>
-                  <label
-                    className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                    aria-label="Shared"
-                  >
-                    <input
-                      type="radio"
-                      name="privacy"
-                      value="shared"
-                      checked={selectedPrivacy === "shared"}
-                      onChange={() => onSelectPrivacy("shared")}
-                      className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 focus:ring-emerald-500"
-                    />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Shared
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Anyone with the link can view. Not indexed.
-                      </div>
-                    </div>
-                  </label>
-                  <label
-                    className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                    aria-label="Public"
-                  >
-                    <input
-                      type="radio"
-                      name="privacy"
-                      value="public"
-                      checked={selectedPrivacy === "public"}
-                      onChange={() => onSelectPrivacy("public")}
-                      className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 focus:ring-emerald-500"
-                    />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Public
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Anyone can view and it may appear in search results.
-                      </div>
-                    </div>
-                  </label>
-                  <label
-                    className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                    aria-label="LLM Link"
-                  >
-                    <input
-                      type="radio"
-                      name="privacy"
-                      value="llm"
-                      checked={selectedPrivacy === "llm"}
-                      onChange={() => onSelectPrivacy("llm")}
-                      className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 focus:ring-emerald-500"
-                    />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        LLM Link (Markdown .txt)
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Same visibility as Shared, formatted for LLMs; not
-                        indexed.
-                      </div>
-                    </div>
-                  </label>
-                </div>
-              </fieldset>
-            </div>
+            <PrivacyFieldset
+              selectedPrivacy={selectedPrivacy}
+              onSelectPrivacy={onSelectPrivacy}
+            />
 
-            {(selectedPrivacy === "shared" ||
-              selectedPrivacy === "public" ||
-              selectedPrivacy === "llm") && (
+            {showLinkSection && (
               <div className="space-y-3">
                 <label
                   htmlFor="share-url-input"
@@ -208,60 +168,21 @@ export function ShareModalContent({
                     name="shareUrl"
                     type="text"
                     value={displayUrl}
-                    placeholder={
-                      selectedPrivacy === "llm"
-                        ? "Generate LLM-friendly .txt link"
-                        : selectedPrivacy === "shared"
-                          ? "Generate shared link"
-                          : "Generate public link"
-                    }
+                    placeholder={getPlaceholder(selectedPrivacy)}
                     readOnly
                     className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                   <button
                     onClick={onGenerateOrCopy}
                     className="px-3 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-60"
-                    aria-label={
-                      displayUrl
-                        ? "Copy URL to clipboard"
-                        : busy
-                          ? "Generating…"
-                          : "Generate URL"
-                    }
+                    aria-label={getActionAriaLabel(displayUrl, busy)}
                     disabled={busy}
                   >
-                    {displayUrl ? (
-                      urlCopied ? (
-                        "Copied!"
-                      ) : (
-                        "Copy"
-                      )
-                    ) : busy ? (
-                      <span className="inline-flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 animate-spin"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                        >
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            strokeWidth="4"
-                            className="opacity-25"
-                          />
-                          <path
-                            d="M4 12a8 8 0 018-8"
-                            strokeWidth="4"
-                            className="opacity-75"
-                          />
-                        </svg>
-                        Generating…
-                      </span>
-                    ) : (
-                      "Generate URL"
-                    )}
+                    <ActionButtonContent
+                      displayUrl={displayUrl}
+                      urlCopied={urlCopied}
+                      busy={busy}
+                    />
                   </button>
                 </div>
               </div>
@@ -301,8 +222,77 @@ export function ShareModalContent({
               </div>
             </div>
           </div>
-        </Dialog.Panel>
+        </DialogPanel>
       </div>
     </>
+  );
+}
+
+const PRIVACY_OPTIONS: ReadonlyArray<{
+  value: PrivacyOption;
+  title: string;
+  description: string;
+}> = [
+  {
+    value: "private",
+    title: "Private",
+    description: "Only you can see this chat.",
+  },
+  {
+    value: "shared",
+    title: "Shared",
+    description: "Anyone with the link can view. Not indexed.",
+  },
+  {
+    value: "public",
+    title: "Public",
+    description: "Anyone can view and it may appear in search results.",
+  },
+  {
+    value: "llm",
+    title: "LLM Link (Markdown .txt)",
+    description: "Same visibility as Shared, formatted for LLMs; not indexed.",
+  },
+];
+
+function PrivacyFieldset({
+  selectedPrivacy,
+  onSelectPrivacy,
+}: Readonly<{
+  selectedPrivacy: PrivacyOption;
+  onSelectPrivacy: (p: PrivacyOption) => void;
+}>) {
+  return (
+    <fieldset>
+      <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        Privacy Level
+      </legend>
+      <div className="mt-1 flex flex-col space-y-2">
+        {PRIVACY_OPTIONS.map(({ value, title, description }) => (
+          <label
+            key={value}
+            className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            aria-label={title}
+          >
+            <input
+              type="radio"
+              name="privacy"
+              value={value}
+              checked={selectedPrivacy === value}
+              onChange={() => onSelectPrivacy(value)}
+              className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 focus:ring-emerald-500"
+            />
+            <div>
+              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                {title}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {description}
+              </div>
+            </div>
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }

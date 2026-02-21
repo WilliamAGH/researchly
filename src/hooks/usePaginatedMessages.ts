@@ -33,7 +33,7 @@ interface PaginatedMessagesState {
 
 export function usePaginatedMessages({
   chatId,
-  initialLimit = 50,
+  initialLimit = 25,
   enabled = true,
   sessionId,
 }: UsePaginatedMessagesOptions): PaginatedMessagesState {
@@ -171,13 +171,18 @@ export function usePaginatedMessages({
           didSucceed = true;
         }
       } catch (err) {
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : typeof err === "string"
-              ? err
-              : "Unknown error";
-        const error = err instanceof Error ? err : new Error(errorMessage);
+        let errorMessage = "Unknown error";
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === "string") {
+          errorMessage = err;
+        }
+        let error: Error;
+        if (err instanceof Error) {
+          error = err;
+        } else {
+          error = new Error(errorMessage);
+        }
         const failTime = performance.now() - attemptStartTime;
 
         logger.error(`Failed to load more messages (attempt ${attempt})`, {

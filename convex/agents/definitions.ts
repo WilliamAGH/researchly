@@ -60,6 +60,11 @@ export const queryPlannerAgent = Agent.create({
 
   outputType: z.object({
     userIntent: z.string().describe("What the user wants to know or do"),
+    chatTitle: z
+      .string()
+      .describe(
+        "Best concise title for this chat (max 50 chars). Capture the core research topic. Do NOT start with filler like 'Research on' or 'Question about'.",
+      ),
     informationNeeded: z
       .array(z.string())
       .describe("List of specific information types needed"),
