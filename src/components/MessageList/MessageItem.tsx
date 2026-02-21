@@ -3,10 +3,15 @@
  * Handles rendering of user and assistant messages
  */
 
-import React from "react";
+import React, { Suspense } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { ContentWithCitations } from "../ContentWithCitations";
 import { ReasoningDisplay } from "../ReasoningDisplay";
+
+const ContentWithCitations = React.lazy(() =>
+  import("../ContentWithCitations").then((mod) => ({
+    default: mod.ContentWithCitations,
+  })),
+);
 import { CopyButton } from "../CopyButton";
 import { MessageSources } from "./MessageSources";
 import { ToolProgressIndicator } from "./ToolProgressIndicator";
@@ -182,13 +187,19 @@ export const MessageItem = React.memo(function MessageItem({
           aria-live={message.role === "assistant" ? "polite" : undefined}
         >
           {message.role === "assistant" ? (
-            <ContentWithCitations
-              content={message.content || ""}
-              webResearchSources={message.webResearchSources}
-              hoveredSourceUrl={hoveredSourceUrl}
-              onCitationHover={onCitationHover}
-              isStreaming={message.isStreaming}
-            />
+            <Suspense
+              fallback={
+                <div className="animate-pulse h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+              }
+            >
+              <ContentWithCitations
+                content={message.content || ""}
+                webResearchSources={message.webResearchSources}
+                hoveredSourceUrl={hoveredSourceUrl}
+                onCitationHover={onCitationHover}
+                isStreaming={message.isStreaming}
+              />
+            </Suspense>
           ) : (
             <div className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 leading-relaxed break-words slashed-zero lining-nums tabular-nums">
               {message.content}

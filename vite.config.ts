@@ -134,13 +134,23 @@ window.addEventListener('message', async (message) => {
             if (id.includes("convex")) return "convex";
             if (id.includes("tailwind") || id.includes("@headlessui"))
               return "ui";
-            // Do not force vendor/react chunks to avoid TDZ/cycle issues.
+            if (
+              id.includes("react-markdown") ||
+              id.includes("remark-") ||
+              id.includes("rehype-") ||
+              id.includes("hast-") ||
+              id.includes("unified") ||
+              id.includes("mdast") ||
+              id.includes("micromark")
+            )
+              return "markdown";
             return undefined;
           },
         },
       },
       chunkSizeWarningLimit: 600,
       sourcemap: mode !== "production",
+      minify: "terser",
     },
     server: convexProxyTarget
       ? {

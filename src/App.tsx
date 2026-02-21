@@ -8,12 +8,21 @@
  */
 
 import { Authenticated, Unauthenticated } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
-import { SignInModal } from "@/components/SignInModal";
-import { SignUpModal } from "@/components/SignUpModal";
 import { ThemeProvider } from "@/components/ThemeProvider";
+
+const SignInModal = React.lazy(() =>
+  import("@/components/SignInModal").then((mod) => ({
+    default: mod.SignInModal,
+  })),
+);
+const SignUpModal = React.lazy(() =>
+  import("@/components/SignUpModal").then((mod) => ({
+    default: mod.SignUpModal,
+  })),
+);
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SignOutButton } from "@/SignOutButton";
 import { useClaimAnonymousChats } from "@/hooks/useClaimAnonymousChats";
@@ -244,16 +253,24 @@ export default function App() {
               icons={toastIcons}
             />
 
-            <SignInModal
-              isOpen={showSignInModal}
-              onClose={closeSignIn}
-              onSwitchToSignUp={openSignUp}
-            />
-            <SignUpModal
-              isOpen={showSignUpModal}
-              onClose={closeSignUp}
-              onSwitchToSignIn={openSignIn}
-            />
+            {showSignInModal && (
+              <Suspense fallback={null}>
+                <SignInModal
+                  isOpen={showSignInModal}
+                  onClose={closeSignIn}
+                  onSwitchToSignUp={openSignUp}
+                />
+              </Suspense>
+            )}
+            {showSignUpModal && (
+              <Suspense fallback={null}>
+                <SignUpModal
+                  isOpen={showSignUpModal}
+                  onClose={closeSignUp}
+                  onSwitchToSignIn={openSignIn}
+                />
+              </Suspense>
+            )}
           </div>
         </div>
       </BrowserRouter>
