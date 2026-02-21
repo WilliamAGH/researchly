@@ -25,7 +25,7 @@ describe("ShareModal LLM link behavior", () => {
       />,
     );
 
-    fireEvent.click(screen.getByLabelText("LLM Link"));
+    fireEvent.click(screen.getByLabelText("LLM Link (Markdown .txt)"));
     fireEvent.click(screen.getByRole("button", { name: "Generate URL" }));
 
     await waitFor(() => {

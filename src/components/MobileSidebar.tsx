@@ -1,3 +1,8 @@
+/**
+ * Mobile sidebar drawer for chat navigation.
+ * Slides in from the left with a scrim overlay.
+ */
+
 import {
   Dialog,
   DialogPanel,
@@ -35,7 +40,6 @@ export function MobileSidebar({
   isCreatingChat = false,
 }: Readonly<MobileSidebarProps>) {
   const deleteChat = useSessionAwareDeleteChat();
-  // Ensure Headless UI Dialog has a stable initial focusable element on open
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -99,7 +103,6 @@ export function MobileSidebar({
         await deleteChat(resolvedChatId);
       }
 
-      // Only dismiss dialog and navigate after successful deletion
       setDeleteTargetId(null);
       setDeleteError(null);
       if (isCurrent) {
@@ -140,15 +143,15 @@ export function MobileSidebar({
         >
           <TransitionChild
             as={Fragment}
-            enter="transition-opacity ease-linear duration-300"
+            enter="transition-opacity ease-linear duration-200"
             enterFrom="opacity-0"
             enterTo="opacity-100"
-            leave="transition-opacity ease-linear duration-300"
+            leave="transition-opacity ease-linear duration-200"
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
             <button
-              className="fixed inset-0 bg-gray-900/80"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
               onClick={onClose}
               onKeyDown={handleOverlayKeyDown}
               type="button"
@@ -156,13 +159,13 @@ export function MobileSidebar({
             />
           </TransitionChild>
 
-          <div className="fixed inset-0 flex pr-16 overflow-x-hidden">
+          <div className="fixed inset-0 flex pr-14 overflow-x-hidden">
             <TransitionChild
               as={Fragment}
-              enter="transition ease-in-out duration-300 transform"
+              enter="transition ease-out duration-250 transform"
               enterFrom="-translate-x-full"
               enterTo="translate-x-0"
-              leave="transition ease-in-out duration-300 transform"
+              leave="transition ease-in duration-200 transform"
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
@@ -172,51 +175,67 @@ export function MobileSidebar({
               >
                 <TransitionChild
                   as={Fragment}
-                  enter="ease-in-out duration-300"
+                  enter="ease-out duration-250"
                   enterFrom="opacity-0"
                   enterTo="opacity-100"
-                  leave="ease-in-out duration-300"
+                  leave="ease-in duration-200"
                   leaveFrom="opacity-100"
                   leaveTo="opacity-0"
                 >
-                  <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
+                  <div className="absolute left-full top-0 flex w-14 justify-center pt-4">
                     <button
                       type="button"
-                      className="-m-2.5 p-2.5"
+                      className="p-1.5 rounded-full ring-1 ring-white/20 hover:ring-white/40 transition-all"
                       onClick={onClose}
                       ref={closeButtonRef}
                     >
                       <span className="sr-only">Close sidebar</span>
                       <svg
-                        className="h-6 w-6 text-white"
+                        className="h-5 w-5 text-white/80"
                         fill="none"
                         viewBox="0 0 24 24"
-                        strokeWidth="1.5"
+                        strokeWidth="1.8"
                         stroke="currentColor"
-                        aria-label="Close sidebar"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
                       >
-                        <title>Close sidebar</title>
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
+                        <path d="M18 6 6 18M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
                 </TransitionChild>
 
-                <div className="flex grow min-w-0 flex-col gap-y-5 overflow-y-auto overflow-x-hidden bg-white dark:bg-gray-900 px-6 pb-2">
-                  <div className="flex h-16 shrink-0 items-center">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                <div className="flex grow min-w-0 flex-col overflow-y-auto overflow-x-hidden bg-white dark:bg-gray-900 border-r border-gray-200/40 dark:border-gray-700/40">
+                  <div className="flex h-[3.75rem] sm:h-16 shrink-0 items-center px-3 sm:px-4 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-2.5 sm:gap-4">
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 ring-1 ring-gray-200/60 dark:ring-gray-700/60 hover:ring-emerald-400/50 dark:hover:ring-emerald-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                        aria-label="Close sidebar"
+                      >
                         <svg
-                          className="w-5 h-5 text-white"
+                          className="w-[18px] h-[18px] text-gray-500 dark:text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                      </button>
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-md flex items-center justify-center">
+                        <svg
+                          className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
+                          aria-hidden="true"
                         >
-                          <title>Search</title>
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -225,73 +244,40 @@ export function MobileSidebar({
                           />
                         </svg>
                       </div>
-                      <span className="text-lg font-semibold">Researchly</span>
+                      <span className="text-lg font-semibold !normal-case tracking-normal text-gray-900 dark:text-white">
+                        Researchly
+                      </span>
                     </div>
                   </div>
 
-                  <nav className="flex flex-1 flex-col">
+                  <div className="flex-1 flex flex-col px-4 pt-4 pb-6 gap-4">
                     <button
                       type="button"
                       onClick={handleNewChat}
                       disabled={isCreatingChat}
-                      className="w-full px-4 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors flex items-center gap-2 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-ui"
                     >
-                      {isCreatingChat ? (
-                        <svg
-                          className="w-5 h-5 animate-spin"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <title>Creating chat</title>
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-label="New chat"
-                        >
-                          <title>New chat</title>
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                      )}
+                      {isCreatingChat ? <SpinnerIcon /> : <PlusIcon />}
                       {isCreatingChat ? "Creating..." : "New Chat"}
                     </button>
 
-                    <div className="space-y-1">
+                    <div className="flex-1 flex flex-col gap-1.5">
+                      <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 px-1 font-ui">
+                        Recent
+                      </span>
+
                       {deleteError && (
-                        <p className="px-3 py-1 text-sm text-red-600 dark:text-red-400">
+                        <p className="px-2 py-1.5 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-md font-ui">
                           {deleteError}
                         </p>
                       )}
-                      <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Recent Chats
-                      </h3>
+
                       {chats.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-gray-500">
+                        <p className="px-1 py-3 text-sm text-gray-400 dark:text-gray-500 font-ui">
                           No chats yet
-                        </div>
+                        </p>
                       ) : (
-                        <div className="space-y-1">
+                        <div className="flex flex-col gap-0.5">
                           {chats.map((chat) => (
                             <MobileChatListItem
                               key={chat._id}
@@ -304,7 +290,7 @@ export function MobileSidebar({
                         </div>
                       )}
                     </div>
-                  </nav>
+                  </div>
                 </div>
               </DialogPanel>
             </TransitionChild>
@@ -312,5 +298,47 @@ export function MobileSidebar({
         </Dialog>
       </Transition>
     </>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function SpinnerIcon() {
+  return (
+    <svg
+      className="w-4 h-4 animate-spin"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
   );
 }

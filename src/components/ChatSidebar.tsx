@@ -1,3 +1,8 @@
+/**
+ * Desktop chat sidebar for chat navigation and management.
+ * Fixed-position panel rendered alongside the main content area.
+ */
+
 import React, { useState } from "react";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { Chat } from "@/lib/types/chat";
@@ -6,9 +11,6 @@ import { toConvexId } from "@/lib/utils/idValidation";
 import { useSessionAwareDeleteChat } from "@/hooks/useSessionAwareDeleteChat";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
-/**
- * Execute chat deletion based on available handlers.
- */
 async function executeDeleteChat(
   chatId: string,
   chat: Chat | undefined,
@@ -33,41 +35,16 @@ async function executeDeleteChat(
   await deleteChat(convexId);
 }
 
-/**
- * Props for the ChatSidebar component
- * @interface ChatSidebarProps
- */
 interface ChatSidebarProps {
-  /** List of all available chats to display */
   chats: Chat[];
-  /** ID of the currently selected/active chat */
   currentChatId: Id<"chats"> | string | null;
-  /** Callback fired when user selects a chat from the list */
   onSelectChat: (chatId: Id<"chats"> | string | null) => void;
-  /** Callback fired when user clicks the "New Chat" button */
   onNewChat: () => void;
-  /** Optional callback to request deletion of a synced chat */
   onRequestDeleteChat?: (chatId: Id<"chats"> | string) => void;
-  /** Callback to toggle sidebar open/closed state */
   onToggle: () => void;
-  /** Indicates if a new chat is currently being created (shows loading state) */
   isCreatingChat?: boolean;
 }
 
-/**
- * ChatSidebar component - Main navigation sidebar for chat selection and management
- *
- * Provides:
- * - List of all available chats with titles
- * - Chat selection functionality
- * - New chat creation button
- * - Chat deletion capabilities
- * - Responsive behavior (drawer on mobile, sidebar on desktop)
- *
- * @component
- * @param {ChatSidebarProps} props - Component props
- * @returns {JSX.Element} Rendered sidebar component
- */
 export function ChatSidebar({
   chats,
   currentChatId,
@@ -88,7 +65,6 @@ export function ChatSidebar({
     [onSelectChat],
   );
 
-  // Avoid inline functions in JSX: use dataset-driven handlers
   const handleSelectClick = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       const { chatId } = e.currentTarget.dataset;
@@ -119,7 +95,6 @@ export function ChatSidebar({
         deleteChat,
       });
 
-      // Only dismiss dialog and navigate after successful deletion
       setDeleteTargetId(null);
       const currentIdString =
         currentChatId === null ? null : String(currentChatId);
@@ -143,11 +118,8 @@ export function ChatSidebar({
     setDeleteTargetId(null);
   }, []);
 
-  // Always render the sidebar container so tests can locate the "New Chat" button
-  // even when visually hidden on small screens. We use CSS to hide it when closed.
-
   return (
-    <div className="w-full h-full bg-muted/30 flex flex-col">
+    <div className="w-full h-full bg-white dark:bg-gray-900 flex flex-col">
       <ConfirmDialog
         open={deleteTargetId !== null}
         onConfirm={() => void confirmDeleteChat()}
@@ -155,30 +127,30 @@ export function ChatSidebar({
         title="Delete chat"
         message="Delete this chat? This cannot be undone."
       />
-      <div className="p-3 sm:p-4 border-b">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Chats</h3>
+
+      <div className="px-4 pt-4 pb-3 flex flex-col gap-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 font-ui">
+            Chats
+          </span>
           <button
             type="button"
-            onClick={() => {
-              onToggle();
-            }}
-            className="p-1 hover:bg-muted rounded transition-colors"
+            onClick={onToggle}
+            className="flex items-center justify-center w-7 h-7 rounded-full ring-1 ring-gray-200/60 dark:ring-gray-700/60 hover:ring-emerald-400/50 dark:hover:ring-emerald-500/50 transition-all duration-150"
             title="Close sidebar"
+            aria-label="Close sidebar"
           >
             <svg
-              className="w-5 h-5"
+              className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500"
               fill="none"
               stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
-              <title>Close sidebar</title>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+              <path d="M15 19l-7-7 7-7" />
             </svg>
           </button>
         </div>
@@ -186,54 +158,18 @@ export function ChatSidebar({
           type="button"
           onClick={onNewChat}
           disabled={isCreatingChat}
-          className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-ui"
         >
-          {isCreatingChat ? (
-            <svg
-              className="w-5 h-5 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <title>Creating chat</title>
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-          ) : (
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <title>New chat</title>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-          )}
+          {isCreatingChat ? <SpinnerIcon /> : <PlusIcon />}
           {isCreatingChat ? "Creating..." : "New Chat"}
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto px-3 py-2">
         {deleteError && (
           <div
             role="alert"
-            className="mx-2 mt-2 px-3 py-2 text-sm text-red-700 bg-red-50 dark:text-red-300 dark:bg-red-900/20 rounded-lg flex items-center justify-between gap-2"
+            className="mb-2 px-3 py-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-between gap-2 font-ui"
           >
             <span>{deleteError}</span>
             <button
@@ -243,28 +179,26 @@ export function ChatSidebar({
               aria-label="Dismiss error"
             >
               <svg
-                className="w-4 h-4"
+                className="w-3.5 h-3.5"
                 fill="none"
                 stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
-                <title>Dismiss</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
           </div>
         )}
         {chats.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
+          <p className="px-2 py-6 text-center text-sm text-gray-400 dark:text-gray-500 font-ui">
             No chats yet. Start a new conversation!
-          </div>
+          </p>
         ) : (
-          <div className="p-2">
+          <div className="flex flex-col gap-0.5">
             {chats.map((chat) => {
               const resolvedChatId = String(chat._id);
               const isSelected =
@@ -274,42 +208,47 @@ export function ChatSidebar({
               return (
                 <div
                   key={chat._id}
-                  className="flex items-center gap-2 mb-1 pr-2 min-w-0"
+                  className="group flex items-start gap-1 min-w-0"
                 >
                   <button
                     type="button"
                     data-chat-id={resolvedChatId}
                     onClick={handleSelectClick}
-                    className={`flex-1 min-w-0 p-3 rounded-lg text-left hover:bg-muted transition-colors ${
-                      isSelected ? "bg-muted" : ""
+                    className={`flex-1 min-w-0 px-3 py-2.5 rounded-lg text-left transition-colors duration-150 ${
+                      isSelected
+                        ? "bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-200/60 dark:ring-emerald-700/40"
+                        : "hover:bg-gray-50 dark:hover:bg-gray-800/60"
                     }`}
                   >
-                    <div className="text-sm font-medium truncate min-w-0 leading-tight">
+                    <div
+                      className={`text-[13px] font-medium leading-snug line-clamp-2 min-w-0 ${
+                        isSelected
+                          ? "text-emerald-800 dark:text-emerald-300"
+                          : "text-gray-700 dark:text-gray-300"
+                      }`}
+                    >
                       {chat.title}
                     </div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0 mt-0.5">
-                      <span className="truncate">
-                        {new Date(chat.updatedAt).toLocaleDateString()}
-                      </span>
+                    <div className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 font-ui">
+                      {new Date(chat.updatedAt).toLocaleDateString()}
                     </div>
                   </button>
                   <button
                     type="button"
                     data-chat-id={resolvedChatId}
                     onClick={handleDeleteClick}
-                    className="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                    className="flex-shrink-0 mt-2 p-1.5 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-red-500 dark:hover:text-red-400 rounded-md transition-all duration-150"
                     title="Delete chat"
                     aria-label="Delete chat"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="w-3.5 h-3.5"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
                       viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
                     >
-                      <title>Delete chat</title>
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -324,5 +263,47 @@ export function ChatSidebar({
         )}
       </div>
     </div>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function SpinnerIcon() {
+  return (
+    <svg
+      className="w-4 h-4 animate-spin"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
   );
 }

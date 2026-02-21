@@ -36,11 +36,10 @@
  * - Assistant/user OUTPUT fonts are NOT controlled here
  */
 .message-textarea {
-  /* Ensure intrinsic line-height-based centering for single-line height */
   min-height: 48px;
   max-height: 200px;
+  box-sizing: border-box;
   -ms-overflow-style: none; /* IE/Edge legacy */
-  /* Override serif body for better numeral clarity while typing */
   font-family:
     "Inter",
     -apple-system,
@@ -55,32 +54,24 @@
     "zero" 1,
     "lnum" 1,
     "tnum" 1;
+  letter-spacing: 0.01em;
 }
 
-/* Slightly reduce input height on small screens to feel less bulky */
 @media (max-width: 480px) {
   .message-textarea {
     min-height: 44px;
   }
 }
 
-/* Normalize textarea vertical alignment and placeholder alignment */
 .message-textarea,
 .message-textarea::placeholder {
   line-height: 1.5;
 }
 
-/* Dark mode input/editor: tighter leading and no extra tracking to reduce perceived size */
-html.dark .message-textarea {
-  line-height: 1.35; /* slightly tighter for perceived smaller size */
-  letter-spacing: -0.005em; /* subtle negative tracking shrinks appearance */
-}
-
-/* Ensure consistent padding-box sizing so text stays centered with auto-resize */
-.message-textarea {
-  box-sizing: border-box;
-  /* Slightly tighter horizontal letterspacing in dark mono to reduce perceived crowding */
-  letter-spacing: 0.01em;
+/* Mono font mode: tighter leading and reduced tracking for mono typefaces */
+html.font-mode-mono .message-textarea {
+  line-height: 1.35;
+  letter-spacing: -0.005em;
 }
 
 /* Apply Firefox-specific scrollbar suppression only when supported */
