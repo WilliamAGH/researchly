@@ -5,6 +5,7 @@
 
 import React, { Suspense } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { ErrorBoundary } from "../ErrorBoundary";
 import { ReasoningDisplay } from "../ReasoningDisplay";
 
 const ContentWithCitations = React.lazy(() =>
@@ -187,19 +188,27 @@ export const MessageItem = React.memo(function MessageItem({
           aria-live={message.role === "assistant" ? "polite" : undefined}
         >
           {message.role === "assistant" ? (
-            <Suspense
+            <ErrorBoundary
               fallback={
-                <div className="animate-pulse h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                <p className="text-sm text-red-500 dark:text-red-400">
+                  Failed to render message content.
+                </p>
               }
             >
-              <ContentWithCitations
-                content={message.content || ""}
-                webResearchSources={message.webResearchSources}
-                hoveredSourceUrl={hoveredSourceUrl}
-                onCitationHover={onCitationHover}
-                isStreaming={message.isStreaming}
-              />
-            </Suspense>
+              <Suspense
+                fallback={
+                  <div className="animate-pulse h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                }
+              >
+                <ContentWithCitations
+                  content={message.content || ""}
+                  webResearchSources={message.webResearchSources}
+                  hoveredSourceUrl={hoveredSourceUrl}
+                  onCitationHover={onCitationHover}
+                  isStreaming={message.isStreaming}
+                />
+              </Suspense>
+            </ErrorBoundary>
           ) : (
             <div className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 leading-relaxed break-words slashed-zero lining-nums tabular-nums">
               {message.content}
