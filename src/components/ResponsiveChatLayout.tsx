@@ -1,5 +1,10 @@
 import React, { Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
+import {
+  Dialog,
+  DialogPanel,
+  Transition,
+  TransitionChild,
+} from "@headlessui/react";
 
 interface ResponsiveChatLayoutProps {
   children: React.ReactNode;
@@ -13,7 +18,7 @@ export function ResponsiveChatLayout({
   sidebarContent,
   isSidebarOpen,
   onToggleSidebar,
-}: ResponsiveChatLayoutProps) {
+}: Readonly<ResponsiveChatLayoutProps>) {
   return (
     <div className="flex h-full">
       {/* Desktop Sidebar - Hidden on mobile, visible on lg+ */}
@@ -26,13 +31,13 @@ export function ResponsiveChatLayout({
       </div>
 
       {/* Mobile Sidebar - Headless UI Dialog */}
-      <Transition.Root show={isSidebarOpen} as={Fragment}>
+      <Transition show={isSidebarOpen} as={Fragment}>
         <Dialog
           as="div"
           className="relative z-50 lg:hidden"
           onClose={onToggleSidebar}
         >
-          <Transition.Child
+          <TransitionChild
             as={Fragment}
             enter="transition-opacity ease-linear duration-300"
             enterFrom="opacity-0"
@@ -42,10 +47,10 @@ export function ResponsiveChatLayout({
             leaveTo="opacity-0"
           >
             <div className="fixed inset-0 bg-gray-900/80" />
-          </Transition.Child>
+          </TransitionChild>
 
           <div className="fixed inset-0 flex pr-16 overflow-x-hidden">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="transition ease-in-out duration-300 transform"
               enterFrom="-translate-x-full"
@@ -54,8 +59,8 @@ export function ResponsiveChatLayout({
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <Dialog.Panel className="relative flex w-full max-w-xs flex-1 min-w-0">
-                <Transition.Child
+              <DialogPanel className="relative flex w-full max-w-xs flex-1 min-w-0">
+                <TransitionChild
                   as={Fragment}
                   enter="ease-in-out duration-300"
                   enterFrom="opacity-0"
@@ -86,15 +91,15 @@ export function ResponsiveChatLayout({
                       </svg>
                     </button>
                   </div>
-                </Transition.Child>
+                </TransitionChild>
                 <div className="flex grow min-w-0 flex-col gap-y-5 overflow-y-auto overflow-x-hidden bg-white dark:bg-gray-900 px-6 pb-2">
                   {sidebarContent}
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              </DialogPanel>
+            </TransitionChild>
           </div>
         </Dialog>
-      </Transition.Root>
+      </Transition>
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col min-w-0">{children}</div>
