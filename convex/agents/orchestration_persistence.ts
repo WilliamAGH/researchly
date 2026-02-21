@@ -50,6 +50,8 @@ export interface UpdateChatTitleParams {
   chatId: Id<"chats">;
   currentTitle: string | undefined;
   intent: string;
+  /** LLM-generated title from planner — used directly when available. */
+  chatTitle?: string;
 }
 
 /**
@@ -85,21 +87,23 @@ export interface CompleteWorkflowParams {
 
 /**
  * Update chat title if it's still the default "New Chat".
- * Uses generateChatTitle utility which enforces 25-char limit.
- *
- * @see {@link ../chats/utils.ts} - generateChatTitle source
+ * Prefers the LLM-generated chatTitle from the planner when available;
+ * falls back to generateChatTitle (prefix-strip + truncate) for
+ * instant/conversational paths that skip planning.
  */
 export async function updateChatTitleIfNeeded(
   params: UpdateChatTitleParams,
 ): Promise<void> {
-  const { ctx, chatId, currentTitle, intent } = params;
+  const { ctx, chatId, currentTitle, intent, chatTitle } = params;
 
   if (currentTitle === "New Chat" || !currentTitle) {
-    const generatedTitle = generateChatTitle({ intent });
+    const title = chatTitle?.trim()
+      ? chatTitle.trim().slice(0, 50)
+      : generateChatTitle({ intent });
     // @ts-ignore - Known Convex TS2589 issue with complex type inference in ctx.runMutation
     await ctx.runMutation(internal.chats.internalUpdateChatTitle, {
       chatId,
-      title: generatedTitle,
+      title,
     });
   }
 }

@@ -36,6 +36,7 @@ export type PlannedSearchQuery = z.infer<typeof PlannedSearchQuerySchema>;
  */
 export const PlanningOutputSchema = z.object({
   userIntent: z.string(),
+  chatTitle: z.string().max(50).optional(),
   informationNeeded: z.array(z.string()).default([]),
   searchQueries: z.array(PlannedSearchQuerySchema).default([]),
   needsWebScraping: z.boolean().default(false),

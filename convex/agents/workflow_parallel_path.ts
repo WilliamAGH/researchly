@@ -272,6 +272,7 @@ export async function* executeParallelPath({
     chatId: args.chatId,
     currentTitle: chat.title,
     intent: planningOutput?.userIntent || args.userQuery,
+    chatTitle: planningOutput?.chatTitle,
   });
 
   const assistantMessageId = await persistAssistantMessage({
