@@ -55,7 +55,7 @@ const EMPTY_PAGE: PaginatedMessagesResult = {
  * - Validates chat ownership
  * - Returns messages with pagination info
  * @param chatId - Chat database ID
- * @param limit - Number of messages to return (default: 50)
+ * @param limit - Number of messages to return (default: 25)
  * @param cursor - Pagination cursor (optional)
  * @returns Object with messages array and nextCursor
  */
