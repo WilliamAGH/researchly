@@ -128,11 +128,24 @@ export function useEnhancedFollowUpPrompt({
   const [followUpMessage, setFollowUpMessage] = useState<string | null>(null);
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [summaryError, setSummaryError] = useState<Error | null>(null);
+  /** Mirror summaryError in a ref so the follow-up effect can read it as a guard without listing it as a dependency (avoids self-triggered re-run). */
+  const summaryErrorRef = useRef(summaryError);
+  summaryErrorRef.current = summaryError;
   /** Guards against concurrent summarization calls and prevents the effect from hiding the prompt mid-flight. */
   const isSummarizingRef = useRef(false);
 
-  /** Evaluate follow-up conditions with cooldown gating. */
+  /** Evaluate follow-up conditions with cooldown gating. Dev-only until production-ready. */
   const evaluateFollowUp = useCallback(() => {
+    // Context-drift prompt is dev-only for now.
+    if (!import.meta.env.DEV) {
+      return {
+        shouldShow: false,
+        suggestions: [],
+        followUpMessage: null,
+        userMsgCount: 0,
+      };
+    }
+
     const messages = chatState?.messages || [];
     const userMsgCount = messages.filter((m) => m?.role === "user").length;
     const result = checkFollowUpConditions(messages, chatState?.isGenerating);
@@ -163,11 +176,11 @@ export function useEnhancedFollowUpPrompt({
       setShowFollowUpPrompt(true);
       // Clear any stale error from a previous topic so the new prompt is clean.
       setSummaryError(null);
-    } else if (!summaryError && !isSummarizingRef.current) {
+    } else if (!summaryErrorRef.current && !isSummarizingRef.current) {
       setShowFollowUpPrompt(false);
       setFollowUpMessage(null);
     }
-  }, [evaluateFollowUp, summaryError]);
+  }, [evaluateFollowUp]);
 
   const resetFollowUp = useCallback(() => {
     setShowFollowUpPrompt(false);
