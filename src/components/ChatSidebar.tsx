@@ -105,6 +105,7 @@ export function ChatSidebar({
     } catch (err) {
       logger.warn("Chat deletion failed:", err);
       setDeleteError("Failed to delete chat. Please try again.");
+      setDeleteTargetId(null);
     }
   }, [
     deleteTargetId,
