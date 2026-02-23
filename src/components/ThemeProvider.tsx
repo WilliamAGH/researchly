@@ -95,8 +95,10 @@ export function ThemeProvider({
     if (hasLocal) return;
     if (userPrefs.theme === "system") {
       setSelectedMode("auto");
+      writeStorage(THEME_KEY, "auto");
     } else if (userPrefs.theme === "light" || userPrefs.theme === "dark") {
       setSelectedMode(userPrefs.theme);
+      writeStorage(THEME_KEY, userPrefs.theme);
     }
   }, [userPrefs]);
 
