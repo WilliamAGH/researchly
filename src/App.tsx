@@ -9,6 +9,7 @@
 
 import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { useConvexAuth } from "convex/react";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -134,6 +135,8 @@ export default function App() {
     setShowSignUpModal(false);
   }, []);
 
+  const { isAuthenticated } = useConvexAuth();
+
   return (
     <ThemeProvider>
       <BrowserRouter>
@@ -187,7 +190,18 @@ export default function App() {
                   </span>
                 </div>
 
-                <ControlPanel onSignIn={openSignIn} onSignUp={openSignUp} />
+                <div className="flex items-center gap-2">
+                  {!isAuthenticated && (
+                    <button
+                      type="button"
+                      onClick={openSignUp}
+                      className="text-sm font-medium px-3 py-1.5 rounded-md bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-ui"
+                    >
+                      Sign up
+                    </button>
+                  )}
+                  <ControlPanel onSignIn={openSignIn} onSignUp={openSignUp} />
+                </div>
               </div>
             </header>
 
