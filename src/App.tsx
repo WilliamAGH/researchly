@@ -11,6 +11,7 @@ import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const SignInModal = React.lazy(() =>
   import("@/components/SignInModal").then((mod) => ({
@@ -216,22 +217,26 @@ export default function App() {
             <Toaster position="top-center" icons={toastIcons} />
 
             {showSignInModal && (
-              <Suspense fallback={null}>
-                <SignInModal
-                  isOpen={showSignInModal}
-                  onClose={closeSignIn}
-                  onSwitchToSignUp={openSignUp}
-                />
-              </Suspense>
+              <ErrorBoundary fallback={null} onError={() => closeSignIn()}>
+                <Suspense fallback={null}>
+                  <SignInModal
+                    isOpen={showSignInModal}
+                    onClose={closeSignIn}
+                    onSwitchToSignUp={openSignUp}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             )}
             {showSignUpModal && (
-              <Suspense fallback={null}>
-                <SignUpModal
-                  isOpen={showSignUpModal}
-                  onClose={closeSignUp}
-                  onSwitchToSignIn={openSignIn}
-                />
-              </Suspense>
+              <ErrorBoundary fallback={null} onError={() => closeSignUp()}>
+                <Suspense fallback={null}>
+                  <SignUpModal
+                    isOpen={showSignUpModal}
+                    onClose={closeSignUp}
+                    onSwitchToSignIn={openSignIn}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             )}
           </div>
         </div>
