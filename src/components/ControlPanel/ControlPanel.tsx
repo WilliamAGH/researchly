@@ -43,15 +43,27 @@ export function ControlPanel({ onSignIn, onSignUp }: ControlPanelProps) {
     onSignUp();
   }, [close, onSignUp]);
 
-  // Position the portal panel below the trigger button
-  useLayoutEffect(() => {
-    if (!isOpen || !triggerRef.current) return;
+  // Position the portal panel below the trigger button, and keep it
+  // anchored on scroll (capture — scroll doesn't bubble) and resize.
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     setPanelPos({
       top: rect.bottom + 8,
       right: window.innerWidth - rect.right,
     });
-  }, [isOpen]);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [isOpen, updatePosition]);
 
   // Close on click outside (check both trigger and panel refs)
   useEffect(() => {
