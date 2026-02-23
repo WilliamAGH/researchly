@@ -3,10 +3,11 @@
  * Shows user email + sign-out when authenticated, sign-in/up when anonymous.
  */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useConvexAuth, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../../convex/_generated/api";
+import { logger } from "@/lib/logger";
 
 interface AccountSectionProps {
   readonly onSignIn: () => void;
@@ -31,10 +32,17 @@ export const AccountSection = React.memo(function AccountSection({
 function AuthenticatedAccount({ onClose }: Readonly<{ onClose: () => void }>) {
   const user = useQuery(api.auth.loggedInUser);
   const { signOut } = useAuthActions();
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
-  const handleSignOut = useCallback(() => {
-    onClose();
-    void signOut();
+  const handleSignOut = useCallback(async () => {
+    setSignOutError(null);
+    try {
+      await signOut();
+      onClose();
+    } catch (error) {
+      logger.error("Sign out failed:", error);
+      setSignOutError("Sign out failed. Please try again.");
+    }
   }, [onClose, signOut]);
 
   return (
@@ -51,12 +59,15 @@ function AuthenticatedAccount({ onClose }: Readonly<{ onClose: () => void }>) {
         </span>
         <button
           type="button"
-          onClick={handleSignOut}
+          onClick={() => void handleSignOut()}
           className="shrink-0 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors font-ui"
         >
           Sign out
         </button>
       </div>
+      {signOutError && (
+        <p className="mt-2 text-xs text-red-500 font-ui">{signOutError}</p>
+      )}
     </div>
   );
 }
