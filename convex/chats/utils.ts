@@ -148,18 +148,21 @@ export function generateChatTitle(params: {
 
   // Strip conversational filler ("can you please tell me about X" → "X").
   // Question words ("what is", "how does") are intentionally kept for context.
-  let compressed = sanitized.toLowerCase();
+  // Match prefixes case-insensitively but preserve original casing (e.g. "I").
+  let lower = sanitized.toLowerCase();
+  let stripped = 0;
   let prev: string;
   do {
-    prev = compressed;
+    prev = lower;
     for (const prefix of FILLER_PREFIXES) {
-      if (compressed.startsWith(prefix)) {
-        compressed = compressed.slice(prefix.length);
+      if (lower.startsWith(prefix)) {
+        stripped += prefix.length;
+        lower = lower.slice(prefix.length);
         break;
       }
     }
-  } while (compressed !== prev);
-  compressed = compressed.trim();
+  } while (lower !== prev);
+  let compressed = sanitized.slice(stripped).trim();
 
   // Capitalize first letter
   if (compressed) {

@@ -43,11 +43,11 @@ describe("Chat Title Generation", () => {
       expect(title).toBe("What is the meaning of life?");
     });
 
-    it("keeps question words like 'how do i'", () => {
+    it("keeps question words and preserves pronoun casing", () => {
       const message = "How do I configure my database?";
       const title = generateChatTitle({ intent: message });
-      // Question words kept; function lowercases then capitalizes first char
-      expect(title).toBe("How do i configure my database?");
+      // Question words kept; original casing preserved (no full-string toLowerCase)
+      expect(title).toBe("How do I configure my database?");
     });
 
     it("handles empty messages", () => {
