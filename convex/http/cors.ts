@@ -240,7 +240,7 @@ export function corsPreflightResponse(request: Request, methods?: string) {
   const requestOrigin = request.headers.get("Origin");
 
   if (!requestOrigin) {
-    return new Response(null, { status: 204 });
+    return new Response(null, { status: 204, headers: { Vary: "Origin" } });
   }
 
   const validOrigin = validateOrigin(requestOrigin);
