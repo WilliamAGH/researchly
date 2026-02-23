@@ -17,7 +17,7 @@ export const ControlPanelTrigger = React.memo(function ControlPanelTrigger({
   isOpen,
 }: ControlPanelTriggerProps) {
   const { isAuthenticated } = useConvexAuth();
-  const user = useQuery(api.auth.loggedInUser);
+  const user = useQuery(api.auth.loggedInUser, isAuthenticated ? {} : "skip");
   const initial = extractInitial(user?.email);
 
   return (
