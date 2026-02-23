@@ -18,9 +18,27 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "22.17.0"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+
+      - name: Install Playwright (cache hit — deps only)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Install Playwright (cache miss — browsers + deps)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
 
       - name: Build app
         run: npm run build
@@ -50,9 +68,6 @@ jobs:
           kill $SERVER_PID 2>/dev/null || true
           pkill -f "vite preview.*5174" 2>/dev/null || true
           sleep 2
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Run Playwright tests (integration)
         env:
