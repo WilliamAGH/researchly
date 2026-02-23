@@ -85,14 +85,13 @@ export function ThemeProvider({
   });
 
   const { isAuthenticated } = useConvexAuth();
-  // @ts-ignore TS2589: Convex generic type instantiation is excessively deep
   const userPrefs = useQuery(api.preferences.getUserPreferences);
   const updatePrefs = useMutation(api.preferences.updateUserPreferences);
 
   // Sync theme from Convex prefs on first load (only if no local override)
   useEffect(() => {
     if (!userPrefs?.theme) return;
-    const hasLocal = localStorage.getItem(THEME_KEY) !== null;
+    const hasLocal = readStorage(THEME_KEY, ["auto", "light", "dark"]) !== null;
     if (hasLocal) return;
     if (userPrefs.theme === "system") {
       setSelectedMode("auto");
