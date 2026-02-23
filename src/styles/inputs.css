@@ -69,7 +69,8 @@
 }
 
 /* Mono font mode: tighter leading and reduced tracking for mono typefaces */
-html.font-mode-mono .message-textarea {
+html.font-mode-mono .message-textarea,
+html.font-mode-mono .message-textarea::placeholder {
   line-height: 1.35;
   letter-spacing: -0.005em;
 }
