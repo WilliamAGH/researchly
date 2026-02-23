@@ -44,7 +44,7 @@ export function MobileChatListItem({
         data-chat-id={String(chat._id)}
         data-current={isActive ? "1" : "0"}
         onClick={onDelete}
-        className="flex-shrink-0 mt-2 p-1.5 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-red-500 dark:hover:text-red-400 rounded-md transition-all duration-150"
+        className="flex-shrink-0 mt-2 p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 rounded-md transition-all duration-150"
         title="Delete chat"
         aria-label="Delete chat"
       >
