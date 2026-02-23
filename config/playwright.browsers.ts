@@ -9,7 +9,8 @@
  * in headless terminal contexts.
  */
 
-const isCI = process.env.CI === "true";
+const ciEnv = process.env.CI?.trim().toLowerCase();
+const isCI = !!ciEnv && ciEnv !== "0" && ciEnv !== "false";
 
 const includeWebkitEnv = process.env.PLAYWRIGHT_INCLUDE_WEBKIT;
 const includeWebkitForced =

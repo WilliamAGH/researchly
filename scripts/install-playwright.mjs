@@ -13,7 +13,8 @@
 import { execFileSync } from "node:child_process";
 import { platform } from "node:os";
 
-const isCI = process.env.CI === "true";
+const ciEnv = (process.env.CI ?? "").trim().toLowerCase();
+const isCI = !!ciEnv && ciEnv !== "0" && ciEnv !== "false";
 
 if (isCI) {
   // CI workflows manage Playwright installation with caching.
