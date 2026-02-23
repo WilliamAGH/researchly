@@ -10,7 +10,7 @@
 import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { useConvexAuth } from "convex/react";
-import { Toaster } from "sonner";
+import { toast, Toaster } from "sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -135,7 +135,7 @@ export default function App() {
     setShowSignUpModal(false);
   }, []);
 
-  const { isAuthenticated } = useConvexAuth();
+  const { isAuthenticated, isLoading } = useConvexAuth();
 
   return (
     <ThemeProvider>
@@ -191,7 +191,7 @@ export default function App() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {!isAuthenticated && (
+                  {!isAuthenticated && !isLoading && (
                     <button
                       type="button"
                       onClick={openSignUp}
@@ -231,7 +231,13 @@ export default function App() {
             <Toaster position="top-center" icons={toastIcons} />
 
             {showSignInModal && (
-              <ErrorBoundary fallback={null} onError={() => closeSignIn()}>
+              <ErrorBoundary
+                fallback={<></>}
+                onError={() => {
+                  toast.error("Failed to load sign-in. Please try again.");
+                  closeSignIn();
+                }}
+              >
                 <Suspense fallback={null}>
                   <SignInModal
                     isOpen={showSignInModal}
@@ -242,7 +248,13 @@ export default function App() {
               </ErrorBoundary>
             )}
             {showSignUpModal && (
-              <ErrorBoundary fallback={null} onError={() => closeSignUp()}>
+              <ErrorBoundary
+                fallback={<></>}
+                onError={() => {
+                  toast.error("Failed to load sign-up. Please try again.");
+                  closeSignUp();
+                }}
+              >
                 <Suspense fallback={null}>
                   <SignUpModal
                     isOpen={showSignUpModal}
