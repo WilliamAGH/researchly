@@ -5,11 +5,11 @@
 
 import React, { Suspense } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { ErrorBoundary } from "../ErrorBoundary";
-import { ReasoningDisplay } from "../ReasoningDisplay";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ReasoningDisplay } from "@/components/ReasoningDisplay";
 
 const ContentWithCitations = React.lazy(() =>
-  import("../ContentWithCitations").then((mod) => ({
+  import("@/components/ContentWithCitations").then((mod) => ({
     default: mod.ContentWithCitations,
   })),
 );
