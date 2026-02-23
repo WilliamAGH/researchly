@@ -119,7 +119,7 @@ export async function handlePublishChat(
           : {}),
       }),
       status: 400,
-      origin: rawOrigin,
+      origin: allowOrigin,
     });
   }
 
@@ -128,7 +128,7 @@ export async function handlePublishChat(
     return corsResponse({
       body: JSON.stringify({ error: "Invalid request payload" }),
       status: 400,
-      origin: rawOrigin,
+      origin: allowOrigin,
     });
   }
 
@@ -148,7 +148,7 @@ export async function handlePublishChat(
     return corsResponse({
       body: JSON.stringify({ ...result, ...urls }),
       status: 200,
-      origin: rawOrigin,
+      origin: allowOrigin,
     });
   } catch (error: unknown) {
     const errorInfo = serializeError(error);
@@ -161,7 +161,7 @@ export async function handlePublishChat(
           : {}),
       }),
       status: 500,
-      origin: rawOrigin,
+      origin: allowOrigin,
     });
   }
 }
