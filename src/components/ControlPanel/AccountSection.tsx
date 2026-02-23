@@ -20,7 +20,11 @@ export const AccountSection = React.memo(function AccountSection({
   onSignUp,
   onClose,
 }: AccountSectionProps) {
-  const { isAuthenticated } = useConvexAuth();
+  const { isAuthenticated, isLoading } = useConvexAuth();
+
+  if (isLoading) {
+    return null;
+  }
 
   if (isAuthenticated) {
     return <AuthenticatedAccount onClose={onClose} />;
