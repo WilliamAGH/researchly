@@ -74,6 +74,13 @@ describe("Chat Title Generation", () => {
       expect(title.length).toBeLessThanOrEqual(53);
     });
 
+    it("capitalizes filler-only intents instead of returning raw lowercase", () => {
+      // When intent is purely filler (e.g., "can you"), stripped result is empty
+      // and the fallback should still capitalize the first letter.
+      const title = generateChatTitle({ intent: "can you" });
+      expect(title).toBe("Can you");
+    });
+
     it("handles custom max length", () => {
       const message = "This is a test message for custom length";
       const title = generateChatTitle({ intent: message, maxLength: 15 });

@@ -168,7 +168,8 @@ export function generateChatTitle(params: {
   if (compressed) {
     compressed = compressed.charAt(0).toUpperCase() + compressed.slice(1);
   } else {
-    compressed = sanitized;
+    // Filler-only intent: fall back to sanitized with first-letter capitalization.
+    compressed = sanitized.charAt(0).toUpperCase() + sanitized.slice(1);
   }
 
   if (compressed.length <= maxLength) return compressed;
