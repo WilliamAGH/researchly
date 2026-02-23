@@ -24,7 +24,7 @@ export const ControlPanelTrigger = React.memo(function ControlPanelTrigger({
     <button
       type="button"
       onClick={onClick}
-      aria-label="Open control panel"
+      aria-label={isOpen ? "Close control panel" : "Open control panel"}
       aria-expanded={isOpen}
       className="relative flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 ring-1 ring-gray-200/60 dark:ring-gray-700/60 hover:ring-emerald-400/50 dark:hover:ring-emerald-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
     >
