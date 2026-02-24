@@ -211,7 +211,9 @@ export function corsResponse(params: CorsResponseParams) {
   const { body, status = 200, origin, contentType, extraHeaders } = params;
 
   if (!origin) {
-    return buildContentResponse(body, status, contentType, extraHeaders);
+    return buildContentResponse(body, status, contentType, extraHeaders, {
+      Vary: "Origin",
+    });
   }
 
   const validOrigin = validateOrigin(origin);
