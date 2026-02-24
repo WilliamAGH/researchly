@@ -13,13 +13,13 @@ const ContentWithCitations = React.lazy(() =>
     default: mod.ContentWithCitations,
   })),
 );
-import { CopyButton } from "../CopyButton";
-import { MessageSources } from "./MessageSources";
-import { ToolProgressIndicator } from "./ToolProgressIndicator";
+import { CopyButton } from "@/components/CopyButton";
+import { MessageSources } from "@/components/MessageList/MessageSources";
+import { ToolProgressIndicator } from "@/components/MessageList/ToolProgressIndicator";
 import { formatConversationWithWebResearchSources } from "@/lib/clipboard";
 import type { Message, SearchProgress } from "@/lib/types/message";
 import { hasWebResearchSources } from "@/lib/domain/webResearchSources";
-import { MessageImages } from "./MessageImages";
+import { MessageImages } from "@/components/MessageList/MessageImages";
 import { useExitTransition } from "@/hooks/useExitTransition";
 
 interface MessageItemProps {
