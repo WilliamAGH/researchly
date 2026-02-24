@@ -1,11 +1,16 @@
 /**
  * Shared browser inclusion flags for Playwright configs.
  *
- * WebKit on macOS crashes during _RegisterApplication (SIGABRT) when
- * launched in headless terminal contexts. Each crash spawns a macOS crash
- * dialog, so retries make it worse. Skip WebKit on local macOS; CI (Linux)
- * runs it safely. Override with PLAYWRIGHT_INCLUDE_WEBKIT=1 if needed.
+ * CI installs chromium only (to keep workflows fast). Firefox and WebKit
+ * are opt-in everywhere via PLAYWRIGHT_INCLUDE_FIREFOX=1 / PLAYWRIGHT_INCLUDE_WEBKIT=1.
+ *
+ * Local Linux still gets WebKit by default (the install script handles it).
+ * Local macOS skips WebKit — it crashes during _RegisterApplication (SIGABRT)
+ * in headless terminal contexts.
  */
+
+const ciEnv = process.env.CI?.trim().toLowerCase();
+const isCI = !!ciEnv && ciEnv !== "0" && ciEnv !== "false";
 
 const includeWebkitEnv = process.env.PLAYWRIGHT_INCLUDE_WEBKIT;
 const includeWebkitForced =
@@ -15,13 +20,9 @@ const includeWebkitDisabled =
 
 export const includeWebkit =
   includeWebkitForced ||
-  (!includeWebkitDisabled && process.platform !== "darwin");
+  (!includeWebkitDisabled && !isCI && process.platform !== "darwin");
 
 const includeFirefoxEnv = process.env.PLAYWRIGHT_INCLUDE_FIREFOX;
 
 export const includeFirefox =
-  includeFirefoxEnv === "1" ||
-  includeFirefoxEnv === "true" ||
-  (process.env.CI === "true" &&
-    includeFirefoxEnv !== "0" &&
-    includeFirefoxEnv !== "false");
+  includeFirefoxEnv === "1" || includeFirefoxEnv === "true";

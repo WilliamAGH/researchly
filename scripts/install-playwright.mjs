@@ -1,7 +1,9 @@
 /**
- * Install Playwright browser binaries.
+ * Install Playwright browser binaries (local dev only).
  *
- * - CI: installs all browsers (chromium, firefox, webkit).
+ * CI workflows handle Playwright installation via explicit cached steps
+ * in .github/workflows/, so this script exits early when CI=true.
+ *
  * - macOS (local): installs only chromium — WebKit crashes during
  *   _RegisterApplication in headless terminal contexts.
  * - Linux (local): installs chromium + webkit.
@@ -11,7 +13,15 @@
 import { execFileSync } from "node:child_process";
 import { platform } from "node:os";
 
-const isCI = process.env.CI === "true";
+const ciEnv = (process.env.CI ?? "").trim().toLowerCase();
+const isCI = !!ciEnv && ciEnv !== "0" && ciEnv !== "false";
+
+if (isCI) {
+  // CI workflows manage Playwright installation with caching.
+  // See .github/workflows/playwright.yml and deploy.yml.
+  process.exit(0);
+}
+
 const isMac = platform() === "darwin";
 const includeWebkitEnv = process.env.PLAYWRIGHT_INCLUDE_WEBKIT;
 const forceWebkitInstall =
@@ -19,13 +29,10 @@ const forceWebkitInstall =
 const disableWebkitInstall =
   includeWebkitEnv === "0" || includeWebkitEnv === "false";
 
-const args = ["playwright", "install", "--with-deps"];
+const args = ["playwright", "install", "--with-deps", "chromium"];
 
-if (!isCI) {
-  args.push("chromium");
-  if (forceWebkitInstall || (!disableWebkitInstall && !isMac)) {
-    args.push("webkit");
-  }
+if (forceWebkitInstall || (!disableWebkitInstall && !isMac)) {
+  args.push("webkit");
 }
 
 execFileSync("npx", args, { stdio: "inherit" });

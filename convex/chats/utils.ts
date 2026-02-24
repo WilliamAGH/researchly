@@ -80,44 +80,31 @@ export function buildContextSummary(params: {
 
 /**
  * CRITICAL: This is the ONLY place where chat titles are generated.
- * All chat titles in the entire application use this 25 character limit.
+ * All chat titles in the entire application use this character limit.
  * DO NOT create alternative title generation functions.
+ *
+ * 50 chars fits in 2 lines at sidebar width (max-w-xs / 320 px) with
+ * text-[13px] and line-clamp-2, giving enough room for meaningful
+ * research topics without overflowing or requiring a wider panel.
  */
-const DEFAULT_TITLE_MAX_LENGTH = 25;
+const DEFAULT_TITLE_MAX_LENGTH = 50;
 
 /**
- * Common question/request prefixes stripped from user intent before title generation.
- * Applied iteratively so compound openers like "Can you please tell me about X"
- * reduce fully to "X" in multiple passes.
- * Module-level constant — defined once, never re-allocated per call.
+ * Conversational filler prefixes stripped before title generation.
+ * Only removes request verbs and politeness ("can you", "please", "I want").
+ * Question words ("what is", "how does") are KEPT — they provide research
+ * context and fit comfortably within the 50-char limit.
  */
-const QUESTION_PREFIXES = [
-  "what is a ",
-  "what is an ",
-  "what is the ",
-  "what are the ",
-  "what are some ",
-  "what are ",
-  "what is ",
-  "what's the ",
-  "what's a ",
-  "what's an ",
-  "what's ",
-  "what was ",
-  "what were ",
-  "how do i ",
-  "how do you ",
-  "how does ",
-  "how would i ",
-  "how would you ",
-  "how can i ",
-  "how to ",
-  "how do ",
+const FILLER_PREFIXES = [
+  "can you please ",
+  "could you please ",
   "can you ",
   "can i ",
   "could you ",
   "would you ",
-  "should i ",
+  "please ",
+  "tell me about ",
+  "tell me ",
   "give me a ",
   "give me an ",
   "give me ",
@@ -125,30 +112,24 @@ const QUESTION_PREFIXES = [
   "find me an ",
   "find me ",
   "show me ",
-  "tell me about ",
-  "tell me ",
-  "explain the ",
-  "explain ",
-  "understand the ",
-  "define ",
-  "describe ",
-  "list ",
-  "please ",
+  "i need to know about ",
+  "i need to know ",
   "i need a ",
   "i need an ",
   "i need ",
+  "i want to know about ",
+  "i want to know ",
   "i want a ",
   "i want ",
-  "definition of ",
-  "meaning of ",
 ] as const;
 
 /**
  * Generate a concise chat title from user intent/message
  *
  * SINGLE SOURCE OF TRUTH for all chat title generation.
- * - Default max length: 25 characters (used everywhere in the app)
- * - Removes filler words ("what is the", "tell me about", etc.)
+ * - Default max length: 50 characters (used everywhere in the app)
+ * - Strips conversational filler ("can you", "please", "i want")
+ * - Keeps question words ("what is", "how does") for research context
  * - Smart word-boundary truncation
  * - Capitalizes first letter
  *
@@ -165,27 +146,30 @@ export function generateChatTitle(params: {
   const sanitized = normalizeWhitespace(intent.replaceAll(/<+/g, ""));
   if (!sanitized) return "New Chat";
 
-  // Remove common question/request prefixes to expose the core topic.
-  // Applied iteratively so compound openers like "Can you please tell me about X"
-  // reduce fully to "X" in multiple passes. Uses module-level QUESTION_PREFIXES.
-  let compressed = sanitized.toLowerCase();
+  // Strip conversational filler ("can you please tell me about X" → "X").
+  // Question words ("what is", "how does") are intentionally kept for context.
+  // Match prefixes case-insensitively but preserve original casing (e.g. "I").
+  let lower = sanitized.toLowerCase();
+  let stripped = 0;
   let prev: string;
   do {
-    prev = compressed;
-    for (const prefix of QUESTION_PREFIXES) {
-      if (compressed.startsWith(prefix)) {
-        compressed = compressed.slice(prefix.length);
+    prev = lower;
+    for (const prefix of FILLER_PREFIXES) {
+      if (lower.startsWith(prefix)) {
+        stripped += prefix.length;
+        lower = lower.slice(prefix.length);
         break;
       }
     }
-  } while (compressed !== prev);
-  compressed = compressed.trim();
+  } while (lower !== prev);
+  let compressed = sanitized.slice(stripped).trim();
 
   // Capitalize first letter
   if (compressed) {
     compressed = compressed.charAt(0).toUpperCase() + compressed.slice(1);
   } else {
-    compressed = sanitized;
+    // Filler-only intent: fall back to sanitized with first-letter capitalization.
+    compressed = sanitized.charAt(0).toUpperCase() + sanitized.slice(1);
   }
 
   if (compressed.length <= maxLength) return compressed;

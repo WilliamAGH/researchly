@@ -128,9 +128,24 @@ export function useEnhancedFollowUpPrompt({
   const [followUpMessage, setFollowUpMessage] = useState<string | null>(null);
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [summaryError, setSummaryError] = useState<Error | null>(null);
+  /** Mirror summaryError in a ref so the follow-up effect can read it as a guard without listing it as a dependency (avoids self-triggered re-run). */
+  const summaryErrorRef = useRef(summaryError);
+  summaryErrorRef.current = summaryError;
+  /** Guards against concurrent summarization calls and prevents the effect from hiding the prompt mid-flight. */
+  const isSummarizingRef = useRef(false);
 
-  /** Evaluate follow-up conditions with cooldown gating. */
+  /** Evaluate follow-up conditions with cooldown gating. Dev-only until production-ready. */
   const evaluateFollowUp = useCallback(() => {
+    // Context-drift prompt is dev-only for now.
+    if (!import.meta.env.DEV) {
+      return {
+        shouldShow: false,
+        suggestions: [],
+        followUpMessage: null,
+        userMsgCount: 0,
+      };
+    }
+
     const messages = chatState?.messages || [];
     const userMsgCount = messages.filter((m) => m?.role === "user").length;
     const result = checkFollowUpConditions(messages, chatState?.isGenerating);
@@ -159,7 +174,9 @@ export function useEnhancedFollowUpPrompt({
       setFollowUpSuggestions(suggestions);
       setFollowUpMessage(msg);
       setShowFollowUpPrompt(true);
-    } else {
+      // Clear any stale error from a previous topic so the new prompt is clean.
+      setSummaryError(null);
+    } else if (!summaryErrorRef.current && !isSummarizingRef.current) {
       setShowFollowUpPrompt(false);
       setFollowUpMessage(null);
     }
@@ -205,8 +222,11 @@ export function useEnhancedFollowUpPrompt({
   }, [followUpMessage, handleNewChat, resetFollowUp]);
 
   const handleNewChatWithSummary = useCallback(async () => {
+    // Prevent concurrent summarization calls from rapid clicks.
+    if (isSummarizingRef.current) return;
+
     const messageToSend = followUpMessage;
-    resetFollowUp();
+    setSummaryError(null);
 
     // Step 1: Fetch the summary BEFORE navigation so it's ready when the new chat loads.
     priorChatSummaryRef.current = null;
@@ -216,6 +236,7 @@ export function useEnhancedFollowUpPrompt({
         setSummaryError(new Error("Invalid chat ID — cannot summarize."));
         return;
       }
+      isSummarizingRef.current = true;
       try {
         const summary = await summarizeRecentAction({ chatId: convexChatId });
         priorChatSummaryRef.current = summary;
@@ -223,12 +244,15 @@ export function useEnhancedFollowUpPrompt({
         const error = err instanceof Error ? err : new Error(String(err));
         logger.error("Failed to summarize recent chat:", error);
         setSummaryError(error);
-        // Abort: do not start a new chat if summary fails
+        // Abort and keep prompt visible so the inline error message can be shown.
         return;
+      } finally {
+        isSummarizingRef.current = false;
       }
     }
 
     // Step 2: Queue the message and navigate — the dispatch effect will attach the summary.
+    resetFollowUp();
     if (messageToSend) {
       setPendingMessage(messageToSend);
     }

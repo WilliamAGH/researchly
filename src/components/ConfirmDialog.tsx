@@ -3,7 +3,13 @@
  * Replaces native window.confirm() / globalThis.confirm() calls.
  */
 
-import { Dialog, Transition } from "@headlessui/react";
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  Transition,
+  TransitionChild,
+} from "@headlessui/react";
 import { Fragment, useRef } from "react";
 
 interface ConfirmDialogProps {
@@ -24,18 +30,18 @@ export function ConfirmDialog({
   message,
   confirmLabel = "Delete",
   cancelLabel = "Cancel",
-}: ConfirmDialogProps) {
+}: Readonly<ConfirmDialogProps>) {
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
 
   return (
-    <Transition.Root show={open} as={Fragment}>
+    <Transition show={open} as={Fragment}>
       <Dialog
         as="div"
         className="relative z-50"
         initialFocus={cancelButtonRef}
         onClose={onCancel}
       >
-        <Transition.Child
+        <TransitionChild
           as={Fragment}
           enter="ease-out duration-200"
           enterFrom="opacity-0"
@@ -45,10 +51,10 @@ export function ConfirmDialog({
           leaveTo="opacity-0"
         >
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-        </Transition.Child>
+        </TransitionChild>
 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <Transition.Child
+          <TransitionChild
             as={Fragment}
             enter="ease-out duration-200"
             enterFrom="opacity-0 scale-95"
@@ -57,10 +63,10 @@ export function ConfirmDialog({
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="w-full max-w-sm rounded-xl bg-white dark:bg-gray-900 p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
-              <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-white">
+            <DialogPanel className="w-full max-w-sm rounded-xl bg-white dark:bg-gray-900 p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+              <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
                 {title}
-              </Dialog.Title>
+              </DialogTitle>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 {message}
               </p>
@@ -81,10 +87,10 @@ export function ConfirmDialog({
                   {confirmLabel}
                 </button>
               </div>
-            </Dialog.Panel>
-          </Transition.Child>
+            </DialogPanel>
+          </TransitionChild>
         </div>
       </Dialog>
-    </Transition.Root>
+    </Transition>
   );
 }

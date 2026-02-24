@@ -35,8 +35,9 @@ export function registerScrapeRoutes(http: HttpRouter) {
     path: "/api/scrape",
     method: "POST",
     handler: httpAction(async (ctx, request) => {
-      const origin = validateOrigin(request.headers.get("Origin"));
-      if (!origin) return buildUnauthorizedOriginResponse();
+      const rawOrigin = request.headers.get("Origin");
+      const origin = rawOrigin ? validateOrigin(rawOrigin) : null;
+      if (rawOrigin && !origin) return buildUnauthorizedOriginResponse();
 
       // Rate limiting check
       const rateLimit = checkIpRateLimit(request, "/api/scrape");

@@ -23,6 +23,11 @@ const EXPECTED_TEST_LOG_PREFIXES = [
   "Using paginated messages - preferred source",
   "Using unified messages while paginated source is loading",
   "Using unified messages - optimistic state present",
+  // Crawl orchestrator negative-path diagnostics
+  "Scraping URL initiated:",
+  "[CRAWL]",
+  "[OK]",
+  "[ERROR] Scraping failed:",
 ];
 
 export default defineConfig({

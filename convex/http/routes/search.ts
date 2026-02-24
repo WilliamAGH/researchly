@@ -7,7 +7,12 @@ import { httpAction } from "../../_generated/server";
 import { api } from "../../_generated/api";
 import type { HttpRouter } from "convex/server";
 import { dlog, serializeError } from "../utils";
-import { corsPreflightResponse, corsResponse } from "../cors";
+import {
+  buildUnauthorizedOriginResponse,
+  corsPreflightResponse,
+  corsResponse,
+  validateOrigin,
+} from "../cors";
 import { checkIpRateLimit } from "../../lib/rateLimit";
 import { applyEnhancements, sortResultsWithPriority } from "../../enhancements";
 import { normalizeUrlForKey } from "../../lib/url";
@@ -31,10 +36,9 @@ export function registerSearchRoutes(http: HttpRouter) {
     path: "/api/search",
     method: "POST",
     handler: httpAction(async (ctx, request) => {
-      const origin = request.headers.get("Origin");
-      // Enforce strict origin validation early
-      const probe = corsResponse({ body: "{}", status: 204, origin });
-      if (probe.status === 403) return probe;
+      const rawOrigin = request.headers.get("Origin");
+      const origin = rawOrigin ? validateOrigin(rawOrigin) : null;
+      if (rawOrigin && !origin) return buildUnauthorizedOriginResponse();
 
       // Rate limiting check
       const rateLimit = checkIpRateLimit(request, "/api/search");

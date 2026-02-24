@@ -9,7 +9,7 @@ export const SEO = {
   siteUrl: "https://researchly.bot",
   defaultTitle: "Researchly - AI-Powered Web Research",
   defaultDescription:
-    "Research the web with AI. Get accurate, up-to-date information with sources powered by real-time web search.",
+    "A powerful research tool: get direct answers to your questions with citations pulled straight from the web. Save hours with a bot that does the research for you.",
   ogImagePath: "/images/opengraph/researchly-og-card.png",
   ogImageWidth: 1200,
   ogImageHeight: 630,

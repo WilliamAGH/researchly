@@ -16,14 +16,13 @@ const ROOT_DIR = path.resolve(
   "..",
 );
 
-// Local safety: default to Chromium-only to avoid spawning extra browsers on dev
-// machines. CI continues to run the full matrix. To opt in locally, set:
-// PLAYWRIGHT_ALL_BROWSERS=1
 const ciEnv = process.env.CI?.trim().toLowerCase();
 const isCI = !!ciEnv && ciEnv !== "0" && ciEnv !== "false";
+
+// Default to Chromium-only everywhere (CI installs chromium only to keep
+// workflows fast). Opt in to the full browser matrix with PLAYWRIGHT_ALL_BROWSERS=1.
 const allBrowsersEnv = process.env.PLAYWRIGHT_ALL_BROWSERS;
-const runAllBrowsers =
-  isCI || allBrowsersEnv === "1" || allBrowsersEnv === "true";
+const runAllBrowsers = allBrowsersEnv === "1" || allBrowsersEnv === "true";
 
 export default defineConfig({
   testDir: "../__tests__/integration",

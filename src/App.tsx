@@ -7,15 +7,24 @@
  * - Conditional rendering for auth/unauth users
  */
 
-import { Authenticated, Unauthenticated } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
-import { Toaster } from "sonner";
-import { SignInModal } from "@/components/SignInModal";
-import { SignUpModal } from "@/components/SignUpModal";
+import { useConvexAuth } from "convex/react";
+import { toast, Toaster } from "sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { SignOutButton } from "@/SignOutButton";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+const SignInModal = React.lazy(() =>
+  import("@/components/SignInModal").then((mod) => ({
+    default: mod.SignInModal,
+  })),
+);
+const SignUpModal = React.lazy(() =>
+  import("@/components/SignUpModal").then((mod) => ({
+    default: mod.SignUpModal,
+  })),
+);
+import { ControlPanel } from "@/components/ControlPanel/ControlPanel";
 import { useClaimAnonymousChats } from "@/hooks/useClaimAnonymousChats";
 import { ChatPage } from "@/components/ChatPage";
 import { toastIcons } from "@/components/toastIcons";
@@ -28,7 +37,6 @@ export default function App() {
   const [hasManuallyToggled, setHasManuallyToggled] = useState(false);
 
   // Keep the app pinned to the Visual Viewport on iOS Safari (address bar + keyboard).
-  // This prevents the "gap under composer" where 100dvh can desync from the visible area.
   useEffect(() => {
     const setAppDvh = () => {
       const vv = globalThis.visualViewport;
@@ -38,9 +46,6 @@ export default function App() {
 
     setAppDvh();
 
-    // When the page itself can't scroll (we use internal scroll containers),
-    // Safari's browser chrome can still expand/collapse during *element* scroll.
-    // Capture scroll events and refresh dvh once per frame to avoid stale sizing.
     let rafId: number | null = null;
     const scheduleSetAppDvh = () => {
       if (rafId !== null) return;
@@ -67,7 +72,6 @@ export default function App() {
     };
   }, []);
 
-  // Claim anonymous chats when user signs in
   useClaimAnonymousChats();
 
   // Handle responsive sidebar behavior
@@ -131,7 +135,7 @@ export default function App() {
     setShowSignUpModal(false);
   }, []);
 
-  // Navigating home via <Link /> avoids full-page reloads in the SPA
+  const { isAuthenticated, isLoading } = useConvexAuth();
 
   return (
     <ThemeProvider>
@@ -141,26 +145,23 @@ export default function App() {
             <header className="flex-shrink-0 sticky top-0 z-50 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-gray-200/30 dark:border-gray-700/30">
               <div className="h-[3.75rem] sm:h-16 flex items-center justify-between pl-3 sm:pl-4 pr-4 sm:pr-6 lg:pr-8">
                 <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
-                  {/* Mobile menu button */}
                   <button
                     type="button"
                     onClick={toggleSidebar}
-                    className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 ring-1 ring-gray-200/60 dark:ring-gray-700/60 hover:ring-emerald-400/50 dark:hover:ring-emerald-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                     aria-label="Toggle sidebar"
                   >
                     <svg
-                      className="w-5 h-5 text-gray-700 dark:text-gray-300"
+                      className="w-[18px] h-[18px] text-gray-500 dark:text-gray-400"
                       fill="none"
                       stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
-                      <title>Menu</title>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 6h16M4 12h16M4 18h16"
-                      />
+                      <path d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                   </button>
 
@@ -188,28 +189,18 @@ export default function App() {
                     Researchly
                   </span>
                 </div>
-                <div className="flex items-center gap-2.5 sm:gap-4">
-                  <Authenticated>
-                    <SignOutButton />
-                  </Authenticated>
-                  <Unauthenticated>
+
+                <div className="flex items-center gap-2">
+                  {!isAuthenticated && !isLoading && (
                     <button
                       type="button"
                       onClick={openSignUp}
-                      className="inline-flex h-9 items-center justify-center px-3 sm:px-4 text-[14px] font-medium bg-emerald-500 text-white hover:bg-emerald-600 transition-colors rounded-md whitespace-nowrap dark:font-mono"
+                      className="text-sm font-medium px-3 py-1.5 rounded-md bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-ui"
                     >
-                      <span className="hidden sm:inline">Sign Up</span>
-                      <span className="sm:hidden">Sign Up</span>
+                      Sign up
                     </button>
-                    <button
-                      type="button"
-                      onClick={openSignIn}
-                      className="hidden sm:inline-flex h-9 items-center justify-center px-3 sm:px-4 text-[14px] font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 whitespace-nowrap dark:font-mono"
-                    >
-                      Sign In
-                    </button>
-                  </Unauthenticated>
-                  <ThemeToggle />
+                  )}
+                  <ControlPanel onSignIn={openSignIn} onSignUp={openSignUp} />
                 </div>
               </div>
             </header>
@@ -237,23 +228,42 @@ export default function App() {
               </Routes>
             </main>
 
-            <Toaster
-              position="top-center"
-              // Provide explicit icons to avoid Sonner referencing its internal
-              // icon components before initialization in some bundlers.
-              icons={toastIcons}
-            />
+            <Toaster position="top-center" icons={toastIcons} />
 
-            <SignInModal
-              isOpen={showSignInModal}
-              onClose={closeSignIn}
-              onSwitchToSignUp={openSignUp}
-            />
-            <SignUpModal
-              isOpen={showSignUpModal}
-              onClose={closeSignUp}
-              onSwitchToSignIn={openSignIn}
-            />
+            {showSignInModal && (
+              <ErrorBoundary
+                fallback={<></>}
+                onError={() => {
+                  toast.error("Failed to load sign-in. Please try again.");
+                  closeSignIn();
+                }}
+              >
+                <Suspense fallback={null}>
+                  <SignInModal
+                    isOpen={showSignInModal}
+                    onClose={closeSignIn}
+                    onSwitchToSignUp={openSignUp}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            )}
+            {showSignUpModal && (
+              <ErrorBoundary
+                fallback={<></>}
+                onError={() => {
+                  toast.error("Failed to load sign-up. Please try again.");
+                  closeSignUp();
+                }}
+              >
+                <Suspense fallback={null}>
+                  <SignUpModal
+                    isOpen={showSignUpModal}
+                    onClose={closeSignUp}
+                    onSwitchToSignIn={openSignIn}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            )}
           </div>
         </div>
       </BrowserRouter>
