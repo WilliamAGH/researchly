@@ -190,9 +190,14 @@ export const MessageItem = React.memo(function MessageItem({
           {message.role === "assistant" ? (
             <ErrorBoundary
               fallback={
-                <p className="text-sm text-red-500 dark:text-red-400">
-                  Failed to render message content.
-                </p>
+                <div>
+                  <p className="text-sm text-red-500 dark:text-red-400 mb-2">
+                    Failed to render formatted content.
+                  </p>
+                  <div className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 leading-relaxed break-words">
+                    {message.content}
+                  </div>
+                </div>
               }
             >
               <Suspense
