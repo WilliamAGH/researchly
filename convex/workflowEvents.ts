@@ -62,7 +62,7 @@ export const cleanupEvents = internalMutation({
       .collect();
 
     for (const event of events) {
-      await ctx.db.delete(event._id);
+      await ctx.db.delete("workflowEvents", event._id);
     }
   },
 });

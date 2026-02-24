@@ -65,7 +65,7 @@ export const claimAnonymousChats = mutation({
         patchData.userId = userId;
         claimed += 1;
       }
-      await ctx.db.patch(chat._id, patchData);
+      await ctx.db.patch("chats", chat._id, patchData);
     }
 
     return { claimed, newSessionId };

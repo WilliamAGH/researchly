@@ -32,7 +32,7 @@ export const completeToken = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const token = await ctx.db.get(args.tokenId);
+    const token = await ctx.db.get("workflowTokens", args.tokenId);
     if (!token) {
       throw new Error(
         `${TOKEN_NOT_FOUND}: completeToken called with nonexistent tokenId=${args.tokenId}`,
@@ -43,7 +43,7 @@ export const completeToken = internalMutation({
         `${TOKEN_WRONG_STATUS}: completeToken expected active, got ${token.status} for tokenId=${args.tokenId}`,
       );
     }
-    await ctx.db.patch(args.tokenId, {
+    await ctx.db.patch("workflowTokens", args.tokenId, {
       status: "completed",
     });
     return null;
@@ -56,7 +56,7 @@ export const invalidateToken = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const token = await ctx.db.get(args.tokenId);
+    const token = await ctx.db.get("workflowTokens", args.tokenId);
     if (!token) {
       throw new Error(
         `${TOKEN_NOT_FOUND}: invalidateToken called with nonexistent tokenId=${args.tokenId}`,
@@ -67,7 +67,9 @@ export const invalidateToken = internalMutation({
         `${TOKEN_WRONG_STATUS}: invalidateToken expected active, got ${token.status} for tokenId=${args.tokenId}`,
       );
     }
-    await ctx.db.patch(args.tokenId, { status: "invalidated" });
+    await ctx.db.patch("workflowTokens", args.tokenId, {
+      status: "invalidated",
+    });
     return null;
   },
 });

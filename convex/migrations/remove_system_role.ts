@@ -11,7 +11,7 @@ export const removeSystemRole = internalMutation({
 
     // Convert to assistant role
     for (const msg of systemMessages) {
-      await ctx.db.patch(msg._id, { role: "assistant" });
+      await ctx.db.patch("messages", msg._id, { role: "assistant" });
     }
 
     return { converted: systemMessages.length };

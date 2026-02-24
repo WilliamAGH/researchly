@@ -41,7 +41,7 @@ export const updateUserPreferences = mutation({
       .first();
 
     if (existing) {
-      await ctx.db.patch(existing._id, {
+      await ctx.db.patch("preferences", existing._id, {
         ...(args.theme && { theme: args.theme }),
         ...(args.searchEnabled !== undefined && {
           searchEnabled: args.searchEnabled,

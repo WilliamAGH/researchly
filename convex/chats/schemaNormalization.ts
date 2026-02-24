@@ -156,7 +156,7 @@ async function applyMessageNormalization(
     return null;
   }
   if (!dryRun) {
-    await ctx.db.patch(message._id, delta.patch);
+    await ctx.db.patch("messages", message._id, delta.patch);
   }
   return delta;
 }
@@ -209,7 +209,7 @@ export const normalizeChatMessagesSchema = mutation({
   }),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
     if (!chat) {
       throw new Error("Chat not found");
     }

@@ -58,7 +58,7 @@ export const migrateMessagesToWebResearchSources = internalMutation({
 
       migrated += 1;
       if (!dryRun) {
-        await ctx.db.patch(message._id, {
+        await ctx.db.patch("messages", message._id, {
           webResearchSources: canonical,
           contextReferences: undefined,
           searchResults: undefined,

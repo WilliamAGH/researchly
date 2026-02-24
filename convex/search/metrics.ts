@@ -36,7 +36,9 @@ export const recordMetric = internalMutation({
         )
         .first();
       if (existing) {
-        await ctx.db.patch(existing._id, { count: (existing.count || 0) + 1 });
+        await ctx.db.patch("metrics", existing._id, {
+          count: (existing.count || 0) + 1,
+        });
       } else {
         await ctx.db.insert("metrics", {
           name: args.name,

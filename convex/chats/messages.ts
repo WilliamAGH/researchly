@@ -34,7 +34,7 @@ export const getChatMessages = query({
   returns: v.array(vMessageProjection),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
 
     if (!chat) return [];
 
@@ -67,7 +67,7 @@ export const getChatMessagesHttp = query({
   },
   returns: v.array(vMessageProjection),
   handler: async (ctx, args) => {
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
 
     if (!chat) return [];
 
@@ -80,7 +80,7 @@ export const getChatMessagesHttp = query({
 
     if (!hasAccess) {
       const token = args.workflowTokenId
-        ? await ctx.db.get(args.workflowTokenId)
+        ? await ctx.db.get("workflowTokens", args.workflowTokenId)
         : null;
       hasAccess = isValidWorkflowToken(token, args.chatId);
     }

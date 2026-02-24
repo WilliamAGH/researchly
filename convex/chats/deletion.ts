@@ -20,7 +20,7 @@ export const deleteChat = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
 
     // Silently succeed if chat already deleted (idempotent operation)
     if (!chat) return null;
@@ -34,10 +34,10 @@ export const deleteChat = mutation({
       .query("messages")
       .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId));
     for await (const message of q) {
-      await ctx.db.delete(message._id);
+      await ctx.db.delete("messages", message._id);
     }
 
-    await ctx.db.delete(args.chatId);
+    await ctx.db.delete("chats", args.chatId);
 
     // Best-effort: also invalidate planner cache for this chat
     // Note: Disabled to avoid circular dependency; enable once dependency issue is resolved.
