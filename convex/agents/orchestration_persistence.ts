@@ -97,8 +97,9 @@ export async function updateChatTitleIfNeeded(
   const { ctx, chatId, currentTitle, intent, chatTitle } = params;
 
   if (currentTitle === "New Chat" || !currentTitle) {
-    const title = chatTitle?.trim()
-      ? chatTitle.trim().slice(0, 50)
+    const trimmedTitle = chatTitle?.trim();
+    const title = trimmedTitle
+      ? trimmedTitle.slice(0, 50)
       : generateChatTitle({ intent });
     // @ts-ignore - Known Convex TS2589 issue with complex type inference in ctx.runMutation
     await ctx.runMutation(internal.chats.internalUpdateChatTitle, {
