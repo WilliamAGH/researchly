@@ -5,6 +5,7 @@
 
 import React, { Suspense } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { safeParseHttpUrl } from "../../../convex/lib/urlHttp";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ReasoningDisplay } from "@/components/ReasoningDisplay";
 
@@ -21,6 +22,59 @@ import type { Message, SearchProgress } from "@/lib/types/message";
 import { hasWebResearchSources } from "@/lib/domain/webResearchSources";
 import { MessageImages } from "@/components/MessageList/MessageImages";
 import { useExitTransition } from "@/hooks/useExitTransition";
+
+const FALLBACK_HTTP_URL_REGEX = /https?:\/\/[^\s<>"']+/g;
+
+function renderFallbackContentWithLinks(content: string): React.ReactNode[] {
+  if (!content) return [""];
+
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null = null;
+  FALLBACK_HTTP_URL_REGEX.lastIndex = 0;
+
+  while ((match = FALLBACK_HTTP_URL_REGEX.exec(content)) !== null) {
+    const rawUrl = match[0];
+    const start = match.index;
+
+    if (start > lastIndex) {
+      nodes.push(content.slice(lastIndex, start));
+    }
+
+    const normalizedUrl = safeParseHttpUrl(rawUrl)?.toString();
+    if (normalizedUrl) {
+      nodes.push(
+        <a
+          key={`fallback-link-${start}`}
+          href={normalizedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline decoration-blue-400/70 text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200 break-all"
+        >
+          {normalizedUrl}
+        </a>,
+      );
+    } else {
+      nodes.push(rawUrl);
+    }
+
+    lastIndex = start + rawUrl.length;
+  }
+
+  if (lastIndex < content.length) {
+    nodes.push(content.slice(lastIndex));
+  }
+
+  return nodes;
+}
+
+function MessageFallbackContent({ content }: { content: string }) {
+  return (
+    <div className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 leading-relaxed break-words">
+      {renderFallbackContentWithLinks(content)}
+    </div>
+  );
+}
 
 interface MessageItemProps {
   message: Message;
@@ -194,9 +248,7 @@ export const MessageItem = React.memo(function MessageItem({
                   <p className="text-sm text-red-500 dark:text-red-400 mb-2">
                     Failed to render formatted content.
                   </p>
-                  <div className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 leading-relaxed break-words">
-                    {message.content}
-                  </div>
+                  <MessageFallbackContent content={message.content || ""} />
                 </div>
               }
             >
