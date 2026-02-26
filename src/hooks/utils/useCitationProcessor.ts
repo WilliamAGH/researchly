@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 import { getDomainFromUrl } from "@/lib/utils/favicon";
 import { logger } from "@/lib/logger";
-import { toWebSourceCards } from "@/lib/domain/webResearchSources";
+import {
+  toNormalizedUrlKey,
+  toWebSourceCards,
+} from "@/lib/domain/webResearchSources";
 import type { WebResearchSourceClient } from "@/lib/schemas/messageStream";
 
 /**
@@ -15,7 +18,16 @@ export function useCitationProcessor(
 ): string {
   return useMemo(() => {
     const cards = toWebSourceCards(webResearchSources);
-    const urlSet = new Set(cards.map((c) => c.url));
+    const cardByNormalizedUrl = new Map(
+      cards
+        .map((card) => {
+          const key = toNormalizedUrlKey(card.url);
+          return key ? ([key, card] as const) : null;
+        })
+        .filter((entry): entry is readonly [string, (typeof cards)[number]] =>
+          Boolean(entry),
+        ),
+    );
 
     // Replace [domain.com] or [full URL] with custom markers that survive markdown processing
     // Updated regex to capture potential following (url) part of a markdown link
@@ -54,14 +66,13 @@ export function useCitationProcessor(
         ) {
           // Extract domain from the full URL citation
           try {
+            const normalizedCitation = toNormalizedUrlKey(citedText);
+            const exactCard = normalizedCitation
+              ? cardByNormalizedUrl.get(normalizedCitation)
+              : undefined;
+
             domain = new URL(citedText).hostname.replace("www.", "");
-            // Try to find exact URL match first
-            if (urlSet.has(citedText)) {
-              url = citedText;
-            } else {
-              // Fallback to domain matching
-              url = domainToUrlMap.get(domain);
-            }
+            url = exactCard?.url ?? domainToUrlMap.get(domain);
           } catch (error) {
             logger.warn("Failed to parse cited URL for markdown citation", {
               citedText,
@@ -73,15 +84,16 @@ export function useCitationProcessor(
           // Handle cases like "github.com/user/repo" - extract just the domain
           const domainPart = citedText.split("/")[0];
           domain = domainPart;
-          // Look for any URL from this domain
-          url = domainToUrlMap.get(domain);
+
+          const normalizedCitation = toNormalizedUrlKey(`https://${citedText}`);
+          const exactCard = normalizedCitation
+            ? cardByNormalizedUrl.get(normalizedCitation)
+            : undefined;
+          url = exactCard?.url ?? domainToUrlMap.get(domain);
+
           // If not found, try to find a URL that contains this path
           if (!url) {
-            const matchingCard = cards.find(
-              (c) =>
-                c.url.includes(citedText) ||
-                (c.url.includes(domain) && c.url.includes("/")),
-            );
+            const matchingCard = cards.find((c) => c.url.includes(citedText));
             if (matchingCard) {
               url = matchingCard.url;
             }
