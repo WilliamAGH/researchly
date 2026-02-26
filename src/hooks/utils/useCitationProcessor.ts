@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 import { getDomainFromUrl } from "@/lib/utils/favicon";
 import { logger } from "@/lib/logger";
-import { toWebSourceCards } from "@/lib/domain/webResearchSources";
+import {
+  toNormalizedUrlKey,
+  toWebSourceCards,
+} from "@/lib/domain/webResearchSources";
 import type { WebResearchSourceClient } from "@/lib/schemas/messageStream";
 
 /**
@@ -16,6 +19,15 @@ export function useCitationProcessor(
   return useMemo(() => {
     const cards = toWebSourceCards(webResearchSources);
     const urlSet = new Set(cards.map((c) => c.url));
+    const cardByNormalizedUrl = new Map<string, string>();
+
+    for (const card of cards) {
+      const normalizedKey = toNormalizedUrlKey(card.url);
+      if (!normalizedKey || cardByNormalizedUrl.has(normalizedKey)) {
+        continue;
+      }
+      cardByNormalizedUrl.set(normalizedKey, card.url);
+    }
 
     // Replace [domain.com] or [full URL] with custom markers that survive markdown processing
     // Updated regex to capture potential following (url) part of a markdown link
@@ -70,21 +82,26 @@ export function useCitationProcessor(
             url = domainToUrlMap.get(citedText);
           }
         } else if (citedText.includes("/")) {
-          // Handle cases like "github.com/user/repo" - extract just the domain
+          // Handle cases like "github.com/user/repo"
           const domainPart = citedText.split("/")[0];
           domain = domainPart;
-          // Look for any URL from this domain
-          url = domainToUrlMap.get(domain);
-          // If not found, try to find a URL that contains this path
+
+          const parsedCitation =
+            citedText.startsWith("http://") || citedText.startsWith("https://")
+              ? citedText
+              : `https://${citedText}`;
+          const normalizedCitationUrl = toNormalizedUrlKey(parsedCitation);
+
+          if (normalizedCitationUrl) {
+            url = cardByNormalizedUrl.get(normalizedCitationUrl);
+          }
+
           if (!url) {
-            const matchingCard = cards.find(
-              (c) =>
-                c.url.includes(citedText) ||
-                (c.url.includes(domain) && c.url.includes("/")),
-            );
-            if (matchingCard) {
-              url = matchingCard.url;
-            }
+            const matchingCard = cards.find((c) => {
+              const cardDomain = getDomainFromUrl(c.url);
+              return cardDomain === domain && c.url.includes(citedText);
+            });
+            url = matchingCard?.url;
           }
         } else {
           // Simple domain citation
