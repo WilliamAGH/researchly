@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { getDomainFromUrl } from "@/lib/utils/favicon";
 import { logger } from "@/lib/logger";
+import { stripTrailingSources } from "@/lib/utils/stripTrailingSources";
 import {
   toNormalizedUrlKey,
   toWebSourceCards,
