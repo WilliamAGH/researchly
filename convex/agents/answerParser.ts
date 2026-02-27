@@ -6,24 +6,46 @@
 /**
  * Patterns to detect trailing source/reference sections the AI may add.
  * These duplicate our UI's source display and expose full URLs.
+ *
+ * Each pattern uses `\n\n` or `\n` prefix to anchor to a section break.
+ * The `$` anchor ensures we only strip content at the very end of the text.
  */
 
 /** Matches `## Sources` or `### References` heading followed by any content */
 const MARKDOWN_HEADING_SOURCES =
-  /\n#{1,3}\s*(?:Sources?|References?):?\s*\n[\s\S]*$/i;
+  /\n+#{1,3}\s*(?:Sources?|References?|Citations?):?\s*\n[\s\S]*$/i;
 
 /** Matches `**Sources:**` or `**References:**` bold header followed by any content */
 const BOLD_HEADER_SOURCES =
-  /\n\*\*(?:Sources?|References?)\*\*:?\s*\n[\s\S]*$/i;
+  /\n+\*\*(?:Sources?|References?|Citations?)\*\*:?\s*\n[\s\S]*$/i;
 
-/** Matches plain `Sources:` or `References:` followed by bullet/numbered list items */
+/** Matches plain `Sources:` or `References:` followed by bullet/numbered/bare-URL list items */
 const PLAIN_HEADER_SOURCES =
-  /\n(?:Sources?|References?):?\s*\n(?:\s*[-•*\d]+\.?\s+.+(?:\n|$))+$/i;
+  /\n+(?:Sources?|References?|Citations?):?\s*\n(?:\s*[-•*\d[\]]+[.):]*\s+.+(?:\n|$))+$/i;
+
+/**
+ * Matches a trailing numbered reference list without a header, e.g.:
+ *   [1] https://example.com
+ *   [2] https://other.com/path
+ * or:
+ *   [1]: https://example.com
+ *   [2]: https://other.com
+ * Requires 2+ consecutive entries to avoid false positives on inline citations.
+ */
+const NUMBERED_BRACKET_REFS = /\n+(?:\[\d+\]:?\s+https?:\/\/\S+(?:\n|$)){2,}$/;
+
+/**
+ * Matches a trailing bare-URL list (2+ URLs on consecutive lines at end).
+ * Only matches when preceded by a blank line to avoid catching inline URLs.
+ */
+const TRAILING_BARE_URLS = /\n\n(?:[-•*]?\s*https?:\/\/\S+(?:\n|$)){2,}$/;
 
 const TRAILING_SOURCES_PATTERNS = [
   MARKDOWN_HEADING_SOURCES,
   BOLD_HEADER_SOURCES,
   PLAIN_HEADER_SOURCES,
+  NUMBERED_BRACKET_REFS,
+  TRAILING_BARE_URLS,
 ];
 
 /**

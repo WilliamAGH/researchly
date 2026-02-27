@@ -3,6 +3,12 @@
   .citation-pill {
     max-width: 100%;
     overflow: hidden;
+    /* Horizontal spacing between adjacent pills and surrounding text.
+       Defined here (not in Tailwind class strings) to prevent accidental
+       removal during class refactors — see commit 7579bf4 where mx-1
+       was dropped. 3px each side ≈ 6px gap between two adjacent pills. */
+    margin-left: 3px;
+    margin-right: 3px;
   }
 
   .citation-pill-text {
