@@ -16,7 +16,10 @@ import {
   CodeRenderer,
   TableRenderer,
 } from "@/lib/utils/markdownConfig";
-import { toDomainToUrlMap } from "@/lib/domain/webResearchSources";
+import {
+  toDomainToUrlMap,
+  toWebSourceCards,
+} from "@/lib/domain/webResearchSources";
 import type { WebResearchSourceClient } from "@/lib/schemas/messageStream";
 
 interface ContentWithCitationsProps {
@@ -34,6 +37,11 @@ export const ContentWithCitations = React.memo(function ContentWithCitations({
   onCitationHover,
   isStreaming,
 }: ContentWithCitationsProps) {
+  const cards = React.useMemo(
+    () => toWebSourceCards(webResearchSources),
+    [webResearchSources],
+  );
+
   // Create a map of domains to URLs for quick lookup
   const domainToUrlMap = React.useMemo(
     () => toDomainToUrlMap(webResearchSources),
@@ -43,9 +51,9 @@ export const ContentWithCitations = React.memo(function ContentWithCitations({
   // After streaming completes, clean trailing citation sections (safety net)
   const cleanedContent = React.useMemo(() => {
     if (isStreaming || !content) return content;
-    const inlineCitedUrls = new Set(domainToUrlMap.values());
+    const inlineCitedUrls = new Set(cards.map((card) => card.url));
     return cleanTrailingCitations(content, inlineCitedUrls);
-  }, [content, isStreaming, domainToUrlMap]);
+  }, [cards, content, isStreaming]);
 
   // Convert [domain] or [URL] to markdown links where domain is known
   const processedContent = useCitationProcessor(
@@ -56,8 +64,8 @@ export const ContentWithCitations = React.memo(function ContentWithCitations({
 
   // Pre-compute citation URL set for O(1) lookup
   const citationUrls = React.useMemo(
-    () => new Set(domainToUrlMap.values()),
-    [domainToUrlMap],
+    () => new Set(cards.map((card) => card.url)),
+    [cards],
   );
 
   // Anchor renderer needs memoization because it depends on hover state
