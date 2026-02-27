@@ -90,20 +90,38 @@ export function useCitationProcessor(
           // Handle cases like "github.com/user/repo"
           const domainPart = citedText.split("/")[0];
           domain = domainPart;
+          const normalizedDomain = domainPart
+            .toLowerCase()
+            .replace(/^www\./, "");
 
           const normalizedCitation = toNormalizedUrlKey(`https://${citedText}`);
           const exactCard = normalizedCitation
             ? cardByNormalizedUrl.get(normalizedCitation)
             : undefined;
-          url = exactCard?.url ?? domainToUrlMap.get(domain);
+          url = exactCard?.url;
 
-          // If not found, try to find a URL that contains this path
+          // If not found, try a path-aware match before domain fallback.
           if (!url) {
+            const citedPath = `/${citedText.slice(domainPart.length).replace(/^\/+/, "")}`;
             const matchingCard = cards.find((c) => {
               const cardDomain = getDomainFromUrl(c.url);
-              return cardDomain === domain && c.url.includes(citedText);
+              if (cardDomain !== normalizedDomain) return false;
+              const normalizedCardUrl = toNormalizedUrlKey(c.url);
+              if (!normalizedCardUrl) return false;
+              try {
+                const cardPath = new URL(normalizedCardUrl).pathname;
+                return (
+                  cardPath === citedPath || cardPath.startsWith(`${citedPath}/`)
+                );
+              } catch {
+                return false;
+              }
             });
             url = matchingCard?.url;
+          }
+
+          if (!url) {
+            url = domainToUrlMap.get(normalizedDomain);
           }
         } else {
           // Simple domain citation

@@ -113,6 +113,37 @@ describe("useCitationProcessor", () => {
     );
   });
 
+  it("prefers path-aware slash matching before domain fallback", () => {
+    const sources: WebResearchSourceClient[] = [
+      buildSource(
+        "ctx-1",
+        "https://docs.example.com/guides/advanced-other",
+        "Other Guide",
+      ),
+      buildSource(
+        "ctx-2",
+        "https://docs.example.com/guides/advanced/setup",
+        "Setup Guide",
+      ),
+    ];
+    const domainToUrlMap = toDomainToUrlMap(sources);
+
+    const { result } = renderHook(() =>
+      useCitationProcessor(
+        "Read [docs.example.com/guides/advanced] first.",
+        sources,
+        domainToUrlMap,
+      ),
+    );
+
+    expect(result.current).toContain(
+      "[docs.example.com](https://docs.example.com/guides/advanced/setup)",
+    );
+    expect(result.current).not.toContain(
+      "[docs.example.com](https://docs.example.com/guides/advanced-other)",
+    );
+  });
+
   it("keeps domain-only citations mapped to first-seen domain URL", () => {
     const sources: WebResearchSourceClient[] = [
       buildSource("ctx-1", "https://github.com/thushan/olla", "olla"),

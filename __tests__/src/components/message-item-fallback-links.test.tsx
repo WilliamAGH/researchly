@@ -99,4 +99,32 @@ describe("MessageItem fallback links", () => {
       "https://en.wikipedia.org/wiki/Function_(mathematics)",
     );
   });
+
+  it("strips unmatched trailing square and curly brackets from fallback URLs", async () => {
+    renderFallbackMessage(
+      "See https://example.com/one] and https://example.com/two}.",
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Failed to render formatted content."),
+      ).toBeTruthy();
+    });
+
+    const firstLink = await screen.findByRole("link", {
+      name: "https://example.com/one",
+    });
+    const secondLink = await screen.findByRole("link", {
+      name: "https://example.com/two",
+    });
+
+    expect(firstLink.getAttribute("href")).toBe("https://example.com/one");
+    expect(secondLink.getAttribute("href")).toBe("https://example.com/two");
+    expect(
+      screen.queryByRole("link", { name: "https://example.com/one]" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "https://example.com/two}" }),
+    ).toBeNull();
+  });
 });
