@@ -74,7 +74,7 @@ export const getChatMessagesPaginated = query({
   handler: async (ctx, args) => {
     assertValidSessionId(args.sessionId);
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
 
     if (!chat) {
       return EMPTY_PAGE;
@@ -114,7 +114,7 @@ export const getChatMessagesPaginated = query({
 
     // If we have a cursor, validate it BEFORE using it in any query
     if (args.cursor) {
-      const cursorMessage = await ctx.db.get(args.cursor);
+      const cursorMessage = await ctx.db.get("messages", args.cursor);
       const cursorChatId = cursorMessage?.chatId;
       const cursorCreationTime = cursorMessage?._creationTime;
       // SECURITY: Validate cursor belongs to the requested chat BEFORE any query execution
@@ -150,7 +150,7 @@ export const getRecentChatMessages = query({
   handler: async (ctx, args) => {
     assertValidSessionId(args.sessionId);
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
     if (!chat) return [];
 
     const isSharedOrPublic = isSharedOrPublicChat(chat);

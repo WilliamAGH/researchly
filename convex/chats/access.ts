@@ -24,7 +24,7 @@ export async function validateChatAccess(
   sessionId?: string,
 ) {
   const userId = await getAuthUserId(ctx);
-  const chat = await ctx.db.get(chatId);
+  const chat = await ctx.db.get("chats", chatId);
 
   if (!chat) return null;
 

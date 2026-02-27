@@ -144,7 +144,7 @@ export const getChatByIdHttp = query({
   },
   returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
     if (!chat) return null;
 
     if (chat.privacy === "shared" || chat.privacy === "public") {
@@ -156,7 +156,7 @@ export const getChatByIdHttp = query({
     }
 
     const token = args.workflowTokenId
-      ? await ctx.db.get(args.workflowTokenId)
+      ? await ctx.db.get("workflowTokens", args.workflowTokenId)
       : null;
     if (isValidWorkflowToken(token, args.chatId)) {
       return chat;
@@ -181,7 +181,7 @@ export const getChatByIdDirect = query({
   returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
     // Direct lookup bypasses index - use for immediate post-creation reads
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
 
     if (!chat) return null;
 

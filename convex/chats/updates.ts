@@ -27,14 +27,14 @@ export const updateChatTitle = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
 
     if (!chat) throw new Error("Chat not found");
     if (!hasPrimaryOwnerAccess(chat, userId, args.sessionId)) {
       throw new Error("Unauthorized");
     }
 
-    await ctx.db.patch(args.chatId, {
+    await ctx.db.patch("chats", args.chatId, {
       title: args.title,
       updatedAt: Date.now(),
     });
@@ -49,10 +49,10 @@ export const internalUpdateChatTitle = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
     if (!chat) throw new Error("Chat not found");
 
-    await ctx.db.patch(args.chatId, {
+    await ctx.db.patch("chats", args.chatId, {
       title: args.title,
       updatedAt: Date.now(),
     });
@@ -73,10 +73,10 @@ export const updateRollingSummary = internalMutation({
   handler: async (ctx, args) => {
     // No auth check: internalMutation is only reachable from trusted internal
     // actions. Matches the pattern of internalUpdateChatTitle above.
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
     if (!chat) throw new Error("Chat not found");
 
-    await ctx.db.patch(args.chatId, {
+    await ctx.db.patch("chats", args.chatId, {
       rollingSummary: args.summary.slice(0, 2000),
       rollingSummaryUpdatedAt: Date.now(),
       updatedAt: Date.now(),
@@ -107,7 +107,7 @@ export const updateChatPrivacy = mutation({
   }),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
 
     if (!chat) throw new Error("Chat not found");
     if (!hasPrimaryOwnerAccess(chat, userId, args.sessionId)) {
@@ -124,7 +124,7 @@ export const updateChatPrivacy = mutation({
       publicId = generatePublicId();
     }
 
-    await ctx.db.patch(args.chatId, {
+    await ctx.db.patch("chats", args.chatId, {
       privacy: args.privacy,
       // Only set ids if newly generated (preserve existing values)
       ...(shareId && !chat.shareId ? { shareId } : {}),

@@ -30,7 +30,7 @@ export const addMessage = internalMutation({
   returns: v.id("messages"),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
 
     if (!chat) throw new Error("Chat not found");
 
@@ -45,7 +45,7 @@ export const addMessage = internalMutation({
     let threadId = chat.threadId;
     if (!threadId) {
       threadId = generateThreadId();
-      await ctx.db.patch(args.chatId, { threadId });
+      await ctx.db.patch("chats", args.chatId, { threadId });
     }
 
     const { chatId, sessionId: _sessionId, ...persistableArgs } = args;
@@ -69,11 +69,11 @@ export const addMessageHttp = internalMutation({
   returns: v.id("messages"),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
     if (!chat) throw new Error("Chat not found");
 
     const workflowToken = args.workflowTokenId
-      ? await ctx.db.get(args.workflowTokenId)
+      ? await ctx.db.get("workflowTokens", args.workflowTokenId)
       : null;
     const hasValidToken = isValidWorkflowToken(workflowToken, args.chatId);
     const hasBaseAccess = hasChatWriteAccess(chat, userId, args.sessionId);
@@ -98,7 +98,7 @@ export const addMessageHttp = internalMutation({
     let threadId = chat.threadId;
     if (!threadId) {
       threadId = generateThreadId();
-      await ctx.db.patch(args.chatId, { threadId });
+      await ctx.db.patch("chats", args.chatId, { threadId });
     }
 
     const {
@@ -130,13 +130,13 @@ export const updateMessageMetadata = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { messageId, sessionId, ...metadata } = args;
-    const message = await ctx.db.get(messageId);
+    const message = await ctx.db.get("messages", messageId);
     if (!message) {
       throw new Error(`Message not found: ${messageId}`);
     }
 
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(message.chatId);
+    const chat = await ctx.db.get("chats", message.chatId);
     if (!chat) throw new Error("Chat not found");
     if (!hasChatWriteAccess(chat, userId, sessionId)) {
       throw new Error(
@@ -144,7 +144,7 @@ export const updateMessageMetadata = mutation({
       );
     }
 
-    await ctx.db.patch(messageId, metadata);
+    await ctx.db.patch("messages", messageId, metadata);
     return null;
   },
 });
@@ -164,7 +164,7 @@ export const updateMessage = internalMutation({
     imageAnalysis: v.optional(v.string()),
   },
   handler: async (ctx, { messageId, ...rest }) => {
-    await ctx.db.patch(messageId, { ...rest });
+    await ctx.db.patch("messages", messageId, { ...rest });
   },
 });
 
@@ -189,10 +189,10 @@ export const deleteMessage = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const message = await ctx.db.get(args.messageId);
+    const message = await ctx.db.get("messages", args.messageId);
     if (!message) return null;
 
-    const chat = await ctx.db.get(message.chatId);
+    const chat = await ctx.db.get("chats", message.chatId);
     if (!chat) throw new Error("Chat not found");
 
     const userId = await getAuthUserId(ctx);
@@ -202,7 +202,7 @@ export const deleteMessage = mutation({
       );
     }
 
-    await ctx.db.delete(args.messageId);
+    await ctx.db.delete("messages", args.messageId);
 
     // Schedule cache invalidation; scheduling failures should not fail delete.
     try {
@@ -227,7 +227,7 @@ export const deleteMessage = mutation({
     }
 
     // Clear rolling summary - part of the same transaction, errors should propagate
-    await ctx.db.patch(message.chatId, {
+    await ctx.db.patch("chats", message.chatId, {
       rollingSummary: "",
       rollingSummaryUpdatedAt: Date.now(),
       updatedAt: Date.now(),

@@ -33,7 +33,7 @@ export const summarizeRecent = query({
   returns: v.string(),
   handler: async (ctx, args) => {
     const limit = Math.max(1, Math.min(args.limit ?? 14, 40));
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
     if (!chat) return "";
 
     const userId = await getAuthUserId(ctx);

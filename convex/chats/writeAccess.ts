@@ -52,7 +52,7 @@ export const canWriteChat = query({
     v.literal("not_found"),
   ),
   handler: async (ctx, args): Promise<WriteAccessResult> => {
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
     // Return "denied" (not "not_found") so the public query does not reveal
     // whether a chat ID exists, preventing chat-existence probing.
     if (!chat) return "denied";

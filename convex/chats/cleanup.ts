@@ -48,7 +48,7 @@ export const cleanupEmptyChats = internalMutation({
 
       // Delete if no messages exist
       if (!hasMessages) {
-        await ctx.db.delete(chat._id);
+        await ctx.db.delete("chats", chat._id);
         deletedCount++;
       }
     }

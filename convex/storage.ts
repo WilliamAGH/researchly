@@ -109,7 +109,7 @@ export const getFileUrls = query({
       throw new Error("Invalid sessionId format");
     }
 
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
     if (!chat) throw new Error("Chat not found");
     const userId = await getAuthUserId(ctx);
 

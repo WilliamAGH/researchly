@@ -7,6 +7,7 @@ import React, { Suspense } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ReasoningDisplay } from "@/components/ReasoningDisplay";
+import { MessageFallbackContent } from "@/components/MessageList/MessageFallbackContent";
 
 const ContentWithCitations = React.lazy(() =>
   import("@/components/ContentWithCitations").then((mod) => ({
@@ -190,9 +191,12 @@ export const MessageItem = React.memo(function MessageItem({
           {message.role === "assistant" ? (
             <ErrorBoundary
               fallback={
-                <p className="text-sm text-red-500 dark:text-red-400">
-                  Failed to render message content.
-                </p>
+                <div>
+                  <p className="text-sm text-red-500 dark:text-red-400 mb-2">
+                    Failed to render formatted content.
+                  </p>
+                  <MessageFallbackContent content={message.content || ""} />
+                </div>
               }
             >
               <Suspense

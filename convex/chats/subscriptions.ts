@@ -23,7 +23,7 @@ export const subscribeToChatUpdates = query({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    const chat = await ctx.db.get(args.chatId);
+    const chat = await ctx.db.get("chats", args.chatId);
 
     if (!chat) return null;
 
@@ -73,7 +73,7 @@ export const subscribeToChatUpdates = query({
 export const subscribeToMessageStream = query({
   args: { messageId: v.id("messages") },
   handler: async (ctx, args) => {
-    const message = await ctx.db.get(args.messageId);
+    const message = await ctx.db.get("messages", args.messageId);
     if (!message) return null;
 
     return {

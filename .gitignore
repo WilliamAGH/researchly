@@ -14,6 +14,7 @@ playwright-report
 *.bak
 .crush*
 node_modules
+.convex
 dist
 dist-ssr
 *.local

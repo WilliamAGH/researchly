@@ -194,7 +194,7 @@ export function isConvexId<TableName extends TableNames>(
  * @example
  * const chatId = safeConvexId<"chats">("kg24lrv8sq2j9xf0v2q8k6z5sw6z");
  * if (chatId) {
- *   await ctx.db.get(chatId);
+ *   await ctx.db.get("chats", chatId);
  * }
  */
 export function safeConvexId<TableName extends TableNames>(

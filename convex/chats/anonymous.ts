@@ -87,7 +87,7 @@ export const claimAnonymousChats = mutation({
 
     // Update each chat to belong to the user
     for (const chat of anonymousChats) {
-      await ctx.db.patch(chat._id, {
+      await ctx.db.patch("chats", chat._id, {
         userId,
         sessionId: undefined, // Remove session ID
         updatedAt: Date.now(),
