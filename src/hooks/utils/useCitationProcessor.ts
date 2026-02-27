@@ -81,7 +81,7 @@ export function useCitationProcessor(
             url = domainToUrlMap.get(citedText);
           }
         } else if (citedText.includes("/")) {
-          // Handle cases like "github.com/user/repo" - extract just the domain
+          // Handle cases like "github.com/user/repo"
           const domainPart = citedText.split("/")[0];
           domain = domainPart;
 
@@ -93,10 +93,11 @@ export function useCitationProcessor(
 
           // If not found, try to find a URL that contains this path
           if (!url) {
-            const matchingCard = cards.find((c) => c.url.includes(citedText));
-            if (matchingCard) {
-              url = matchingCard.url;
-            }
+            const matchingCard = cards.find((c) => {
+              const cardDomain = getDomainFromUrl(c.url);
+              return cardDomain === domain && c.url.includes(citedText);
+            });
+            url = matchingCard?.url;
           }
         } else {
           // Simple domain citation
